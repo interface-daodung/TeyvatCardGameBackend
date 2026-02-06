@@ -1,0 +1,15 @@
+{
+  "name": "teyvat-card-game-backend",
+  "version": "1.0.0",
+  "description": "Card-based game backend with admin system",
+  "type": "module",
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "dev:admin": "cd admin-web && npm run dev",
+    "build:server": "cd server && npm run build",
+    "build:admin": "cd admin-web && npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

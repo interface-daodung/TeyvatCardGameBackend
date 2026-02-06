@@ -1,0 +1,160 @@
+import api from '../lib/api';
+
+export interface Character {
+  _id: string;
+  name: string;
+  description: string;
+  stats: {
+    attack: number;
+    defense: number;
+    health: number;
+  };
+  maxLevel: number;
+  status: 'enabled' | 'disabled' | 'hidden' | 'unreleased';
+}
+
+export interface Equipment {
+  _id: string;
+  name: string;
+  description: string;
+  slot: string;
+  stats: {
+    attack?: number;
+    defense?: number;
+    health?: number;
+  };
+  status: 'enabled' | 'disabled' | 'hidden';
+}
+
+export interface AdventureCard {
+  _id: string;
+  name: string;
+  description: string;
+  type: 'situation' | 'food' | 'monster' | 'temporary_weapon';
+  stats?: {
+    attack?: number;
+    defense?: number;
+    health?: number;
+    effect?: string;
+  };
+  appearanceRate: number;
+  status: 'enabled' | 'disabled' | 'hidden';
+}
+
+export interface Map {
+  _id: string;
+  name: string;
+  description: string;
+  deck: AdventureCard[];
+  status: 'enabled' | 'disabled';
+}
+
+export const gameDataService = {
+  // Characters
+  getCharacters: async (status?: string) => {
+    const response = await api.get<{ characters: Character[] }>('/characters', {
+      params: status ? { status } : {},
+    });
+    return response.data.characters;
+  },
+
+  getCharacterById: async (id: string): Promise<Character> => {
+    const response = await api.get<Character>(`/characters/${id}`);
+    return response.data;
+  },
+
+  createCharacter: async (data: Partial<Character>): Promise<Character> => {
+    const response = await api.post<Character>('/characters', data);
+    return response.data;
+  },
+
+  updateCharacter: async (id: string, data: Partial<Character>): Promise<Character> => {
+    const response = await api.patch<Character>(`/characters/${id}`, data);
+    return response.data;
+  },
+
+  deleteCharacter: async (id: string): Promise<void> => {
+    await api.delete(`/characters/${id}`);
+  },
+
+  // Equipment
+  getEquipment: async (status?: string) => {
+    const response = await api.get<{ equipment: Equipment[] }>('/equipment', {
+      params: status ? { status } : {},
+    });
+    return response.data.equipment;
+  },
+
+  getEquipmentById: async (id: string): Promise<Equipment> => {
+    const response = await api.get<Equipment>(`/equipment/${id}`);
+    return response.data;
+  },
+
+  createEquipment: async (data: Partial<Equipment>): Promise<Equipment> => {
+    const response = await api.post<Equipment>('/equipment', data);
+    return response.data;
+  },
+
+  updateEquipment: async (id: string, data: Partial<Equipment>): Promise<Equipment> => {
+    const response = await api.patch<Equipment>(`/equipment/${id}`, data);
+    return response.data;
+  },
+
+  deleteEquipment: async (id: string): Promise<void> => {
+    await api.delete(`/equipment/${id}`);
+  },
+
+  // Adventure Cards
+  getAdventureCards: async (status?: string, type?: string) => {
+    const response = await api.get<{ cards: AdventureCard[] }>('/adventure-cards', {
+      params: { status, type },
+    });
+    return response.data.cards;
+  },
+
+  getAdventureCardById: async (id: string): Promise<AdventureCard> => {
+    const response = await api.get<AdventureCard>(`/adventure-cards/${id}`);
+    return response.data;
+  },
+
+  createAdventureCard: async (data: Partial<AdventureCard>): Promise<AdventureCard> => {
+    const response = await api.post<AdventureCard>('/adventure-cards', data);
+    return response.data;
+  },
+
+  updateAdventureCard: async (id: string, data: Partial<AdventureCard>): Promise<AdventureCard> => {
+    const response = await api.patch<AdventureCard>(`/adventure-cards/${id}`, data);
+    return response.data;
+  },
+
+  deleteAdventureCard: async (id: string): Promise<void> => {
+    await api.delete(`/adventure-cards/${id}`);
+  },
+
+  // Maps
+  getMaps: async (status?: string) => {
+    const response = await api.get<{ maps: Map[] }>('/maps', {
+      params: status ? { status } : {},
+    });
+    return response.data.maps;
+  },
+
+  getMapById: async (id: string): Promise<Map> => {
+    const response = await api.get<Map>(`/maps/${id}`);
+    return response.data;
+  },
+
+  createMap: async (data: Partial<Map & { deck: string[] }>): Promise<Map> => {
+    const response = await api.post<Map>('/maps', data);
+    return response.data;
+  },
+
+  updateMap: async (id: string, data: Partial<Map & { deck: string[] }>): Promise<Map> => {
+    const response = await api.patch<Map>(`/maps/${id}`, data);
+    return response.data;
+  },
+
+  deleteMap: async (id: string): Promise<void> => {
+    await api.delete(`/maps/${id}`);
+  },
+};
