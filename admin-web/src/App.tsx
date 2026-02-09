@@ -8,6 +8,7 @@ import Payments from './pages/Payments';
 import UserPayments from './pages/UserPayments';
 import TestPayos from './pages/TestPayos';
 import Characters from './pages/Characters';
+import CharacterDetail from './pages/CharacterDetail';
 import Equipment from './pages/Equipment';
 import AdventureCards from './pages/AdventureCards';
 import Maps from './pages/Maps';
@@ -48,6 +49,7 @@ function App() {
         <Route path="payments" element={<Payments />} />
         <Route path="test-payos" element={<TestPayos />} />
         <Route path="characters" element={<Characters />} />
+        <Route path="characters/:id" element={<CharacterDetail />} />
         <Route path="equipment" element={<Equipment />} />
         <Route path="adventure-cards" element={<AdventureCards />} />
         <Route path="maps" element={<Maps />} />

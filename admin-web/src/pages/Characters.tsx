@@ -1,45 +1,35 @@
-import { useEffect, useState } from 'react';
-import { gameDataService, Character } from '../services/gameDataService';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { Skeleton } from '../components/ui/skeleton';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent } from '../components/ui/card';
+import { gameDataService, type Character } from '../services/gameDataService';
+
+const CARD_IMAGE_RATIO = { width: 420, height: 720 };
 
 export default function Characters() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchCharacters = async () => {
-      try {
-        setLoading(true);
-        const data = await gameDataService.getCharacters();
-        setCharacters(data);
-      } catch (error) {
-        console.error('Failed to fetch characters:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCharacters();
+    gameDataService
+      .getCharacters()
+      .then(setCharacters)
+      .catch((err) => setError(err?.message ?? 'Failed to load characters'))
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-32" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full mb-4" />
-                <Skeleton className="h-4 w-3/4" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="p-6">
+        <p className="text-muted-foreground">Loading characters...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <p className="text-destructive">{error}</p>
       </div>
     );
   }
@@ -47,64 +37,55 @@ export default function Characters() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-red-600 bg-clip-text text-transparent mb-2">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-600 to-slate-600 bg-clip-text text-transparent mb-2">
           Characters
         </h1>
         <p className="text-muted-foreground">Manage game characters and their stats</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-wrap gap-4">
         {characters.map((character) => (
-          <Card key={character._id} className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-            <div className="bg-gradient-to-br from-primary-100 to-red-100 p-1">
-              <CardContent className="bg-card p-6">
-                <CardHeader className="p-0 mb-4">
-                  <CardTitle className="text-xl text-primary-700">{character.name}</CardTitle>
-                  <CardDescription className="mt-2">{character.description}</CardDescription>
-                </CardHeader>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-2 bg-primary-50 rounded-md">
-                    <span className="text-sm font-medium text-muted-foreground">⚔️ Attack</span>
-                    <span className="text-sm font-bold text-primary-600">{character.stats.attack}</span>
+          <Link
+            key={character._id}
+            to={`/characters/${character.nameId}`}
+            className="w-[200px] shrink-0"
+          >
+            <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer">
+              <div className="bg-gradient-to-br from-gray-200 to-slate-200 p-px">
+                <CardContent className="p-0">
+                  <div
+                    className="relative overflow-hidden"
+                    style={{ aspectRatio: `${CARD_IMAGE_RATIO.width}/${CARD_IMAGE_RATIO.height}` }}
+                  >
+                    <img
+                      src={`/assets/images/cards/character/${character.nameId}.webp`}
+                      alt={character.name}
+                      className="w-full h-full scale-[1.03] object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <div className="absolute top-1 left-1">
+                      {character.element === 'none' ? (
+                        <span className="w-5 h-5 rounded-full border border-white/60 bg-black/40 flex items-center justify-center p-0.5">
+                          <svg className="w-3 h-3 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                          </svg>
+                        </span>
+                      ) : (
+                        <img
+                          src={`/assets/images/element/${character.element}.webp`}
+                          alt={character.element}
+                          className="w-5 h-5 rounded-full border border-white/60 bg-black/40 p-0.5"
+                        />
+                      )}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                      <span className="font-bold text-white text-sm">{character.name}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center p-2 bg-red-50 rounded-md">
-                    <span className="text-sm font-medium text-muted-foreground">🛡️ Defense</span>
-                    <span className="text-sm font-bold text-red-600">{character.stats.defense}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-primary-50 rounded-md">
-                    <span className="text-sm font-medium text-muted-foreground">❤️ Health</span>
-                    <span className="text-sm font-bold text-primary-600">{character.stats.health}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-red-50 rounded-md">
-                    <span className="text-sm font-medium text-muted-foreground">⭐ Max Level</span>
-                    <span className="text-sm font-bold text-red-600">{character.maxLevel}</span>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <Badge
-                      variant={
-                        character.status === 'enabled'
-                          ? 'default'
-                          : character.status === 'disabled'
-                          ? 'destructive'
-                          : 'secondary'
-                      }
-                      className={
-                        character.status === 'enabled'
-                          ? 'bg-green-100 text-green-800 border-green-200'
-                          : character.status === 'hidden'
-                          ? 'bg-gray-100 text-gray-800 border-gray-200'
-                          : character.status === 'unreleased'
-                          ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                          : ''
-                      }
-                    >
-                      {character.status}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </div>
-          </Card>
+                </CardContent>
+              </div>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>

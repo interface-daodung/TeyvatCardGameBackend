@@ -30,6 +30,23 @@ function buildLevelStats(basePower: number, baseCooldown: number, maxLevel: numb
   return stats;
 }
 
+/** Generate character levelStats (level 1..maxLevel, price = level * 100, level 10 = 0) */
+function buildCharacterLevelStats(maxLevel: number) {
+  const stats: { level: number; price: number }[] = [];
+  for (let l = 1; l <= maxLevel; l++) {
+    stats.push({
+      level: l,
+      price: l === maxLevel ? 0 : l * 100,
+    });
+  }
+  return stats;
+}
+
+/** Capitalize first letter: eula -> Eula */
+function capitalize(nameId: string) {
+  return nameId.charAt(0).toUpperCase() + nameId.slice(1).toLowerCase();
+}
+
 const seed = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/teyvat-card-game');
@@ -81,27 +98,38 @@ const seed = async () => {
     const users = await User.insertMany(usersData);
     console.log(`Created ${users.length} sample users`);
 
-    // Create characters
-    const characters = await Character.insertMany([
-      {
-        name: 'Traveler',
-        description: 'The main character',
-        stats: { attack: 100, defense: 80, health: 500 },
-        status: 'enabled',
-      },
-      {
-        name: 'Paimon',
-        description: 'Emergency food',
-        stats: { attack: 50, defense: 30, health: 200 },
-        status: 'enabled',
-      },
-      {
-        name: 'Unreleased Hero',
-        description: 'Coming soon',
-        stats: { attack: 120, defense: 100, health: 600 },
-        status: 'unreleased',
-      },
-    ]);
+    // Create characters from admin-web/public/assets/images/cards/character (exclude -sprite, unlock)
+    const characterImagesPath = path.join(__dirname, '../../../admin-web/public/assets/images/cards/character');
+    const characterFiles = fs.existsSync(characterImagesPath)
+      ? fs.readdirSync(characterImagesPath)
+      : [];
+    const characterNameIds = [...new Set(
+      characterFiles
+        .filter((f) => f.endsWith('.webp') && !f.includes('-sprite') && !f.startsWith('unlock'))
+        .map((f) => f.replace('.webp', ''))
+    )];
+
+    const nameIdToElement: Record<string, string> = {
+      eula: 'cryo',
+      furina: 'hydro',
+      mavuika: 'pyro',
+      nahida: 'dendro',
+      raiden: 'electro',
+      venti: 'anemo',
+      zhongli: 'geo',
+    };
+
+    const charactersData = characterNameIds.map((nameId) => ({
+      nameId,
+      name: capitalize(nameId),
+      description: `character.${nameId}.description`,
+      element: nameIdToElement[nameId] ?? 'cryo',
+      HP: 10,
+      maxLevel: 10,
+      status: 'enabled' as const,
+      levelStats: buildCharacterLevelStats(10),
+    }));
+    const characters = await Character.insertMany(charactersData);
     console.log(`Created ${characters.length} characters`);
 
     // Create equipment
@@ -246,6 +274,10 @@ const seed = async () => {
     for (const nameId of nameIds) {
       allKeys.add(`item.${nameId}.name`);
       allKeys.add(`item.${nameId}.description`);
+    }
+    // Add character localization keys for each seeded character
+    for (const nameId of characterNameIds) {
+      allKeys.add(`character.${nameId}.description`);
     }
     const localizationsData = Array.from(allKeys).map((key) => ({
       key,

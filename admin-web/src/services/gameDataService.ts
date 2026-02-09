@@ -1,16 +1,20 @@
 import api from '../lib/api';
 
+export interface CharacterLevelStat {
+  level: number;
+  price: number;
+}
+
 export interface Character {
   _id: string;
+  nameId: string;
   name: string;
-  description: string;
-  stats: {
-    attack: number;
-    defense: number;
-    health: number;
-  };
+  description: string; // i18n key: character.{nameId}.description
+  element?: string; // anemo | cryo | dendro | electro | geo | hydro | pyro | none
+  HP: number;
   maxLevel: number;
   status: 'enabled' | 'disabled' | 'hidden' | 'unreleased';
+  levelStats: CharacterLevelStat[];
 }
 
 export interface Equipment {

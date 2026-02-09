@@ -1,14 +1,21 @@
 import { z } from 'zod';
 
+const characterLevelStatSchema = z.object({
+  level: z.number().min(1),
+  price: z.number().min(0),
+});
+
+const elementEnum = z.enum(['anemo', 'cryo', 'dendro', 'electro', 'geo', 'hydro', 'pyro', 'none']);
+
 export const createCharacterSchema = z.object({
+  nameId: z.string().min(1),
   name: z.string().min(1),
   description: z.string().optional(),
-  stats: z.object({
-    attack: z.number().min(0),
-    defense: z.number().min(0),
-    health: z.number().min(0),
-  }),
+  element: elementEnum.optional(),
+  HP: z.number().min(1).optional(),
+  maxLevel: z.number().min(1).max(99).optional(),
   status: z.enum(['enabled', 'disabled', 'hidden', 'unreleased']).optional(),
+  levelStats: z.array(characterLevelStatSchema).optional(),
 });
 
 export const updateCharacterSchema = createCharacterSchema.partial();
