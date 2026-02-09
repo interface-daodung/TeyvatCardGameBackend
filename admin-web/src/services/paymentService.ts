@@ -29,7 +29,35 @@ export interface PaymentStats {
   revenueByDate: Array<{ _id: string; revenue: number; count: number }>;
 }
 
+export interface PayosPaymentLinkData {
+  checkoutUrl: string;
+  qrCode: string;
+  accountNumber: string;
+  accountName: string;
+  amount: number;
+  description: string;
+  orderCode: number;
+  bin: string;
+  packageName: string;
+  xuReceived: number;
+  uid: string;
+}
+
+export interface CreatePayosLinkResponse {
+  error: number;
+  message: string;
+  data?: PayosPaymentLinkData;
+}
+
 export const paymentService = {
+  createPayosLink: async (uid: string, packageName: string): Promise<CreatePayosLinkResponse> => {
+    const response = await api.post<CreatePayosLinkResponse>('/payos/create-link', {
+      uid,
+      packageName,
+    });
+    return response.data;
+  },
+
   getPayments: async (page = 1, limit = 20, status?: string): Promise<PaymentsResponse> => {
     const response = await api.get<PaymentsResponse>('/payments', {
       params: { page, limit, status },

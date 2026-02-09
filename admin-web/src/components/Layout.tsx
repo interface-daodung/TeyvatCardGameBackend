@@ -149,6 +149,7 @@ export default function Layout() {
     { path: '/', label: 'Dashboard', icon: '📊' },
     { path: '/users', label: 'Users', icon: '👥' },
     { path: '/payments', label: 'Payments', icon: '💳' },
+    { path: '/test-payos', label: 'Test PayOS', icon: '🧪' },
     { path: '/characters', label: 'Characters', icon: '⚔️' },
     { path: '/equipment', label: 'Equipment', icon: '🛡️' },
     { path: '/adventure-cards', label: 'Adventure Cards', icon: '🎴' },

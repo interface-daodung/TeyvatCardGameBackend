@@ -51,3 +51,24 @@ export const createMapSchema = z.object({
 });
 
 export const updateMapSchema = createMapSchema.partial();
+
+const levelStatSchema = z.object({
+  power: z.number().min(0),
+  cooldown: z.number().min(0),
+  price: z.number().min(0),
+});
+
+export const createItemSchema = z.object({
+  nameId: z.string().min(1),
+  basePower: z.number().min(1).max(20),
+  baseCooldown: z.number().min(4).max(19),
+  maxLevel: z.number().min(1).max(99).optional(),
+  levelStats: z.array(levelStatSchema).optional(),
+});
+
+export const updateItemSchema = z.object({
+  basePower: z.number().min(1).max(20).optional(),
+  baseCooldown: z.number().min(4).max(19).optional(),
+  maxLevel: z.number().min(1).max(99).optional(),
+  levelStats: z.array(levelStatSchema).optional(),
+});

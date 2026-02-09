@@ -9,7 +9,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
     const rawPage = parseInt(req.query.page as string) || 1;
     const rawLimit = parseInt(req.query.limit as string) || 20;
-    const limit = Math.min(100, Math.max(1, rawLimit));
+    const limit = Math.min(500, Math.max(1, rawLimit));
     const total = await User.countDocuments();
     const pages = Math.max(1, Math.ceil(total / limit));
     const page = Math.min(pages, Math.max(1, rawPage));
@@ -19,7 +19,8 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
       .select('-password')
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json({
       users,
@@ -30,8 +31,12 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
         pages,
       },
     });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch users' });
+  } catch (error: any) {
+    console.error('getUsers error:', error?.message || error);
+    res.status(500).json({
+      error: 'Failed to fetch users',
+      message: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+    });
   }
 };
 

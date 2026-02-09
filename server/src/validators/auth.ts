@@ -8,3 +8,7 @@ export const loginSchema = z.object({
 export const refreshTokenSchema = z.object({
   refreshToken: z.string(),
 });
+
+export const googleLoginSchema = z.object({
+  credential: z.string().min(10, 'Invalid Google credential'),
+});

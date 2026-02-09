@@ -1,5 +1,10 @@
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import bcrypt from 'bcrypt';
 import { User } from '../models/User.js';
 import { Character } from '../models/Character.js';
@@ -8,8 +13,22 @@ import { AdventureCard } from '../models/AdventureCard.js';
 import { Map } from '../models/Map.js';
 import { Payment } from '../models/Payment.js';
 import { Localization } from '../models/Localization.js';
+import { Item } from '../models/Item.js';
 
 dotenv.config();
+
+/** Generate levelStats for an item (levels 1..maxLevel) */
+function buildLevelStats(basePower: number, baseCooldown: number, maxLevel: number) {
+  const stats: { power: number; cooldown: number; price: number }[] = [];
+  for (let l = 1; l <= maxLevel; l++) {
+    stats.push({
+      power: Math.round(basePower * (1 + l * 0.15)),
+      cooldown: Math.max(0, baseCooldown - l * 0.5),
+      price: l * 50,
+    });
+  }
+  return stats;
+}
 
 const seed = async () => {
   try {
@@ -20,6 +39,7 @@ const seed = async () => {
     await User.deleteMany({});
     await Character.deleteMany({});
     await Equipment.deleteMany({});
+    await Item.deleteMany({});
     await AdventureCard.deleteMany({});
     await Map.deleteMany({});
     await Payment.deleteMany({});
@@ -110,6 +130,30 @@ const seed = async () => {
     ]);
     console.log(`Created ${equipment.length} equipment`);
 
+    // Create items from admin-web/public/assets/images/item
+    const itemImagesPath = path.join(__dirname, '../../../admin-web/public/assets/images/item');
+    const imageFiles = fs.existsSync(itemImagesPath)
+      ? fs.readdirSync(itemImagesPath)
+      : [];
+    const nameIds = imageFiles
+      .filter((f) => f.endsWith('.webp'))
+      .map((f) => f.replace('.webp', ''));
+
+    const itemsData = nameIds.map((nameId, i) => {
+      const basePower = (i % 20) + 1;
+      const baseCooldown = (i % 16) + 4;
+      const maxLevel = 10;
+      return {
+        nameId,
+        basePower,
+        baseCooldown,
+        maxLevel,
+        levelStats: buildLevelStats(basePower, baseCooldown, maxLevel),
+      };
+    });
+    const items = await Item.insertMany(itemsData);
+    console.log(`Created ${items.length} items`);
+
     // Create adventure cards
     const adventureCards = await AdventureCard.insertMany([
       {
@@ -192,24 +236,27 @@ const seed = async () => {
     const payments = await Payment.insertMany(paymentsData);
     console.log(`Created ${payments.length} payments`);
 
-    // Create localizations
-    await Localization.insertMany([
-      {
-        key: 'welcome',
-        values: {
-          en: 'Welcome',
-          vi: 'Chào mừng',
-        },
+    // Create localizations from TeyvatCard i18n locales
+    const localesPath = path.join(__dirname, '../../../../TeyvatCard/i18n/locales');
+    const en = JSON.parse(fs.readFileSync(path.join(localesPath, 'en.json'), 'utf-8')) as Record<string, string>;
+    const vi = JSON.parse(fs.readFileSync(path.join(localesPath, 'vi.json'), 'utf-8')) as Record<string, string>;
+    const ja = JSON.parse(fs.readFileSync(path.join(localesPath, 'ja.json'), 'utf-8')) as Record<string, string>;
+    const allKeys = new Set([...Object.keys(en), ...Object.keys(vi), ...Object.keys(ja)]);
+    // Add item localization keys for each seeded item (merge; existing keys from TeyvatCard are not overwritten)
+    for (const nameId of nameIds) {
+      allKeys.add(`item.${nameId}.name`);
+      allKeys.add(`item.${nameId}.description`);
+    }
+    const localizationsData = Array.from(allKeys).map((key) => ({
+      key,
+      translations: {
+        en: en[key] ?? '',
+        vi: vi[key] ?? '',
+        ja: ja[key] ?? '',
       },
-      {
-        key: 'play',
-        values: {
-          en: 'Play',
-          vi: 'Chơi',
-        },
-      },
-    ]);
-    console.log('Created localizations');
+    }));
+    await Localization.insertMany(localizationsData);
+    console.log(`Created ${localizationsData.length} localizations`);
 
     console.log('Seed completed successfully!');
     process.exit(0);

@@ -6,6 +6,7 @@ import Users from './pages/Users';
 import UserDetail from './pages/UserDetail';
 import Payments from './pages/Payments';
 import UserPayments from './pages/UserPayments';
+import TestPayos from './pages/TestPayos';
 import Characters from './pages/Characters';
 import Equipment from './pages/Equipment';
 import AdventureCards from './pages/AdventureCards';
@@ -45,6 +46,7 @@ function App() {
         <Route path="users" element={<Users />} />
         <Route path="users/:id" element={<UserDetail />} />
         <Route path="payments" element={<Payments />} />
+        <Route path="test-payos" element={<TestPayos />} />
         <Route path="characters" element={<Characters />} />
         <Route path="equipment" element={<Equipment />} />
         <Route path="adventure-cards" element={<AdventureCards />} />

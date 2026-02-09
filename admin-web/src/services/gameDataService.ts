@@ -49,6 +49,21 @@ export interface Map {
   status: 'enabled' | 'disabled';
 }
 
+export interface LevelStat {
+  power: number;
+  cooldown: number;
+  price: number;
+}
+
+export interface Item {
+  _id: string;
+  nameId: string;
+  basePower: number;
+  baseCooldown: number;
+  maxLevel: number;
+  levelStats: LevelStat[];
+}
+
 export const gameDataService = {
   // Characters
   getCharacters: async (status?: string) => {
@@ -156,5 +171,21 @@ export const gameDataService = {
 
   deleteMap: async (id: string): Promise<void> => {
     await api.delete(`/maps/${id}`);
+  },
+
+  // Items (game consumables)
+  getItems: async () => {
+    const response = await api.get<{ items: Item[] }>('/items');
+    return response.data.items;
+  },
+
+  getItemById: async (id: string): Promise<Item> => {
+    const response = await api.get<Item>(`/items/${id}`);
+    return response.data;
+  },
+
+  updateItem: async (id: string, data: Partial<Item>): Promise<Item> => {
+    const response = await api.patch<Item>(`/items/${id}`, data);
+    return response.data;
   },
 };

@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 
 export interface IUser extends mongoose.Document {
   email: string;
-  password: string;
+  password?: string | null;
   role: 'admin' | 'moderator' | 'user';
   isBanned: boolean;
   xu: number;
@@ -27,7 +27,8 @@ const userSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
+      default: null,
     },
     role: {
       type: String,
