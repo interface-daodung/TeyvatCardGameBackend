@@ -43,7 +43,7 @@ This is a monorepo-style project with a backend server and admin frontend for a 
 - **Payment**: Transaction records with status tracking
 - **Character**: Game characters with fixed max level (10)
 - **Equipment**: Equipment items with slots
-- **AdventureCard**: Cards for maps (situation, food, monster, temporary_weapon)
+- **AdventureCard**: Cards for maps (weapon, enemy, food, trap, treasure, bomb, coin, empty) - from libraryCards.json
 - **Map**: Dungeon maps with deck configurations
 - **Localization**: Multi-language key-value pairs
 - **AuditLog**: Admin action logs

@@ -1,16 +1,16 @@
 import mongoose, { Schema } from 'mongoose';
 
 export interface IAdventureCard extends mongoose.Document {
+  nameId: string;
   name: string;
   description: string;
-  type: 'situation' | 'food' | 'monster' | 'temporary_weapon';
-  stats?: {
-    attack?: number;
-    defense?: number;
-    health?: number;
-    effect?: string;
-  };
-  appearanceRate: number; // Percentage (0-100)
+  type: 'weapon' | 'enemy' | 'food' | 'trap' | 'treasure' | 'bomb' | 'coin' | 'empty';
+  category?: string; // e.g. sword (for weapon)
+  element?: string; // anemo, cryo, etc. (for enemy, coin)
+  clan?: string; // e.g. hilichurl (for enemy)
+  rarity?: number;
+  className?: string;
+  appearanceRate?: number; // Percentage (0-100)
   status: 'enabled' | 'disabled' | 'hidden';
   createdAt: Date;
   updatedAt: Date;
@@ -18,6 +18,11 @@ export interface IAdventureCard extends mongoose.Document {
 
 const adventureCardSchema = new Schema<IAdventureCard>(
   {
+    nameId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     name: {
       type: String,
       required: true,
@@ -28,29 +33,16 @@ const adventureCardSchema = new Schema<IAdventureCard>(
     },
     type: {
       type: String,
-      enum: ['situation', 'food', 'monster', 'temporary_weapon'],
+      enum: ['weapon', 'enemy', 'food', 'trap', 'treasure', 'bomb', 'coin', 'empty'],
       required: true,
     },
-    stats: {
-      attack: {
-        type: Number,
-        min: 0,
-      },
-      defense: {
-        type: Number,
-        min: 0,
-      },
-      health: {
-        type: Number,
-        min: 0,
-      },
-      effect: {
-        type: String,
-      },
-    },
+    category: { type: String },
+    element: { type: String },
+    clan: { type: String },
+    rarity: { type: Number, min: 1, max: 5 },
+    className: { type: String },
     appearanceRate: {
       type: Number,
-      required: true,
       min: 0,
       max: 100,
       default: 10,

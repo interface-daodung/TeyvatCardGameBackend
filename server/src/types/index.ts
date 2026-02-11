@@ -11,4 +11,4 @@ export type PaymentStatus = 'pending' | 'success' | 'failed';
 
 export type CardStatus = 'enabled' | 'disabled' | 'hidden' | 'unreleased';
 
-export type AdventureCardType = 'situation' | 'food' | 'monster' | 'temporary_weapon';
+export type AdventureCardType = 'weapon' | 'enemy' | 'food' | 'trap' | 'treasure' | 'bomb' | 'coin' | 'empty';

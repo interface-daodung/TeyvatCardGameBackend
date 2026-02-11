@@ -182,54 +182,204 @@ const seed = async () => {
     const items = await Item.insertMany(itemsData);
     console.log(`Created ${items.length} items`);
 
-    // Create adventure cards
-    const adventureCards = await AdventureCard.insertMany([
-      {
-        name: 'Treasure Chest',
-        description: 'Find a treasure chest',
-        type: 'situation',
-        appearanceRate: 15,
+    // Create adventure cards from libraryCards.json
+    // Priority: server/src/data (primary) -> TeyvatCard/src/data (fallback)
+    const libraryCardsPaths = [
+      path.join(__dirname, '../data/libraryCards.json'),
+      path.join(__dirname, '../../../../TeyvatCard/src/data/libraryCards.json'),
+      path.join(__dirname, '../../../../../TeyvatCard/src/data/libraryCards.json'),
+    ];
+    let libraryCards: Record<string, unknown> = { weapon: [], enemy: [], food: [], trap: [], treasure: [], bomb: [], coin: [], empty: [] };
+    let libraryCardsLoaded = false;
+    for (const p of libraryCardsPaths) {
+      if (fs.existsSync(p)) {
+        try {
+          libraryCards = JSON.parse(fs.readFileSync(p, 'utf-8')) as Record<string, unknown>;
+          libraryCardsLoaded = true;
+          console.log(`[AdventureCards] Loaded libraryCards.json from: ${path.relative(process.cwd(), p)}`);
+          break;
+        } catch (parseErr) {
+          console.warn(`[AdventureCards] Failed to parse ${p}:`, parseErr);
+        }
+      }
+    }
+    if (!libraryCardsLoaded) {
+      throw new Error('Could not load libraryCards.json from any path. Ensure server/src/data/libraryCards.json exists.');
+    }
+
+    const adventureCardsData: Array<{
+      nameId: string;
+      name: string;
+      description: string;
+      type: string;
+      category?: string;
+      element?: string;
+      clan?: string;
+      rarity?: number;
+      className?: string;
+      appearanceRate?: number;
+      status: string;
+    }> = [];
+
+    // Helper to derive appearanceRate from rarity (higher rarity = lower rate)
+    const rarityToAppearanceRate = (r?: number) => (r ? Math.max(5, 25 - (r ?? 3) * 4) : 15);
+
+    const safeCardId = (c: Record<string, unknown>): string | null =>
+      c.id != null ? String(c.id) : null;
+    const safeCardName = (c: Record<string, unknown>, id: string) =>
+      c.name != null ? String(c.name) : id;
+
+    for (const arr of (libraryCards.weapon as Record<string, unknown>[]) || []) {
+      const c = arr as Record<string, unknown>;
+      const nameId = safeCardId(c);
+      if (!nameId) continue;
+      adventureCardsData.push({
+        nameId,
+        name: safeCardName(c, nameId),
+        description: String(c.description || ''),
+        type: 'weapon',
+        category: c.category as string | undefined,
+        rarity: c.rarity as number | undefined,
+        className: c.className as string | undefined,
+        appearanceRate: rarityToAppearanceRate(c.rarity as number),
         status: 'enabled',
-      },
-      {
-        name: 'Healing Potion',
-        description: 'Restore 100 HP',
+      });
+    }
+    for (const arr of (libraryCards.enemy as Record<string, unknown>[]) || []) {
+      const c = arr as Record<string, unknown>;
+      const nameId = safeCardId(c);
+      if (!nameId) continue;
+      adventureCardsData.push({
+        nameId,
+        name: safeCardName(c, nameId),
+        description: String(c.description || ''),
+        type: 'enemy',
+        element: c.element as string | undefined,
+        clan: c.clan as string | undefined,
+        rarity: c.rarity as number | undefined,
+        className: c.className as string | undefined,
+        appearanceRate: rarityToAppearanceRate(c.rarity as number),
+        status: 'enabled',
+      });
+    }
+    for (const arr of (libraryCards.food as Record<string, unknown>[]) || []) {
+      const c = arr as Record<string, unknown>;
+      const nameId = safeCardId(c);
+      if (!nameId) continue;
+      adventureCardsData.push({
+        nameId,
+        name: safeCardName(c, nameId),
+        description: String(c.description || ''),
         type: 'food',
-        stats: { health: 100 },
-        appearanceRate: 20,
+        rarity: c.rarity as number | undefined,
+        className: c.className as string | undefined,
+        appearanceRate: rarityToAppearanceRate(c.rarity as number),
         status: 'enabled',
-      },
-      {
-        name: 'Slime',
-        description: 'A weak monster',
-        type: 'monster',
-        stats: { attack: 30, defense: 20, health: 150 },
-        appearanceRate: 30,
+      });
+    }
+    for (const arr of (libraryCards.trap as Record<string, unknown>[]) || []) {
+      const c = arr as Record<string, unknown>;
+      const nameId = safeCardId(c);
+      if (!nameId) continue;
+      adventureCardsData.push({
+        nameId,
+        name: safeCardName(c, nameId),
+        description: String(c.description || ''),
+        type: 'trap',
+        rarity: c.rarity as number | undefined,
+        className: c.className as string | undefined,
+        appearanceRate: rarityToAppearanceRate(c.rarity as number),
         status: 'enabled',
-      },
-      {
-        name: 'Rusty Sword',
-        description: 'Temporary weapon',
-        type: 'temporary_weapon',
-        stats: { attack: 25 },
+      });
+    }
+    for (const arr of (libraryCards.treasure as Record<string, unknown>[]) || []) {
+      const c = arr as Record<string, unknown>;
+      const nameId = safeCardId(c);
+      if (!nameId) continue;
+      adventureCardsData.push({
+        nameId,
+        name: safeCardName(c, nameId),
+        description: String(c.description || ''),
+        type: 'treasure',
+        rarity: c.rarity as number | undefined,
+        className: c.className as string | undefined,
+        appearanceRate: rarityToAppearanceRate(c.rarity as number),
+        status: 'enabled',
+      });
+    }
+    for (const arr of (libraryCards.bomb as Record<string, unknown>[]) || []) {
+      const c = arr as Record<string, unknown>;
+      const nameId = safeCardId(c);
+      if (!nameId) continue;
+      adventureCardsData.push({
+        nameId,
+        name: safeCardName(c, nameId),
+        description: String(c.description || ''),
+        type: 'bomb',
+        rarity: c.rarity as number | undefined,
+        className: c.className as string | undefined,
+        appearanceRate: rarityToAppearanceRate(c.rarity as number),
+        status: 'enabled',
+      });
+    }
+    // coin: expand per-element into individual cards (supports array or single object)
+    const coinData = libraryCards.coin;
+    const coinItems: Record<string, unknown>[] = Array.isArray(coinData)
+      ? (coinData as Record<string, unknown>[])
+      : coinData && typeof coinData === 'object'
+        ? [coinData as Record<string, unknown>]
+        : [];
+    for (const c of coinItems) {
+      const ids = c.id as Record<string, string> | undefined;
+      const names = c.name as Record<string, string> | undefined;
+      const descs = c.description as Record<string, string> | undefined;
+      if (ids && names) {
+        for (const [elem, id] of Object.entries(ids)) {
+          adventureCardsData.push({
+            nameId: id,
+            name: names[elem] || id,
+            description: (descs && descs[elem]) || '',
+            type: 'coin',
+            element: elem,
+            rarity: (c.rarity as number) || 1,
+            className: c.className as string | undefined,
+            appearanceRate: 20,
+            status: 'enabled',
+          });
+        }
+      }
+    }
+    for (const arr of (libraryCards.empty as Record<string, unknown>[]) || []) {
+      const c = arr as Record<string, unknown>;
+      const nameId = safeCardId(c);
+      if (!nameId) continue;
+      adventureCardsData.push({
+        nameId,
+        name: safeCardName(c, nameId),
+        description: String(c.description || ''),
+        type: 'empty',
+        className: c.className as string | undefined,
         appearanceRate: 10,
         status: 'enabled',
-      },
-    ]);
+      });
+    }
+
+    const adventureCards = await AdventureCard.insertMany(adventureCardsData);
     console.log(`Created ${adventureCards.length} adventure cards`);
 
-    // Create maps
+    // Create maps (use first few cards from different categories for deck)
+    const deckIds = adventureCards.slice(0, 12).map((c) => c._id);
     const maps = await Map.insertMany([
       {
         name: 'Mondstadt Forest',
         description: 'A peaceful forest',
-        deck: [adventureCards[0]._id, adventureCards[1]._id, adventureCards[2]._id],
+        deck: deckIds.slice(0, 6),
         status: 'enabled',
       },
       {
         name: 'Liyue Mountains',
         description: 'Dangerous mountain paths',
-        deck: [adventureCards[1]._id, adventureCards[2]._id, adventureCards[3]._id],
+        deck: deckIds.slice(3, 9),
         status: 'enabled',
       },
     ]);

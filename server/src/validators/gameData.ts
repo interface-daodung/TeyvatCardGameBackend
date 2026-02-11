@@ -35,16 +35,16 @@ export const createEquipmentSchema = z.object({
 export const updateEquipmentSchema = createEquipmentSchema.partial();
 
 export const createAdventureCardSchema = z.object({
+  nameId: z.string().min(1),
   name: z.string().min(1),
   description: z.string().optional(),
-  type: z.enum(['situation', 'food', 'monster', 'temporary_weapon']),
-  stats: z.object({
-    attack: z.number().min(0).optional(),
-    defense: z.number().min(0).optional(),
-    health: z.number().min(0).optional(),
-    effect: z.string().optional(),
-  }).optional(),
-  appearanceRate: z.number().min(0).max(100),
+  type: z.enum(['weapon', 'enemy', 'food', 'trap', 'treasure', 'bomb', 'coin', 'empty']),
+  category: z.string().optional(),
+  element: z.string().optional(),
+  clan: z.string().optional(),
+  rarity: z.number().min(1).max(5).optional(),
+  className: z.string().optional(),
+  appearanceRate: z.number().min(0).max(100).optional(),
   status: z.enum(['enabled', 'disabled', 'hidden']).optional(),
 });
 

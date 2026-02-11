@@ -32,16 +32,16 @@ export interface Equipment {
 
 export interface AdventureCard {
   _id: string;
+  nameId: string;
   name: string;
   description: string;
-  type: 'situation' | 'food' | 'monster' | 'temporary_weapon';
-  stats?: {
-    attack?: number;
-    defense?: number;
-    health?: number;
-    effect?: string;
-  };
-  appearanceRate: number;
+  type: 'weapon' | 'enemy' | 'food' | 'trap' | 'treasure' | 'bomb' | 'coin' | 'empty';
+  category?: string;
+  element?: string;
+  clan?: string;
+  rarity?: number;
+  className?: string;
+  appearanceRate?: number;
   status: 'enabled' | 'disabled' | 'hidden';
 }
 
