@@ -302,7 +302,7 @@ export default function AdventureCards() {
       enemy: '👹',
       food: '🍎',
       trap: '🕳️',
-      treasure: '📦',
+      treasure: '💎',
       bomb: '💣',
       coin: '🪙',
       empty: '⬜',

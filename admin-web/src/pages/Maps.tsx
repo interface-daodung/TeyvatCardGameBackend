@@ -48,6 +48,30 @@ const DEFAULT_TYPE_RATIOS: MapTypeRatios = {
   bombs: 0,
 };
 
+/** Màu input Type ratios: 0=trắng, 1–9=xám, 10+ đậm dần qua xanh lá → vàng → đỏ → tím nhạt (max). */
+function getRatioInputColorClass(value: number): string {
+  const v = Math.max(0, Math.min(100, value));
+  if (v === 0) return 'bg-white border-slate-200 text-slate-800';
+  if (v < 5) return 'bg-slate-200 border-slate-300 text-slate-800';
+  if (v < 10) return 'bg-green-100 border-green-300 text-green-900';
+  if (v < 20) return 'bg-green-200 border-green-400 text-green-900';
+  if (v < 30) return 'bg-yellow-200 border-yellow-400 text-yellow-900';
+  if (v < 35) return 'bg-amber-200 border-amber-400 text-amber-900';
+  if (v < 40) return 'bg-orange-200 border-orange-400 text-orange-900';
+  if (v < 50) return 'bg-red-200 border-red-400 text-red-900';
+  return 'bg-purple-200 border-purple-400 text-purple-900';
+}
+
+/** Tổng 7 loại (không tính free). */
+function sumTypeRatios(tr: MapTypeRatios): number {
+  return TYPE_RATIO_KEYS.reduce((s, k) => s + (tr[k] ?? 0), 0);
+}
+
+/** Free ratio = phần còn lại để tổng = 100. Luôn trong [0, 100]. */
+function getFreeRatio(tr: MapTypeRatios): number {
+  return Math.max(0, Math.min(100, 100 - sumTypeRatios(tr)));
+}
+
 function getFormTypeRatios(tr?: MapTypeRatios | null): MapTypeRatios {
   if (!tr || typeof tr !== 'object') return { ...DEFAULT_TYPE_RATIOS };
   return {
@@ -103,6 +127,7 @@ export default function Maps() {
   const [translateLoading, setTranslateLoading] = useState(false);
   const [i18nError, setI18nError] = useState<string | null>(null);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [ratioTooltipKey, setRatioTooltipKey] = useState<keyof MapTypeRatios | 'free' | null>(null);
 
   const fetchMaps = async () => {
     try {
@@ -253,15 +278,28 @@ export default function Maps() {
     setI18nError(null);
   };
 
-  const setTypeRatio = (key: keyof MapTypeRatios, value: number) => {
-    setForm((prev) => ({
-      ...prev,
-      typeRatios: { ...prev.typeRatios, [key]: value },
-    }));
+  const setTypeRatio = (key: keyof MapTypeRatios, rawValue: number) => {
+    setForm((prev) => {
+      const tr = prev.typeRatios;
+      const sumOthers = sumTypeRatios(tr) - (tr[key] ?? 0);
+      const maxAllowed = 100 - sumOthers;
+      const value = Math.min(maxAllowed, Math.max(0, rawValue));
+      return {
+        ...prev,
+        typeRatios: { ...tr, [key]: value },
+      };
+    });
   };
+
+  const freeRatio = getFreeRatio(form.typeRatios);
+  const canSaveRatios = freeRatio === 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSaveRatios) {
+      setError('Tổng tỉ lệ phải bằng 100 (free ratio phải về 0 mới được lưu).');
+      return;
+    }
     setSubmitLoading(true);
     setError(null);
     try {
@@ -542,8 +580,18 @@ export default function Maps() {
                   <label className="block text-sm font-medium mb-2">Type ratios (%)</label>
                   <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
                     {TYPE_RATIO_KEYS.map((key) => (
-                      <div key={key} className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-lg leading-none" title={key} aria-hidden>
+                      <div
+                        key={key}
+                        className="flex items-center gap-1.5 shrink-0 relative"
+                        onMouseEnter={() => setRatioTooltipKey(key)}
+                        onMouseLeave={() => setRatioTooltipKey(null)}
+                      >
+                        {ratioTooltipKey === key && (
+                          <span className="absolute bottom-full left-1/2 -translate-x-14 mb-1 px-2 py-0.5 text-xs font-medium text-white bg-slate-800 rounded shadow-lg whitespace-nowrap z-10 pointer-events-none">
+                            {key}
+                          </span>
+                        )}
+                        <span className="text-lg leading-none cursor-help" aria-label={key}>
                           {TYPE_RATIO_ICONS[key]}
                         </span>
                         <input
@@ -555,12 +603,40 @@ export default function Maps() {
                           onChange={(e) =>
                             setTypeRatio(key, parseInt(e.target.value, 10) || 0)
                           }
-                          className="w-11 rounded border border-slate-200 px-1.5 py-1 text-sm text-center tabular-nums"
+                          className={`w-[3.25rem] rounded border px-1.5 py-1 text-sm text-center tabular-nums transition-colors ${getRatioInputColorClass(form.typeRatios[key] ?? 0)}`}
                           aria-label={key}
                         />
                       </div>
                     ))}
+                    {/* Free ratio: chỉ hiển thị, tổng luôn 100 */}
+                    <div
+                      className="flex items-center gap-1.5 shrink-0 relative"
+                      onMouseEnter={() => setRatioTooltipKey('free')}
+                      onMouseLeave={() => setRatioTooltipKey(null)}
+                    >
+                      {ratioTooltipKey === 'free' && (
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 text-xs font-medium text-white bg-slate-800 rounded shadow-lg whitespace-nowrap z-10 pointer-events-none">
+                          free
+                        </span>
+                      )}
+                      <span className="text-lg leading-none cursor-help" aria-label="free">
+                        🆓
+                      </span>
+                      <div
+                        role="textbox"
+                        aria-label="free ratio"
+                        aria-readonly="true"
+                        className="w-[3.25rem] rounded border border-slate-300 px-1.5 py-1 text-sm text-center tabular-nums bg-slate-100 text-slate-700 select-none cursor-default pointer-events-none"
+                      >
+                        {freeRatio}
+                      </div>
+                    </div>
                   </div>
+                  {!canSaveRatios && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Tổng phải bằng 100. Giảm tỉ lệ các loại hoặc tăng đến khi free = 0 để lưu.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -599,7 +675,7 @@ export default function Maps() {
                   <div className="flex-1 min-w-0">
                     <label className="block text-sm font-medium mb-2">Deck</label>
                     <div
-                      className={`min-h-[180px] rounded-lg border-2 border-dashed p-3 flex flex-wrap gap-2 content-start transition-colors ${
+                      className={`min-h-[280px] rounded-lg border-2 border-dashed p-3 flex flex-wrap gap-2 content-start transition-colors ${
                         isDeckDragOver ? 'border-primary-400 ring-2 ring-primary-400 bg-primary-100/50' : 'border-primary-200 bg-primary-50/50'
                       }`}
                       onDragOver={(e) => {
@@ -662,7 +738,7 @@ export default function Maps() {
                     <div className="max-h-[280px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2">
                       <div className="grid grid-cols-3 gap-2">
                         {adventureCards
-                          .filter((c) => c.type !== 'empty' && c.nameId !== 'empty')
+                          .filter((c) => c.type !== 'empty' && c.nameId !== 'empty' && c.type !== 'coin')
                           .map((c) => (
                           <div
                             key={c._id}
@@ -709,7 +785,7 @@ export default function Maps() {
                     <Button type="button" variant="outline" onClick={closeModal}>
                       Hủy
                     </Button>
-                    <Button type="submit" disabled={submitLoading}>
+                    <Button type="submit" disabled={submitLoading || !canSaveRatios}>
                       {submitLoading ? 'Đang xử lý...' : editingMap ? 'Lưu' : 'Thêm'}
                     </Button>
                   </div>

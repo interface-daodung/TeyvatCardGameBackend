@@ -4,6 +4,7 @@ import { Payment } from '../models/Payment.js';
 import { Character } from '../models/Character.js';
 import { Equipment } from '../models/Equipment.js';
 import { Map } from '../models/Map.js';
+import { Item } from '../models/Item.js';
 import { AuthRequest } from '../types/index.js';
 
 export const getDashboardStats = async (req: AuthRequest, res: Response) => {
@@ -15,7 +16,8 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     ]);
     const totalPayments = await Payment.countDocuments({ status: 'success' });
     const totalCharacters = await Character.countDocuments();
-    const totalEquipment = await Equipment.countDocuments();
+    // Đổi sang đếm bảng items nhưng vẫn giữ tên field totalEquipment để không phải sửa frontend
+    const totalEquipment = await Item.countDocuments();
     const totalMaps = await Map.countDocuments();
 
     const revenueByDate = await Payment.aggregate([
