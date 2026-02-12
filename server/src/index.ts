@@ -18,6 +18,7 @@ import { itemRoutes } from './routes/items.js';
 import { logRoutes } from './routes/logs.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { payosRoutes } from './routes/payos.js';
+import { filesRoutes } from './routes/files.js';
 // TEST ROUTES - Có thể xóa an toàn mà không ảnh hưởng chương trình chính
 import { testRoutes } from './test/testRoutes.js';
 import path from 'path';
@@ -65,6 +66,7 @@ app.use('/api/items', itemRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payos', payosRoutes);
+app.use('/api/files', filesRoutes);
 // TEST ROUTES - Có thể xóa an toàn mà không ảnh hưởng chương trình chính
 app.use('/api/test', testRoutes);
 

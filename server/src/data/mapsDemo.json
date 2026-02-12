@@ -1,0 +1,109 @@
+[
+  {
+    "nameId": "dungeon_abyss_chamber",
+    "name": "Abyss Chamber",
+    "description": "",
+    "typeRatios": {
+      "enemies": 10,
+      "food": 8,
+      "weapons": 18,
+      "coins": 22,
+      "traps": 12,
+      "treasures": 5,
+      "bombs": 5
+    },
+    "availableCards": {
+      "enemies": ["AnemoSamachurl", "ElectroSamachurl", "DendroSamachurl", "HilichurlFighter", "Shooter"],
+      "food": ["MystiqueSoup", "Pizza", "RoastChicken"],
+      "weapons": ["SwordSteampunk", "SwordForest", "SwordSkyward"],
+      "coins": ["Coin"],
+      "traps": ["Quicksand", "BreatheFire"],
+      "treasures": ["Chest", "GoldMine"],
+      "bombs": ["Explosive"]
+    }
+  },
+  {
+    "nameId": "dungeon_crystal_cave",
+    "name": "Crystal Cave",
+    "description": "",
+    "typeRatios": {
+      "enemies": 30,
+      "food": 10,
+      "weapons": 20,
+      "coins": 25,
+      "traps": 10,
+      "treasures": 50
+    },
+    "availableCards": {
+      "enemies": ["AnemoSamachurl"],
+      "food": ["Macarons", "Pizza", "RoastChicken"],
+      "weapons": ["SwordSteampunk", "SwordForest"],
+      "coins": ["Coin"],
+      "traps": ["BreatheFire"],
+      "treasures": ["Chest", "GoldMine"]
+    }
+  },
+  {
+    "nameId": "dungeon_fire_temple",
+    "name": "Fire Temple",
+    "description": "",
+    "typeRatios": {
+      "enemies": 40,
+      "food": 5,
+      "weapons": 15,
+      "coins": 20,
+      "traps": 15,
+      "treasures": 5
+    },
+    "availableCards": {
+      "enemies": ["AnemoSamachurl", "ElectroSamachurl", "DendroSamachurl", "GeoSamachurl", "HydroSamachurl", "HilichurlFighter", "HilistrayWater", "WoodenShieldwall", "Lawachurl", "RockShieldwall", "Berserker", "Blazing", "IceShieldwall", "Shooter", "Crackling", "CryoShooter", "ElectroShooter"],
+      "food": ["MystiqueSoup", "Pizza", "RoastChicken", "Macarons"],
+      "weapons": ["SwordSteampunk", "SwordForest", "SwordSkyward", "SwordSplendor", "SwordTraveler", "SwordSacrificial"],
+      "coins": ["Coin"],
+      "traps": ["AbyssCall", "BreatheFire", "Quicksand"],
+      "treasures": ["Chest", "Bribery", "GoldMine"]
+    }
+  },
+  {
+    "nameId": "dungeon_ice_palace",
+    "name": "Ice Palace",
+    "description": "",
+    "typeRatios": {
+      "enemies": 32,
+      "food": 12,
+      "weapons": 18,
+      "coins": 23,
+      "traps": 10,
+      "treasures": 5
+    },
+    "availableCards": {
+      "enemies": ["AnemoSamachurl", "ElectroSamachurl", "DendroSamachurl", "GeoSamachurl", "HydroSamachurl", "HilichurlFighter", "Shooter", "Crackling", "CryoShooter"],
+      "food": ["MystiqueSoup", "Pizza", "RoastChicken", "Macarons"],
+      "weapons": ["SwordSteampunk", "SwordForest", "SwordSkyward", "SwordTraveler"],
+      "coins": ["Coin"],
+      "traps": ["AbyssCall", "BreatheFire", "Quicksand"],
+      "treasures": ["Chest", "Bribery", "GoldMine"]
+    }
+  },
+  {
+    "nameId": "dungeon_thunder_peak",
+    "name": "Thunder Peak",
+    "description": "",
+    "typeRatios": {
+      "enemies": 38,
+      "food": 7,
+      "weapons": 16,
+      "coins": 21,
+      "traps": 13,
+      "treasures": 5
+    },
+    "availableCards": {
+      "enemies": ["AnemoSamachurl", "ElectroSamachurl", "DendroSamachurl", "GeoSamachurl", "HydroSamachurl", "HilichurlFighter", "HilistrayWater", "WoodenShieldwall", "Lawachurl", "RockShieldwall", "Berserker", "Blazing", "IceShieldwall", "Shooter", "Crackling", "CryoShooter", "ElectroShooter"],
+      "food": ["MystiqueSoup", "Pizza", "RoastChicken", "Macarons"],
+      "weapons": ["SwordSteampunk", "SwordForest", "SwordSkyward", "SwordSplendor", "SwordTraveler", "SwordSacrificial"],
+      "coins": ["Coin"],
+      "traps": ["AbyssCall", "BreatheFire", "Quicksand"],
+      "treasures": ["Chest", "Bribery", "GoldMine"]
+    }
+  }
+]

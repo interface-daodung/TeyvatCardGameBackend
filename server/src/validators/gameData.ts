@@ -44,17 +44,29 @@ export const createAdventureCardSchema = z.object({
   clan: z.string().optional(),
   rarity: z.number().min(1).max(5).optional(),
   className: z.string().optional(),
-  appearanceRate: z.number().min(0).max(100).optional(),
+  image: z.string().optional(),
   status: z.enum(['enabled', 'disabled', 'hidden']).optional(),
 });
 
 export const updateAdventureCardSchema = createAdventureCardSchema.partial();
 
+const mapTypeRatiosSchema = z.object({
+  enemies: z.number().min(0).optional(),
+  food: z.number().min(0).optional(),
+  weapons: z.number().min(0).optional(),
+  coins: z.number().min(0).optional(),
+  traps: z.number().min(0).optional(),
+  treasures: z.number().min(0).optional(),
+  bombs: z.number().min(0).optional(),
+});
+
 export const createMapSchema = z.object({
+  nameId: z.string().min(1),
   name: z.string().min(1),
   description: z.string().optional(),
+  typeRatios: mapTypeRatiosSchema.optional(),
   deck: z.array(z.string()),
-  status: z.enum(['enabled', 'disabled']).optional(),
+  status: z.enum(['enabled', 'disabled', 'hidden']).optional(),
 });
 
 export const updateMapSchema = createMapSchema.partial();

@@ -10,8 +10,8 @@ export interface IAdventureCard extends mongoose.Document {
   clan?: string; // e.g. hilichurl (for enemy)
   rarity?: number;
   className?: string;
-  appearanceRate?: number; // Percentage (0-100)
   status: 'enabled' | 'disabled' | 'hidden';
+  image?: string; // image URI for admin-web
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,12 +41,7 @@ const adventureCardSchema = new Schema<IAdventureCard>(
     clan: { type: String },
     rarity: { type: Number, min: 1, max: 5 },
     className: { type: String },
-    appearanceRate: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 10,
-    },
+    image: { type: String },
     status: {
       type: String,
       enum: ['enabled', 'disabled', 'hidden'],

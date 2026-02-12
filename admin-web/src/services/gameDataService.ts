@@ -41,17 +41,40 @@ export interface AdventureCard {
   clan?: string;
   rarity?: number;
   className?: string;
-  appearanceRate?: number;
+  image?: string;
   status: 'enabled' | 'disabled' | 'hidden';
+}
+
+export interface MapTypeRatios {
+  enemies?: number;
+  food?: number;
+  weapons?: number;
+  coins?: number;
+  traps?: number;
+  treasures?: number;
+  bombs?: number;
 }
 
 export interface Map {
   _id: string;
+  nameId: string;
   name: string;
   description: string;
+  typeRatios: MapTypeRatios;
   deck: AdventureCard[];
-  status: 'enabled' | 'disabled';
+  status: 'enabled' | 'disabled' | 'hidden';
 }
+
+export type MapCreatePayload = {
+  nameId: string;
+  name: string;
+  description?: string;
+  typeRatios?: MapTypeRatios;
+  deck: string[];
+  status?: 'enabled' | 'disabled' | 'hidden';
+};
+
+export type MapUpdatePayload = Partial<MapCreatePayload>;
 
 export interface LevelStat {
   power: number;
@@ -163,12 +186,12 @@ export const gameDataService = {
     return response.data;
   },
 
-  createMap: async (data: Partial<Map & { deck: string[] }>): Promise<Map> => {
+  createMap: async (data: MapCreatePayload): Promise<Map> => {
     const response = await api.post<Map>('/maps', data);
     return response.data;
   },
 
-  updateMap: async (id: string, data: Partial<Map & { deck: string[] }>): Promise<Map> => {
+  updateMap: async (id: string, data: MapUpdatePayload): Promise<Map> => {
     const response = await api.patch<Map>(`/maps/${id}`, data);
     return response.data;
   },

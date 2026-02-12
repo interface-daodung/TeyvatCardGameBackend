@@ -1,16 +1,33 @@
 import mongoose, { Schema } from 'mongoose';
 
+export interface IMapTypeRatios {
+  enemies?: number;
+  food?: number;
+  weapons?: number;
+  coins?: number;
+  traps?: number;
+  treasures?: number;
+  bombs?: number;
+}
+
 export interface IMap extends mongoose.Document {
+  nameId: string;
   name: string;
   description: string;
+  typeRatios: IMapTypeRatios;
   deck: mongoose.Types.ObjectId[]; // Adventure cards that can appear
-  status: 'enabled' | 'disabled';
+  status: 'enabled' | 'disabled' | 'hidden';
   createdAt: Date;
   updatedAt: Date;
 }
 
 const mapSchema = new Schema<IMap>(
   {
+    nameId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     name: {
       type: String,
       required: true,
@@ -18,6 +35,10 @@ const mapSchema = new Schema<IMap>(
     description: {
       type: String,
       default: '',
+    },
+    typeRatios: {
+      type: Schema.Types.Mixed,
+      default: () => ({}),
     },
     deck: [
       {
@@ -27,7 +48,7 @@ const mapSchema = new Schema<IMap>(
     ],
     status: {
       type: String,
-      enum: ['enabled', 'disabled'],
+      enum: ['enabled', 'disabled', 'hidden'],
       default: 'enabled',
     },
   },

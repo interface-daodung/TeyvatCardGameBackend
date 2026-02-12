@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { localizationService, Localization } from '../services/localizationService';
+import {
+  localizationService,
+  Localization,
+  LocalizationSortField,
+  LocalizationSortOrder,
+} from '../services/localizationService';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
-
-const fetchLocalizations = async (page: number) => {
-  const data = await localizationService.getLocalizations(page, 6);
-  return data;
-};
 
 export default function LocalizationPage() {
   const [localizations, setLocalizations] = useState<Localization[]>([]);
@@ -27,6 +27,16 @@ export default function LocalizationPage() {
   const [translateLoading, setTranslateLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+  const [searchInput, setSearchInput] = useState('');
+  const [searchKey, setSearchKey] = useState('');
+  const [sortBy, setSortBy] = useState<LocalizationSortField>('key');
+  const [sortOrder, setSortOrder] = useState<LocalizationSortOrder>('asc');
+  const [emptyOnly, setEmptyOnly] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearchKey(searchInput), 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const handleSuggestTranslation = async () => {
     const sourceText = formEn.trim();
@@ -84,10 +94,15 @@ export default function LocalizationPage() {
     });
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await fetchLocalizations(page);
+      const data = await localizationService.getLocalizations(page, limit, {
+        search: searchKey.trim() || undefined,
+        sort: sortBy,
+        order: sortOrder,
+        emptyOnly: emptyOnly || undefined,
+      });
       setLocalizations(data.localizations);
       setTotalPages(data.pagination.pages);
       setTotal(data.pagination.total);
@@ -97,11 +112,15 @@ export default function LocalizationPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, searchKey, sortBy, sortOrder, emptyOnly]);
 
   useEffect(() => {
     loadData();
-  }, [page]);
+  }, [loadData]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [sortBy, sortOrder, emptyOnly]);
 
   useEffect(() => {
     if (page > totalPages && totalPages >= 1) setPage(1);
@@ -198,6 +217,53 @@ export default function LocalizationPage() {
           + Thêm mới
         </Button>
       </div>
+
+      <Card className="border-0 shadow-lg p-4">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-[200px]">
+            <label className="block text-sm font-medium text-muted-foreground mb-1">Tìm theo key</label>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="VD: menu.play (%key%)"
+              className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">Sắp xếp theo</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as LocalizationSortField)}
+              className="rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+            >
+              <option value="key">Key</option>
+              <option value="createdAt">Thời gian tạo</option>
+              <option value="updatedAt">Thời gian cập nhật</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">Thứ tự</label>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as LocalizationSortOrder)}
+              className="rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+            >
+              <option value="asc">Tăng dần</option>
+              <option value="desc">Giảm dần</option>
+            </select>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={emptyOnly}
+              onChange={(e) => setEmptyOnly(e.target.checked)}
+              className="rounded border-slate-300 text-blue-600 focus:ring-blue-200"
+            />
+            <span className="text-sm text-muted-foreground">Chỉ bản ghi có translation trống hoặc giá trị trống</span>
+          </label>
+        </div>
+      </Card>
 
       <Card className="border-0 shadow-lg overflow-hidden">
         <CardContent className="p-0">

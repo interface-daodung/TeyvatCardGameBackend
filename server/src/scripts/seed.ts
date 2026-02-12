@@ -217,12 +217,8 @@ const seed = async () => {
       clan?: string;
       rarity?: number;
       className?: string;
-      appearanceRate?: number;
       status: string;
     }> = [];
-
-    // Helper to derive appearanceRate from rarity (higher rarity = lower rate)
-    const rarityToAppearanceRate = (r?: number) => (r ? Math.max(5, 25 - (r ?? 3) * 4) : 15);
 
     const safeCardId = (c: Record<string, unknown>): string | null =>
       c.id != null ? String(c.id) : null;
@@ -241,7 +237,6 @@ const seed = async () => {
         category: c.category as string | undefined,
         rarity: c.rarity as number | undefined,
         className: c.className as string | undefined,
-        appearanceRate: rarityToAppearanceRate(c.rarity as number),
         status: 'enabled',
       });
     }
@@ -258,7 +253,6 @@ const seed = async () => {
         clan: c.clan as string | undefined,
         rarity: c.rarity as number | undefined,
         className: c.className as string | undefined,
-        appearanceRate: rarityToAppearanceRate(c.rarity as number),
         status: 'enabled',
       });
     }
@@ -273,7 +267,6 @@ const seed = async () => {
         type: 'food',
         rarity: c.rarity as number | undefined,
         className: c.className as string | undefined,
-        appearanceRate: rarityToAppearanceRate(c.rarity as number),
         status: 'enabled',
       });
     }
@@ -288,7 +281,6 @@ const seed = async () => {
         type: 'trap',
         rarity: c.rarity as number | undefined,
         className: c.className as string | undefined,
-        appearanceRate: rarityToAppearanceRate(c.rarity as number),
         status: 'enabled',
       });
     }
@@ -303,7 +295,6 @@ const seed = async () => {
         type: 'treasure',
         rarity: c.rarity as number | undefined,
         className: c.className as string | undefined,
-        appearanceRate: rarityToAppearanceRate(c.rarity as number),
         status: 'enabled',
       });
     }
@@ -318,7 +309,6 @@ const seed = async () => {
         type: 'bomb',
         rarity: c.rarity as number | undefined,
         className: c.className as string | undefined,
-        appearanceRate: rarityToAppearanceRate(c.rarity as number),
         status: 'enabled',
       });
     }
@@ -343,7 +333,6 @@ const seed = async () => {
             element: elem,
             rarity: (c.rarity as number) || 1,
             className: c.className as string | undefined,
-            appearanceRate: 20,
             status: 'enabled',
           });
         }
@@ -359,7 +348,6 @@ const seed = async () => {
         description: String(c.description || ''),
         type: 'empty',
         className: c.className as string | undefined,
-        appearanceRate: 10,
         status: 'enabled',
       });
     }
@@ -371,14 +359,18 @@ const seed = async () => {
     const deckIds = adventureCards.slice(0, 12).map((c) => c._id);
     const maps = await Map.insertMany([
       {
+        nameId: 'map_mondstadt_forest',
         name: 'Mondstadt Forest',
         description: 'A peaceful forest',
+        typeRatios: { enemies: 30, food: 10, weapons: 20, coins: 25, traps: 10, treasures: 5 },
         deck: deckIds.slice(0, 6),
         status: 'enabled',
       },
       {
+        nameId: 'map_liyue_mountains',
         name: 'Liyue Mountains',
         description: 'Dangerous mountain paths',
+        typeRatios: { enemies: 35, food: 8, weapons: 18, coins: 22, traps: 12, treasures: 5 },
         deck: deckIds.slice(3, 9),
         status: 'enabled',
       },
@@ -432,9 +424,13 @@ const seed = async () => {
     const localizationsData = Array.from(allKeys).map((key) => ({
       key,
       translations: {
-        en: en[key] ?? '',
-        vi: vi[key] ?? '',
-        ja: ja[key] ?? '',
+        // en: en[key] ?? '',
+        // vi: vi[key] ?? '',
+        // ja: ja[key] ?? '',
+        // Không ép về chuỗi rỗng nữa để tránh overwrite dữ liệu thành ''
+        en: en[key],
+        vi: vi[key],
+        ja: ja[key],
       },
     }));
     await Localization.insertMany(localizationsData);

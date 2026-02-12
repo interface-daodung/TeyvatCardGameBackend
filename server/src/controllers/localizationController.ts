@@ -1,25 +1,80 @@
 import { Response } from 'express';
+import type { PipelineStage } from 'mongoose';
 import { Localization } from '../models/Localization.js';
 import { AuthRequest } from '../types/index.js';
 import { createLocalizationSchema, updateLocalizationSchema } from '../validators/localization.js';
 import { createAuditLog } from '../utils/auditLog.js';
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 export const getLocalizations = async (req: AuthRequest, res: Response) => {
   try {
     const rawPage = parseInt(req.query.page as string) || 1;
     const rawLimit = parseInt(req.query.limit as string) || 6;
     const limit = Math.min(100, Math.max(1, rawLimit));
-    const total = await Localization.countDocuments();
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const sortBy = (req.query.sort as string) || 'key';
+    const order = (req.query.order as string) === 'desc' ? -1 : 1;
+    const emptyOnly = req.query.emptyOnly === 'true' || req.query.emptyOnly === '1';
+
+    const sortField = ['key', 'createdAt', 'updatedAt'].includes(sortBy) ? sortBy : 'key';
+    const sortOption: Record<string, 1 | -1> = { [sortField]: order as 1 | -1 };
+
+    const baseMatch: Record<string, unknown> = {};
+    if (search) {
+      baseMatch.key = { $regex: escapeRegex(search), $options: 'i' };
+    }
+
+    const pipeline: PipelineStage[] = [{ $match: baseMatch }];
+
+    if (emptyOnly) {
+      pipeline.push({
+        $addFields: {
+          _hasEmpty: {
+            $or: [
+              { $eq: [{ $size: { $objectToArray: { $ifNull: ['$translations', {}] } } }, 0] },
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: { $objectToArray: { $ifNull: ['$translations', {}] } },
+                        as: 't',
+                        cond: { $or: [{ $eq: ['$$t.v', null] }, { $eq: ['$$t.v', ''] }] },
+                      },
+                    },
+                  },
+                  0,
+                ],
+              },
+            ],
+          },
+        },
+      });
+      pipeline.push({ $match: { _hasEmpty: true } });
+    }
+
+    const [metaResult, dataResult] = await Promise.all([
+      Localization.aggregate<{ total: number }>([
+        ...pipeline,
+        { $count: 'total' },
+      ]).then((r) => r[0] ?? { total: 0 }),
+      Localization.aggregate([
+        ...pipeline,
+        { $sort: sortOption },
+        { $skip: (Math.max(1, rawPage) - 1) * limit },
+        { $limit: limit },
+        { $project: { _hasEmpty: 0 } },
+      ]),
+    ]);
+
+    const total = metaResult.total ?? 0;
     const pages = Math.max(1, Math.ceil(total / limit));
     const page = Math.min(pages, Math.max(1, rawPage));
-    const skip = (page - 1) * limit;
 
-    const localizations = await Localization.find()
-      .sort({ key: 1 })
-      .skip(skip)
-      .limit(limit);
-
-    const formatted = localizations.map((loc) => ({
+    const formatted = (dataResult as { _id: unknown; key: string; translations?: Record<string, string>; createdAt: Date; updatedAt: Date }[]).map((loc) => ({
       _id: loc._id,
       key: loc.key,
       translations: loc.translations ?? {},

@@ -16,10 +16,27 @@ export interface LocalizationsResponse {
   };
 }
 
+export type LocalizationSortField = 'key' | 'createdAt' | 'updatedAt';
+export type LocalizationSortOrder = 'asc' | 'desc';
+
+export interface GetLocalizationsParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sort?: LocalizationSortField;
+  order?: LocalizationSortOrder;
+  emptyOnly?: boolean;
+}
+
 export const localizationService = {
-  getLocalizations: async (page = 1, limit = 6): Promise<LocalizationsResponse> => {
+  getLocalizations: async (
+    page = 1,
+    limit = 6,
+    params?: GetLocalizationsParams
+  ): Promise<LocalizationsResponse> => {
+    const { search, sort = 'key', order = 'asc', emptyOnly } = params ?? {};
     const response = await api.get<LocalizationsResponse>('/localization', {
-      params: { page, limit },
+      params: { page, limit, ...(search ? { search } : {}), sort, order, ...(emptyOnly ? { emptyOnly: 'true' } : {}) },
     });
     return response.data;
   },
