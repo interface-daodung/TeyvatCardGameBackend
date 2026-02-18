@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
+import { PageHeader } from '../components/PageHeader';
 
 type EditLang = 'en' | 'vi' | 'ja';
 const LANG_OPTIONS: EditLang[] = ['en', 'vi', 'ja'];
@@ -366,12 +367,7 @@ export default function Maps() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-red-600 bg-clip-text text-transparent mb-2">
-            Maps
-          </h1>
-          <p className="text-muted-foreground">Quản lý map dungeon và deck thẻ</p>
-        </div>
+        <PageHeader title="Maps" description="Quản lý map dungeon và deck thẻ" />
         <Button onClick={openCreateModal} className="bg-primary-600 hover:bg-primary-700">
           Thêm map
         </Button>

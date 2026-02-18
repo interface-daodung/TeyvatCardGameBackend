@@ -5,8 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import UserDetail from './pages/UserDetail';
 import Payments from './pages/Payments';
-import UserPayments from './pages/UserPayments';
-import TestPayos from './pages/TestPayos';
+import CreatePaymentLink from './pages/CreatePaymentLink';
 import Characters from './pages/Characters';
 import CharacterDetail from './pages/CharacterDetail';
 import Equipment from './pages/Equipment';
@@ -14,7 +13,10 @@ import AdventureCards from './pages/AdventureCards';
 import Maps from './pages/Maps';
 import Localization from './pages/Localization';
 import Logs from './pages/Logs';
-import Layout from './components/Layout';
+import Themes from './pages/Themes';
+import About from './pages/About';
+import ManagerAssets from './pages/ManagerAssets';
+import Layout from './components/layout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   if (!authService.isAuthenticated()) {
@@ -28,14 +30,6 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route
-        path="/user/:id/Payments"
-        element={
-          <PrivateRoute>
-            <UserPayments />
-          </PrivateRoute>
-        }
-      />
-      <Route
         path="/"
         element={
           <PrivateRoute>
@@ -47,14 +41,17 @@ function App() {
         <Route path="users" element={<Users />} />
         <Route path="users/:id" element={<UserDetail />} />
         <Route path="payments" element={<Payments />} />
-        <Route path="test-payos" element={<TestPayos />} />
+        <Route path="payment-link" element={<CreatePaymentLink />} />
         <Route path="characters" element={<Characters />} />
         <Route path="characters/:id" element={<CharacterDetail />} />
         <Route path="equipment" element={<Equipment />} />
         <Route path="adventure-cards" element={<AdventureCards />} />
         <Route path="maps" element={<Maps />} />
         <Route path="localization" element={<Localization />} />
+        <Route path="themes" element={<Themes />} />
+        <Route path="manager-assets" element={<ManagerAssets />} />
         <Route path="logs" element={<Logs />} />
+        <Route path="about" element={<About />} />
       </Route>
     </Routes>
   );

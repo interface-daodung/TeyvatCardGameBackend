@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
+import { PageHeader } from '../components/PageHeader';
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
@@ -87,12 +88,7 @@ export default function UserDetail() {
         ← Back to Users
       </Button>
 
-      <div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-red-600 bg-clip-text text-transparent mb-2">
-          User Details
-        </h1>
-        <p className="text-muted-foreground">Manage user account and permissions</p>
-      </div>
+      <PageHeader title="User Details" description="Manage user account and permissions" />
 
       <Card className="border-0 shadow-lg">
         <CardHeader>
@@ -102,24 +98,14 @@ export default function UserDetail() {
             </div>
             <div>
               <CardTitle className="text-2xl">{user.email}</CardTitle>
-              <CardDescription className="text-base mt-1 flex items-center gap-2">
+              <div className="text-base mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                 {user.role} •
-                {user.role === 'user' && (
-                  <a
-                    href={`/user/${user._id}/Payments`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-amber-600 hover:text-amber-700 text-sm font-medium"
-                  >
-                    🔗 Link nạp tiền
-                  </a>
-                )}
                 {isBanned ? (
                   <Badge variant="destructive">Banned</Badge>
                 ) : (
                   <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Active</Badge>
                 )}
-              </CardDescription>
+              </div>
             </div>
           </div>
         </CardHeader>

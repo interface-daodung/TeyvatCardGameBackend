@@ -3,8 +3,9 @@ import { logService, AuditLog } from '../services/logService';
 import { format } from 'date-fns';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
+import { PageHeader } from '../components/PageHeader';
+import { Pagination } from '../components/Pagination';
 
 export default function Logs() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -51,12 +52,7 @@ export default function Logs() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-600 to-blue-600 bg-clip-text text-transparent mb-2">
-          Audit Logs
-        </h1>
-        <p className="text-muted-foreground">Track all admin actions and changes</p>
-      </div>
+      <PageHeader title="Audit Logs" description="Track all admin actions and changes" />
 
       <Card className="border-0 shadow-lg overflow-hidden">
         <CardContent className="p-0">
@@ -86,58 +82,32 @@ export default function Logs() {
                     </td>
                   </tr>
                 ) : (
-                logs.map((log) => (
-                  <tr key={log._id} className="hover:bg-slate-100 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                      {log.adminId?.email ?? 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant="outline" className="border-blue-200 text-blue-700">
-                        {log.action}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {log.resource}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {format(new Date(log.createdAt), 'MMM dd, yyyy HH:mm:ss')}
-                    </td>
-                  </tr>
-                )))}
+                  logs.map((log) => (
+                    <tr key={log._id} className="hover:bg-slate-100 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
+                        {log.adminId?.email ?? 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant="outline" className="border-blue-200 text-blue-700">
+                          {log.action}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {log.resource}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {format(new Date(log.createdAt), 'MMM dd, yyyy HH:mm:ss')}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {total > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total} logs
-          </p>
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              variant="outline"
-              className="border-slate-200"
-            >
-              Previous
-            </Button>
-            <span className="text-sm font-medium">
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              variant="outline"
-              className="border-slate-200"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} itemLabel="logs" />
     </div>
   );
 }

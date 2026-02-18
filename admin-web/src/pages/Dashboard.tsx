@@ -1,21 +1,18 @@
 import { useEffect, useState } from 'react';
 import { dashboardService, DashboardStats } from '../services/dashboardService';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Skeleton } from '../components/ui/skeleton';
+import { Card, CardHeader, CardTitle } from '../components/ui/card';
+import { PageHeader } from '../components/PageHeader';
+import { StatCard } from '../components/StatCard';
+import { RevenueChart } from '../components/dashboard/RevenueChart';
+import { DashboardSkeleton } from '../components/dashboard/DashboardSkeleton';
+import { Button } from '../components/ui/button';
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [lastSyncError, setLastSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -31,25 +28,32 @@ export default function Dashboard() {
     fetchStats();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="border-0">
-              <CardHeader>
-                <Skeleton className="h-4 w-24" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-20" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const handleSyncServerConfig = async () => {
+    try {
+      setSyncing(true);
+      setLastSyncError(null);
+
+      const response = await fetch('/api/server-configuration-versions/sync', {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to sync server configuration');
+      }
+
+      setLastSyncTime(new Date().toISOString());
+    } catch (error: any) {
+      console.error('Failed to sync server configuration:', error);
+      setLastSyncError(error?.message ?? 'Unknown error');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  if (loading) return <DashboardSkeleton />;
 
   if (!stats) {
     return (
@@ -64,157 +68,67 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    {
-      title: 'Total Users',
-      value: stats.totalUsers.toLocaleString(),
-      icon: '👥',
-      gradient: 'from-slate-100 to-blue-100',
-      textColor: 'text-blue-700',
-    },
-    {
-      title: 'Total Revenue',
-      value: `$${stats.totalRevenue.toFixed(2)}`,
-      icon: '💰',
-      gradient: 'from-blue-100 to-blue-200',
-      textColor: 'text-blue-800',
-    },
-    {
-      title: 'Total Payments',
-      value: stats.totalPayments.toLocaleString(),
-      icon: '💳',
-      gradient: 'from-slate-100 to-blue-100',
-      textColor: 'text-slate-700',
-    },
-    {
-      title: 'Characters',
-      value: stats.totalCharacters.toLocaleString(),
-      icon: '⚔️',
-      gradient: 'from-slate-100 to-blue-100',
-      textColor: 'text-blue-700',
-    },
-    {
-      title: 'Equipment',
-      value: stats.totalEquipment.toLocaleString(),
-      icon: '🛡️',
-      gradient: 'from-blue-100 to-blue-200',
-      textColor: 'text-blue-800',
-    },
-    {
-      title: 'Maps',
-      value: stats.totalMaps.toLocaleString(),
-      icon: '🗺️',
-      gradient: 'from-slate-100 to-blue-100',
-      textColor: 'text-slate-700',
-    },
+    { title: 'Total Users', value: stats.totalUsers.toLocaleString(), icon: '👥', gradient: 'from-slate-100 to-blue-100', textColor: 'text-blue-700' },
+    { title: 'Total Revenue', value: `$${stats.totalRevenue.toFixed(2)}`, icon: '💰', gradient: 'from-blue-100 to-blue-200', textColor: 'text-blue-800' },
+    { title: 'Total Payments', value: stats.totalPayments.toLocaleString(), icon: '💳', gradient: 'from-slate-100 to-blue-100', textColor: 'text-slate-700' },
+    { title: 'Characters', value: stats.totalCharacters.toLocaleString(), icon: '⚔️', gradient: 'from-slate-100 to-blue-100', textColor: 'text-blue-700' },
+    { title: 'Equipment', value: stats.totalEquipment.toLocaleString(), icon: '🛡️', gradient: 'from-blue-100 to-blue-200', textColor: 'text-blue-800' },
+    { title: 'Maps', value: stats.totalMaps.toLocaleString(), icon: '🗺️', gradient: 'from-slate-100 to-blue-100', textColor: 'text-slate-700' },
   ];
 
   return (
     <div className="p-6 space-y-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
-      <div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-600 to-blue-600 bg-clip-text text-transparent mb-2">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground">Overview of your game statistics</p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        description="Overview of your game statistics"
+      />
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat, index) => (
-          <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-            <div className={`bg-gradient-to-br ${stat.gradient} p-0`}>
-              <CardContent className="bg-card p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">{stat.title}</p>
-                    <p className={`text-3xl font-bold ${stat.textColor}`}>{stat.value}</p>
-                  </div>
-                  <div className="text-4xl opacity-80">{stat.icon}</div>
-                </div>
-              </CardContent>
-            </div>
-          </Card>
+          <StatCard key={index} {...stat} />
         ))}
       </div>
-
+      {/* vị trí thêm code */}
+      <div className="border rounded-lg bg-white shadow-sm p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-800">Server configuration</h2>
+            <p className="text-xs text-slate-500">
+              GET /api/server-configuration-versions/sync – chuẩn bị snapshot server config từ DB (Maps, Cards, Localizations).
+            </p>
+          </div>
+          <Button size="sm" onClick={handleSyncServerConfig} disabled={syncing}>
+            {syncing ? 'Updating…' : 'Update server config'}
+          </Button>
+        </div>
+        <div className="text-xs text-slate-600 space-y-1">
+          <div>
+            <span className="font-medium">Last update:</span>{' '}
+            {lastSyncTime ? new Date(lastSyncTime).toLocaleString() : 'Chưa cập nhật'}
+          </div>
+          <div>
+            <span className="font-medium">Cooldown:</span>{' '}
+            <span className="italic text-slate-400">
+              tính năng đếm thời gian từ lần cập nhật server cuối và so sánh thay đổi DB với snapshot sẽ được bổ sung sau
+            </span>
+          </div>
+          {lastSyncError && (
+            <div className="text-red-600">
+              <span className="font-medium">Error:</span> {lastSyncError}
+            </div>
+          )}
+        </div>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-blue-700">Revenue Over Time</CardTitle>
-            <CardDescription>Daily revenue tracking</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stats.revenueByDate}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="_id" 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <YAxis 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="hsl(217, 91%, 60%)" 
-                  strokeWidth={3}
-                  dot={{ fill: 'hsl(217, 91%, 60%)', r: 4 }}
-                  activeDot={{ r: 6 }}
-                  name="Revenue ($)" 
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-slate-700">User Registrations</CardTitle>
-            <CardDescription>New user signups over time</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stats.usersByDate}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="_id" 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <YAxis 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="hsl(215, 20%, 45%)" 
-                  strokeWidth={3}
-                  dot={{ fill: 'hsl(215, 20%, 45%)', r: 4 }}
-                  activeDot={{ r: 6 }}
-                  name="New Users" 
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <RevenueChart data={stats.revenueByDate} />
+        <RevenueChart
+          data={stats.usersByDate}
+          title="User Registrations"
+          description="New user signups over time"
+          dataKey="count"
+          color="hsl(215, 20%, 45%)"
+          name="New Users"
+        />
       </div>
     </div>
   );

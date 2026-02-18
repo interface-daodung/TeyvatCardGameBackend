@@ -2,7 +2,7 @@
 node_modules/
 .pnp
 .pnp.js
-TeyvatCard
+TeyvatCard/
 TeyvatCard.rar
 *.rar
 # Testing
@@ -11,6 +11,9 @@ coverage/
 # Production
 dist/
 build/
+
+# Uploaded assets (REST + Multer)
+server/uploads/
 
 # Environment
 .env

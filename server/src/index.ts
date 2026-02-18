@@ -19,9 +19,12 @@ import { logRoutes } from './routes/logs.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { payosRoutes } from './routes/payos.js';
 import { filesRoutes } from './routes/files.js';
+import { serverConfigurationVersionRoutes } from './routes/serverConfigurationVersions.js';
+import { themeRoutes } from './routes/themes.js';
 // TEST ROUTES - Có thể xóa an toàn mà không ảnh hưởng chương trình chính
 import { testRoutes } from './test/testRoutes.js';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -41,9 +44,12 @@ const logger = pino({
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Middleware – CORS: khi SERVE_ADMIN_UI=true thì admin cùng gốc, không cần ADMIN_URL
 const frontendUrl = process.env.GAME_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
-app.use(cors({ origin: frontendUrl, credentials: true }));
+const adminUrl = process.env.ADMIN_URL;
+const corsOrigins = [frontendUrl];
+if (adminUrl) corsOrigins.push(adminUrl);
+app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(pinoHttp({ logger }));
@@ -52,6 +58,10 @@ app.use(pinoHttp({ logger }));
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Serve uploaded images (REST + Multer)
+const uploadsPath = path.join(rootDir, 'uploads');
+app.use('/uploads', express.static(uploadsPath));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -67,8 +77,35 @@ app.use('/api/logs', logRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payos', payosRoutes);
 app.use('/api/files', filesRoutes);
+app.use('/api/server-configuration-versions', serverConfigurationVersionRoutes);
+app.use('/api/themes', themeRoutes);
 // TEST ROUTES - Có thể xóa an toàn mà không ảnh hưởng chương trình chính
 app.use('/api/test', testRoutes);
+
+/**
+ * Serve React build (admin-web) khi SERVE_ADMIN_UI=true trong .env.
+ * Dev: SERVE_ADMIN_UI=false, chạy admin-web riêng (CORS dùng ADMIN_URL).
+ * Build: SERVE_ADMIN_UI=true, cùng cổng → không cần CORS.
+ */
+const serveAdminUi = process.env.SERVE_ADMIN_UI === 'true' || process.env.SERVE_ADMIN_UI === '1';
+if (serveAdminUi) {
+  // __dirname = server/dist (khi chạy node dist/index.js) hoặc server/src (khi chạy tsx src/index.ts)
+  const clientPath = path.resolve(__dirname, '..', '..', 'admin-web', 'dist');
+  const exists = fs.existsSync(clientPath);
+  const indexExists = exists && fs.existsSync(path.join(clientPath, 'index.html'));
+  if (!indexExists) {
+    logger.warn(
+      `SERVE_ADMIN_UI=true nhưng không tìm thấy admin build. Path: ${clientPath} (exists: ${exists}). Chạy "npm run build" trong thư mục admin-web trước.`
+    );
+  } else {
+    app.use(express.static(clientPath));
+    /** React Router fallback (SPA) */
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(clientPath, 'index.html'));
+    });
+    logger.info(`Serving admin UI from ${clientPath}`);
+  }
+}
 
 // Error handler
 app.use(errorHandler);

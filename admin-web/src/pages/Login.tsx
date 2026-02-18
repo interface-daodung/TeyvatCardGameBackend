@@ -39,18 +39,11 @@ export default function Login() {
       setError('');
       try {
         await authService.login(data);
-        const role = authService.getUserRole();
-        if (role === 'user') {
-          const userId = authService.getUserId();
-          navigate(`/user/${userId}/Payments`, { replace: true });
-        } else {
-          navigate('/');
-        }
+        navigate('/');
       } catch (adminErr: any) {
         if (adminErr.response?.status === 403) {
           await authService.loginUser(data);
-          const userId = authService.getUserId();
-          navigate(`/user/${userId}/Payments`, { replace: true });
+          navigate('/', { replace: true });
         } else {
           throw adminErr;
         }

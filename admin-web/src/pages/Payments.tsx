@@ -5,6 +5,8 @@ import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
+import { PageHeader } from '../components/PageHeader';
+import { Pagination } from '../components/Pagination';
 
 export default function Payments() {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -51,12 +53,7 @@ export default function Payments() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-600 to-blue-600 bg-clip-text text-transparent mb-2">
-          Payments
-        </h1>
-        <p className="text-muted-foreground">Transaction history and payment records</p>
-      </div>
+      <PageHeader title="Payments" description="Transaction history and payment records" />
 
       <Card className="border-0 shadow-lg overflow-hidden">
         <CardContent className="p-0">
@@ -89,78 +86,52 @@ export default function Payments() {
                     </td>
                   </tr>
                 ) : (
-                payments.map((payment) => (
-                  <tr key={payment._id} className="hover:bg-slate-100 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                      {payment.userId?.email ?? 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">
-                      ${payment.amount.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      <span className="inline-flex items-center">
-                        💰 {payment.xuReceived.toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge
-                        variant={
-                          payment.status === 'success'
-                            ? 'default'
-                            : payment.status === 'pending'
-                            ? 'secondary'
-                            : 'destructive'
-                        }
-                        className={
-                          payment.status === 'success'
-                            ? 'bg-green-100 text-green-800 border-green-200'
-                            : payment.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                            : ''
-                        }
-                      >
-                        {payment.status}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {format(new Date(payment.createdAt), 'MMM dd, yyyy HH:mm')}
-                    </td>
-                  </tr>
-                )))}
+                  payments.map((payment) => (
+                    <tr key={payment._id} className="hover:bg-slate-100 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
+                        {payment.userId?.email ?? 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">
+                        ${payment.amount.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                        <span className="inline-flex items-center">
+                          💰 {payment.xuReceived.toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge
+                          variant={
+                            payment.status === 'success'
+                              ? 'default'
+                              : payment.status === 'pending'
+                              ? 'secondary'
+                              : 'destructive'
+                          }
+                          className={
+                            payment.status === 'success'
+                              ? 'bg-green-100 text-green-800 border-green-200'
+                              : payment.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                              : ''
+                          }
+                        >
+                          {payment.status}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {format(new Date(payment.createdAt), 'MMM dd, yyyy HH:mm')}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {total > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total} payments
-          </p>
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              variant="outline"
-              className="border-slate-200"
-            >
-              Previous
-            </Button>
-            <span className="text-sm font-medium">
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              variant="outline"
-              className="border-slate-200"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} total={total} limit={limit} onPageChange={setPage} itemLabel="payments" />
     </div>
   );
 }
