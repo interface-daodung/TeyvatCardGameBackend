@@ -21,6 +21,11 @@ function basename(filePath: string): string {
   return filePath.replace(/^.*[/\\]/, '');
 }
 
+function dirname(filePath: string): string {
+  const i = filePath.replace(/\\/g, '/').lastIndexOf('/');
+  return i <= 0 ? filePath : filePath.slice(0, i);
+}
+
 export default function ManagerAssets() {
   const [combinedTree, setCombinedTree] = useState<FileTreeItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +40,8 @@ export default function ManagerAssets() {
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [moveLoading, setMoveLoading] = useState(false);
 
   const fetchTrees = useCallback(async () => {
     try {
@@ -181,6 +188,60 @@ export default function ManagerAssets() {
 
   const showEditFor = (item: FileTreeItem) => item.type === 'file';
 
+  const isCardFolder = (p: string) =>
+    p === '/assets/images/cards' || (p.startsWith('/assets/images/cards/') && p.length > '/assets/images/cards/'.length);
+  const isUploadedFolder = (p: string) => p === '/uploads' || (p.startsWith('/uploads/') && p.length > '/uploads/'.length);
+
+  const canDropOnFolder = (targetFolderPath: string, droppedFilePath: string): boolean => {
+    const parent = dirname(droppedFilePath);
+    const sameParent = targetFolderPath === parent;
+    const cardFile = isCardFile(droppedFilePath);
+    const cardFolder = isCardFolder(targetFolderPath);
+    const uploadedFile = isUploadedFile(droppedFilePath);
+    const uploadedFolder = isUploadedFolder(targetFolderPath);
+    const result =
+      !sameParent &&
+      ((cardFile && cardFolder) ||
+        (uploadedFile && uploadedFolder) ||
+        (uploadedFile && cardFolder));
+    return result;
+  };
+
+  const handleMoveFile = async (targetFolderPath: string, droppedFilePath: string) => {
+    if (!canDropOnFolder(targetFolderPath, droppedFilePath)) return;
+    setMoveError(null);
+    setMoveLoading(true);
+    try {
+      if (isCardFile(droppedFilePath)) {
+        const res = await filesService.moveCardFile(droppedFilePath, targetFolderPath);
+        setMoveError(null);
+        await fetchTrees();
+        setExpanded((prev) => new Set(prev).add(targetFolderPath));
+        if (selectedPath === droppedFilePath) setSelectedPath(res.imageUrl);
+      } else if (isUploadedFile(droppedFilePath) && isCardFolder(targetFolderPath)) {
+        const res = await filesService.moveUploadedToCards(basename(droppedFilePath), targetFolderPath);
+        setMoveError(null);
+        await fetchTrees();
+        setExpanded((prev) => new Set(prev).add(targetFolderPath));
+        if (selectedPath === droppedFilePath) setSelectedPath(res.imageUrl);
+      } else if (isUploadedFile(droppedFilePath) && isUploadedFolder(targetFolderPath)) {
+        const res = await filesService.moveUploadedFile(basename(droppedFilePath), targetFolderPath);
+        setMoveError(null);
+        await fetchTrees();
+        setExpanded((prev) => new Set(prev).add(targetFolderPath));
+        if (selectedPath === droppedFilePath) setSelectedPath(res.imageUrl);
+      }
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : 'Di chuyển thất bại';
+      setMoveError(msg || 'Di chuyển thất bại');
+    } finally {
+      setMoveLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <PageHeader
@@ -194,10 +255,16 @@ export default function ManagerAssets() {
             <CardTitle>File tree</CardTitle>
           </CardHeader>
           <CardContent>
+            {moveError && (
+              <p className="text-sm text-red-600 mb-2">{moveError}</p>
+            )}
+            {moveLoading && (
+              <p className="text-sm text-amber-600 mb-2">Đang di chuyển...</p>
+            )}
             {loading ? (
               <p className="text-muted-foreground">Đang tải cây thư mục...</p>
             ) : combinedTree?.children ? (
-              <div className="border rounded-lg p-2 bg-muted/30 min-h-[320px]">
+              <div className="border rounded-lg p-2 bg-muted/30 min-h-[320px] max-h-[60vh] overflow-y-auto">
                 {combinedTree.children.map((item) => (
                   <FileTreeNode
                     key={item.path}
@@ -207,6 +274,8 @@ export default function ManagerAssets() {
                     onSelect={setSelectedPath}
                     onEdit={openEditModal}
                     showEditFor={showEditFor}
+                    onDropOnFolder={handleMoveFile}
+                    canDropOnFolder={canDropOnFolder}
                   />
                 ))}
               </div>

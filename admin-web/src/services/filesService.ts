@@ -47,7 +47,31 @@ export const filesService = {
     return response.data;
   },
 
+  moveCardFile: async (filePath: string, targetFolderPath: string): Promise<{ imageUrl: string }> => {
+    const response = await api.patch<{ imageUrl: string }>('/files/cards/move', {
+      filePath,
+      targetFolderPath,
+    });
+    return response.data;
+  },
+
   deleteCardFile: async (filePath: string): Promise<void> => {
     await api.delete('/files/cards', { data: { filePath } });
+  },
+
+  moveUploadedFile: async (filename: string, targetFolderPath: string): Promise<{ imageUrl: string }> => {
+    const response = await api.patch<{ imageUrl: string }>('/files/uploaded/move', {
+      filename,
+      targetFolderPath,
+    });
+    return response.data;
+  },
+
+  moveUploadedToCards: async (filename: string, targetFolderPath: string): Promise<{ imageUrl: string }> => {
+    const response = await api.patch<{ imageUrl: string }>('/files/uploaded/to-cards', {
+      filename,
+      targetFolderPath,
+    });
+    return response.data;
   },
 };

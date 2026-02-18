@@ -197,6 +197,7 @@ export async function deleteUploadedHandler(req: Request, res: Response) {
 }
 
 const CARDS_WEB_PREFIX = '/assets/images/cards/';
+const CARDS_WEB_PREFIX_ROOT = '/assets/images/cards';
 
 function resolveCardFilePath(webPath: string): string | null {
   if (!webPath.startsWith(CARDS_WEB_PREFIX)) return null;
@@ -205,6 +206,19 @@ function resolveCardFilePath(webPath: string): string | null {
   const fullPath = path.join(imagesBasePath, relative);
   const normalized = path.normalize(fullPath);
   if (!normalized.startsWith(path.normalize(imagesBasePath))) return null;
+  return normalized;
+}
+
+function resolveCardFolderPath(webPath: string): string | null {
+  const p = webPath.replace(/\/+$/, '');
+  if (p === CARDS_WEB_PREFIX_ROOT) return path.normalize(imagesBasePath);
+  if (!p.startsWith(CARDS_WEB_PREFIX)) return null;
+  const relative = p.slice(CARDS_WEB_PREFIX.length).replace(/\\/g, '/');
+  if (relative.includes('..') || path.isAbsolute(relative)) return null;
+  const fullPath = path.join(imagesBasePath, relative);
+  const normalized = path.normalize(fullPath);
+  if (!normalized.startsWith(path.normalize(imagesBasePath))) return null;
+  if (!fs.existsSync(normalized) || !fs.statSync(normalized).isDirectory()) return null;
   return normalized;
 }
 
@@ -251,6 +265,136 @@ export async function renameCardFileHandler(req: Request, res: Response) {
   } catch (err) {
     console.error('Rename card file failed:', err);
     res.status(500).json({ error: 'Đổi tên thất bại' });
+  }
+}
+
+export async function moveCardFileHandler(req: Request, res: Response) {
+  try {
+    const { filePath: webPath, targetFolderPath } = req.body as { filePath?: string; targetFolderPath?: string };
+    if (!webPath || typeof webPath !== 'string' || !targetFolderPath || typeof targetFolderPath !== 'string') {
+      res.status(400).json({ error: 'Thiếu filePath hoặc targetFolderPath' });
+      return;
+    }
+    const currentPath = resolveCardFilePath(webPath);
+    const targetDir = resolveCardFolderPath(targetFolderPath);
+    if (!currentPath || !targetDir) {
+      res.status(400).json({ error: 'Đường dẫn không hợp lệ' });
+      return;
+    }
+    if (!fs.existsSync(currentPath)) {
+      res.status(404).json({ error: 'File không tồn tại' });
+      return;
+    }
+    if (!fs.statSync(currentPath).isFile()) {
+      res.status(400).json({ error: 'Chỉ được di chuyển file' });
+      return;
+    }
+    const base = path.basename(currentPath);
+    const nextPath = path.join(targetDir, base);
+    if (path.normalize(nextPath) === path.normalize(currentPath)) {
+      res.status(400).json({ error: 'File đã nằm trong thư mục này' });
+      return;
+    }
+    if (fs.existsSync(nextPath)) {
+      res.status(400).json({ error: 'Đã tồn tại file cùng tên trong thư mục đích' });
+      return;
+    }
+    fs.renameSync(currentPath, nextPath);
+    const relative = path.relative(imagesBasePath, nextPath).replace(/\\/g, '/');
+    res.json({ imageUrl: `${CARDS_WEB_PREFIX}${relative}` });
+  } catch (err) {
+    console.error('Move card file failed:', err);
+    res.status(500).json({ error: 'Di chuyển thất bại' });
+  }
+}
+
+export async function moveUploadedFileHandler(req: Request, res: Response) {
+  try {
+    const { filename, targetFolderPath } = req.body as { filename?: string; targetFolderPath?: string };
+    if (!filename || typeof filename !== 'string' || !targetFolderPath || typeof targetFolderPath !== 'string') {
+      res.status(400).json({ error: 'Thiếu filename hoặc targetFolderPath' });
+      return;
+    }
+    const base = safeBasename(filename);
+    if (!base) {
+      res.status(400).json({ error: 'Tên file không hợp lệ' });
+      return;
+    }
+    const currentPath = path.join(uploadsDir, base);
+    if (!fs.existsSync(currentPath) || !fs.statSync(currentPath).isFile()) {
+      res.status(404).json({ error: 'File không tồn tại' });
+      return;
+    }
+    const prefix = '/uploads';
+    const targetNorm = targetFolderPath.replace(/\/+$/, '') || prefix;
+    if (!targetNorm.startsWith(prefix)) {
+      res.status(400).json({ error: 'Thư mục đích phải thuộc /uploads' });
+      return;
+    }
+    let targetDir: string;
+    if (targetNorm === '/uploads') {
+      targetDir = uploadsDir;
+    } else {
+      const sub = targetNorm.slice(prefix.length + 1).replace(/\\/g, '/');
+      if (sub.includes('..') || path.isAbsolute(sub)) {
+        res.status(400).json({ error: 'Thư mục đích không hợp lệ' });
+        return;
+      }
+      targetDir = path.join(uploadsDir, sub);
+      if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+    }
+    const nextPath = path.join(targetDir, base);
+    if (path.normalize(nextPath) === path.normalize(currentPath)) {
+      res.json({ imageUrl: `/uploads/${base}` });
+      return;
+    }
+    if (fs.existsSync(nextPath)) {
+      res.status(400).json({ error: 'Đã tồn tại file cùng tên trong thư mục đích' });
+      return;
+    }
+    fs.renameSync(currentPath, nextPath);
+    const relative = path.relative(uploadsDir, nextPath).replace(/\\/g, '/');
+    res.json({ imageUrl: `/uploads/${relative}` });
+  } catch (err) {
+    console.error('Move uploaded file failed:', err);
+    res.status(500).json({ error: 'Di chuyển thất bại' });
+  }
+}
+
+export async function moveUploadedToCardsHandler(req: Request, res: Response) {
+  try {
+    const { filename, targetFolderPath } = req.body as { filename?: string; targetFolderPath?: string };
+    if (!filename || typeof filename !== 'string' || !targetFolderPath || typeof targetFolderPath !== 'string') {
+      res.status(400).json({ error: 'Thiếu filename hoặc targetFolderPath' });
+      return;
+    }
+    const base = safeBasename(filename);
+    if (!base) {
+      res.status(400).json({ error: 'Tên file không hợp lệ' });
+      return;
+    }
+    const sourcePath = path.join(uploadsDir, base);
+    if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) {
+      res.status(404).json({ error: 'File không tồn tại trong uploaded' });
+      return;
+    }
+    const targetDir = resolveCardFolderPath(targetFolderPath);
+    if (!targetDir) {
+      res.status(400).json({ error: 'Thư mục đích không hợp lệ (phải thuộc cards)' });
+      return;
+    }
+    const destPath = path.join(targetDir, base);
+    if (fs.existsSync(destPath)) {
+      res.status(400).json({ error: 'Đã tồn tại file cùng tên trong thư mục đích' });
+      return;
+    }
+    fs.copyFileSync(sourcePath, destPath);
+    fs.unlinkSync(sourcePath);
+    const relative = path.relative(imagesBasePath, destPath).replace(/\\/g, '/');
+    res.json({ imageUrl: `${CARDS_WEB_PREFIX}${relative}` });
+  } catch (err) {
+    console.error('Move uploaded to cards failed:', err);
+    res.status(500).json({ error: 'Di chuyển thất bại' });
   }
 }
 

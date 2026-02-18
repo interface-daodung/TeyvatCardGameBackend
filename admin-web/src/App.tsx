@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { authService } from './services/authService';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -27,7 +29,8 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <Routes>
+    <DndProvider backend={HTML5Backend}>
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route
         path="/"
@@ -54,6 +57,7 @@ function App() {
         <Route path="about" element={<About />} />
       </Route>
     </Routes>
+    </DndProvider>
   );
 }
 

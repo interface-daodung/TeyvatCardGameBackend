@@ -10,7 +10,10 @@ import {
   renameUploadedHandler,
   deleteUploadedHandler,
   renameCardFileHandler,
+  moveCardFileHandler,
   deleteCardFileHandler,
+  moveUploadedFileHandler,
+  moveUploadedToCardsHandler,
 } from '../controllers/filesController.js';
 
 export const filesRoutes = Router();
@@ -23,7 +26,10 @@ filesRoutes.get('/uploaded-tree', getUploadedTreeHandler);
 filesRoutes.patch('/uploaded/rename', renameUploadedHandler);
 filesRoutes.delete('/uploaded', deleteUploadedHandler);
 filesRoutes.patch('/cards/rename', renameCardFileHandler);
+filesRoutes.patch('/cards/move', moveCardFileHandler);
 filesRoutes.delete('/cards', deleteCardFileHandler);
+filesRoutes.patch('/uploaded/move', moveUploadedFileHandler);
+filesRoutes.patch('/uploaded/to-cards', moveUploadedToCardsHandler);
 
 filesRoutes.post('/upload', (req: Request, res: Response, next: NextFunction) => {
   uploadMiddleware(req, res, (err: unknown) => {
