@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
+import { notificationService } from '../../services/notificationService';
 import { Sidebar, type NavItem } from './Sidebar';
 import { AppHeader } from './AppHeader';
 import type { NotificationItem } from './NotificationDropdown';
@@ -26,9 +27,14 @@ export default function Layout() {
   const [searchValue, setSearchValue] = useState('');
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationPage, setNotificationPage] = useState(1);
+  const [notificationPagesTotal, setNotificationPagesTotal] = useState(0);
+  const [loadingMoreNotifications, setLoadingMoreNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const navigate = useNavigate();
+
+  const hasMoreNotifications = notificationPage < notificationPagesTotal;
   const userEmail = authService.getUserEmail() || 'Admin';
 
   const handleLogout = () => {
@@ -54,6 +60,31 @@ export default function Layout() {
     setShowNotifications(false);
   };
 
+  const fetchInitialNotifications = async () => {
+    try {
+      const res = await notificationService.getNotifications(1, 50);
+      setNotifications(res.notifications);
+      setNotificationPage(res.pagination.page);
+      setNotificationPagesTotal(res.pagination.pages);
+    } catch {
+      setNotifications([]);
+    }
+  };
+
+  const handleNotificationLoadMore = async () => {
+    if (loadingMoreNotifications || !hasMoreNotifications) return;
+    setLoadingMoreNotifications(true);
+    try {
+      const nextPage = notificationPage + 1;
+      const res = await notificationService.getNotifications(nextPage, 50);
+      setNotifications((prev) => [...prev, ...res.notifications]);
+      setNotificationPage(res.pagination.page);
+      setNotificationPagesTotal(res.pagination.pages);
+    } finally {
+      setLoadingMoreNotifications(false);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -74,12 +105,12 @@ export default function Layout() {
   useEffect(() => {
     if (!authService.isAuthenticated()) return;
 
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const connectSSE = () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
       if (eventSourceRef.current) eventSourceRef.current.close();
 
       try {
@@ -98,7 +129,12 @@ export default function Layout() {
         eventSource.onmessage = (event) => {
           try {
             const notification: NotificationItem = JSON.parse(event.data);
-            setNotifications((prev) => [notification, ...prev]);
+            setNotifications((prev) => {
+              if (notification._id && prev.some((n) => n._id === notification._id)) {
+                return prev;
+              }
+              return [notification, ...prev];
+            });
           } catch (err) {
             console.error('Error parsing notification:', err);
           }
@@ -107,7 +143,7 @@ export default function Layout() {
         eventSource.onerror = () => {
           if (eventSource.readyState === EventSource.CLOSED) {
             if (authService.isAuthenticated() && !reconnectTimeout) {
-              reconnectTimeout = setTimeout(connectSSE, 3000);
+              reconnectTimeout = setTimeout(reconnectWithRefresh, 3000);
             }
           }
         };
@@ -116,7 +152,27 @@ export default function Layout() {
       }
     };
 
-    connectSSE();
+    const reconnectWithRefresh = async () => {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        try {
+          const axios = (await import('axios')).default;
+          const { data } = await axios.post<{ accessToken: string }>('/api/auth/refresh', {
+            refreshToken,
+          });
+          localStorage.setItem('accessToken', data.accessToken);
+        } catch {
+          // Refresh failed, will try connect with current token (may 401 again)
+        }
+      }
+      connectSSE();
+    };
+
+    const init = async () => {
+      await fetchInitialNotifications();
+      connectSSE();
+    };
+    init();
 
     return () => {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
@@ -147,6 +203,9 @@ export default function Layout() {
           onNotificationToggle={() => setShowNotifications((o) => !o)}
           notificationRef={notificationRef}
           onNotificationItemClick={handleNotificationItemClick}
+          onNotificationLoadMore={handleNotificationLoadMore}
+          hasMoreNotifications={hasMoreNotifications}
+          loadingMoreNotifications={loadingMoreNotifications}
           userEmail={userEmail}
         />
 

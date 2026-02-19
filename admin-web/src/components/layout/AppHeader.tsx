@@ -20,6 +20,9 @@ interface AppHeaderProps {
   onNotificationToggle: () => void;
   notificationRef: React.RefObject<HTMLDivElement>;
   onNotificationItemClick: (path: string) => void;
+  onNotificationLoadMore?: () => void;
+  hasMoreNotifications?: boolean;
+  loadingMoreNotifications?: boolean;
   userEmail: string;
 }
 
@@ -34,6 +37,9 @@ export function AppHeader({
   onNotificationToggle,
   notificationRef,
   onNotificationItemClick,
+  onNotificationLoadMore,
+  hasMoreNotifications = false,
+  loadingMoreNotifications = false,
   userEmail,
 }: AppHeaderProps) {
   return (
@@ -75,6 +81,9 @@ export function AppHeader({
             ref={notificationRef}
             notifications={notifications}
             onItemClick={onNotificationItemClick}
+            onLoadMore={onNotificationLoadMore}
+            hasMore={hasMoreNotifications}
+            loadingMore={loadingMoreNotifications}
           />
         )}
 

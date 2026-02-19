@@ -94,7 +94,7 @@ export default function Dashboard() {
           <div>
             <h2 className="text-sm font-semibold text-slate-800">Server configuration</h2>
             <p className="text-xs text-slate-500">
-              GET /api/server-configuration-versions/sync – chuẩn bị snapshot server config từ DB (Maps, Cards, Localizations).
+              GET /api/server-configuration-versions/sync – chuẩn bị snapshot server config từ DB (Maps, Cards, Characters, Localizations).
             </p>
           </div>
           <Button size="sm" onClick={handleSyncServerConfig} disabled={syncing}>

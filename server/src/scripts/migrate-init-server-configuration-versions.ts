@@ -1,6 +1,6 @@
 /**
  * Migration: Khởi tạo collection server_configuration_versions.
- * Cho phép thêm / sửa / xóa các JSON data (CardsData, MapsData, AboutData, AtlasData, themeData, localizations).
+ * Cho phép thêm / sửa / xóa các JSON data (CardsData, MapsData, CharacterData, themeData, itemData, localizations).
  *
  * Chạy từ thư mục server:
  *   npx tsx src/scripts/migrate-init-server-configuration-versions.ts
@@ -36,9 +36,9 @@ async function migrate() {
       configuration: {
         CardsData: null,
         MapsData: null,
-        AboutData: null,
-        AtlasData: {},
+        CharacterData: null,
         themeData: null,
+        itemData: null,
         localizations: { en: null, vi: null, ja: null },
       },
     });

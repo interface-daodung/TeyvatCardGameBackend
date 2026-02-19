@@ -23,6 +23,10 @@ export const login = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    if (!user.password) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });

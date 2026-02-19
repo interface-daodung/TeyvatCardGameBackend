@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { Button } from '../ui/button';
 import { AdventureCardImagePicker } from './AdventureCardImagePicker';
 import { AdventureCardEditForm } from './AdventureCardEditForm';
@@ -65,8 +66,8 @@ export function AdventureCardEditModal({
   onSelectImage,
   onCloseTree,
 }: AdventureCardEditModalProps) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  const modal = (
+    <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 min-h-screen min-w-screen w-full h-full z-[9999] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
       <div className="relative z-10 flex items-stretch gap-4">
         <div className="w-full max-w-3xl rounded-xl bg-card shadow-2xl border border-border overflow-hidden">
@@ -145,4 +146,5 @@ export function AdventureCardEditModal({
       </div>
     </div>
   );
+  return createPortal(modal, document.body);
 }

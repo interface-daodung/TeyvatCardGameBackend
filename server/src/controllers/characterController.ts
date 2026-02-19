@@ -61,6 +61,10 @@ export const updateCharacter = async (req: AuthRequest, res: Response) => {
       { new: true, runValidators: true }
     );
 
+    if (!character) {
+      return res.status(404).json({ error: 'Character not found' });
+    }
+
     await createAuditLog(req, 'update_character', 'character', character._id.toString());
 
     res.json(character);

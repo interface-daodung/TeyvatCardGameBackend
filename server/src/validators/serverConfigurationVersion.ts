@@ -10,9 +10,9 @@ const versionSchema = z.object({
 const configurationSchema = z.object({
   CardsData: z.record(z.unknown()).nullable().optional(),
   MapsData: z.record(z.unknown()).nullable().optional(),
-  AboutData: z.record(z.unknown()).nullable().optional(),
-  AtlasData: z.record(z.unknown()).optional(),
+  CharacterData: z.record(z.unknown()).nullable().optional(),
   themeData: z.record(z.unknown()).nullable().optional(),
+  itemData: z.record(z.unknown()).nullable().optional(),
   localizations: z
     .object({
       en: z.record(z.unknown()).nullable().optional(),

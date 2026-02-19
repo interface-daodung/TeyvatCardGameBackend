@@ -1,5 +1,4 @@
 import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import type { AdventureCard } from '../../services/gameDataService';
 
 const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled', 'hidden'];
@@ -18,7 +17,6 @@ export function AdventureCardEditForm({
   card,
   form,
   setForm,
-  editLang,
   nameDisplay,
   descriptionDisplay,
   onOpenI18n,

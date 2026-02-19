@@ -74,4 +74,37 @@ export const filesService = {
     });
     return response.data;
   },
+
+  convertToWebp: async (filename: string, quality: number): Promise<{ imageUrl: string }> => {
+    const response = await api.post<{ imageUrl: string }>('/files/uploaded/convert-webp', {
+      filename,
+      quality,
+    });
+    return response.data;
+  },
+
+  resizeUploaded: async (filename: string, width: number, height: number): Promise<{ imageUrl: string }> => {
+    const response = await api.post<{ imageUrl: string }>('/files/uploaded/resize', {
+      filename,
+      width,
+      height,
+    });
+    return response.data;
+  },
+
+  /** Tạo TeyvatCard/public/assets/images/cards/all-cards.webp + all-cards.json, lưu tạm vào server/atlas và trả link hiển thị */
+  generateAllCardsAtlas: async (): Promise<{
+    imageUrl: string;
+    jsonUrl: string;
+    count: number;
+    sheetSize: { w: number; h: number };
+  }> => {
+    const response = await api.post<{
+      imageUrl: string;
+      jsonUrl: string;
+      count: number;
+      sheetSize: { w: number; h: number };
+    }>('/files/generate-all-cards-atlas');
+    return response.data;
+  },
 };

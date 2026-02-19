@@ -4,6 +4,9 @@ import { AuthRequest } from '../types/index.js';
 import { Map } from '../models/Map.js';
 import { AdventureCard } from '../models/AdventureCard.js';
 import { Localization } from '../models/Localization.js';
+import { Character } from '../models/Character.js';
+import { Theme } from '../models/Theme.js';
+import { Equipment } from '../models/Equipment.js';
 import { createAuditLog } from '../utils/auditLog.js';
 
 export const getServerConfigurationVersions = async (req: AuthRequest, res: Response) => {
@@ -47,14 +50,16 @@ export const getLatestServerConfigurationVersion = async (req: AuthRequest, res:
  * Không nhận body – chỉ đọc dữ liệu hiện tại từ các collection:
  * - MapsData: toàn bộ collection Map
  * - CardsData: toàn bộ collection AdventureCard
+ * - CharacterData: toàn bộ collection Character
  * - localizations: toàn bộ collection Localization
- * - AboutData, themeData, AtlasData: giữ nguyên từ bản mới nhất (nếu có)
+ * - themeData: toàn bộ collection Theme (themes)
+ * - itemData: toàn bộ collection Equipment (equipment)
  *
  * Trả về success / failed.
  */
 export const syncServerConfigurationVersion = async (req: AuthRequest, res: Response) => {
   try {
-    // Lấy bản mới nhất để giữ AboutData, themeData, AtlasData
+    // Lấy bản mới nhất để tăng version
     const latest = await ServerConfigurationVersion.findOne().sort({
       'version.major': -1,
       'version.minor': -1,
@@ -63,10 +68,13 @@ export const syncServerConfigurationVersion = async (req: AuthRequest, res: Resp
     });
 
     // Lấy dữ liệu hiện tại từ các collection
-    const [maps, cards, localizations] = await Promise.all([
+    const [maps, cards, localizations, characters, themes, equipment] = await Promise.all([
       Map.find().lean(),
       AdventureCard.find().lean(),
       Localization.find().lean(),
+      Character.find().lean(),
+      Theme.find().lean(),
+      Equipment.find().lean(),
     ]);
 
     // Tăng version (patch) mỗi lần sync, hoặc khởi tạo 1.0.0
@@ -80,14 +88,12 @@ export const syncServerConfigurationVersion = async (req: AuthRequest, res: Resp
         : { major: 1, minor: 0, patch: 0 };
 
     const configuration = {
-      // Toàn bộ dữ liệu hiện tại ở dạng JSON
       MapsData: { maps },
       CardsData: { cards },
+      CharacterData: { characters },
       localizations: { localizations },
-      // Giữ nguyên các phần chưa triển khai logic
-      AboutData: latest?.configuration?.AboutData ?? null,
-      themeData: latest?.configuration?.themeData ?? null,
-      AtlasData: latest?.configuration?.AtlasData ?? {},
+      themeData: { themes },
+      itemData: { equipment },
     };
 
     const doc = await ServerConfigurationVersion.create({

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { Theme } from '../models/Theme.js';
 import { AuthRequest } from '../types/index.js';
+import { ZodError } from 'zod';
 import { createThemeSchema, updateThemeSchema } from '../validators/theme.js';
 import { createAuditLog } from '../utils/auditLog.js';
 
@@ -34,8 +35,8 @@ export const createTheme = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(theme);
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === 'ZodError') {
-      return res.status(400).json({ error: (error as { errors: unknown }).errors });
+    if (error instanceof ZodError) {
+      return res.status(400).json({ error: error.errors });
     }
     res.status(500).json({ error: 'Failed to create theme' });
   }
@@ -57,8 +58,8 @@ export const updateTheme = async (req: AuthRequest, res: Response) => {
 
     res.json(theme);
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === 'ZodError') {
-      return res.status(400).json({ error: (error as { errors: unknown }).errors });
+    if (error instanceof ZodError) {
+      return res.status(400).json({ error: error.errors });
     }
     res.status(500).json({ error: 'Failed to update theme' });
   }

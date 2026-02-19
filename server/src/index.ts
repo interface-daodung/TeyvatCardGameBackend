@@ -62,6 +62,10 @@ app.get('/health', (req, res) => {
 // Serve uploaded images (REST + Multer)
 const uploadsPath = path.join(rootDir, 'uploads');
 app.use('/uploads', express.static(uploadsPath));
+// Atlas tạm: all-cards.webp + all-cards.json (sau có thể đổi sang env)
+const atlasPath = path.join(rootDir, 'atlas');
+if (!fs.existsSync(atlasPath)) fs.mkdirSync(atlasPath, { recursive: true });
+app.use('/atlas', express.static(atlasPath));
 
 // Routes
 app.use('/api/auth', authRoutes);

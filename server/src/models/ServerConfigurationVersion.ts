@@ -6,14 +6,12 @@ export interface IVersion {
   patch: number;
 }
 
-/** AtlasData: object với key là tên file, value là JSON — duyệt bằng for, không phụ thuộc key cố định */
 export interface IConfiguration {
   CardsData?: Record<string, unknown>;
   MapsData?: Record<string, unknown>;
-  AboutData?: Record<string, unknown>;
-  /** ["ten-file": json, ...] — nhiều file, đọc bằng for, không quan tâm key */
-  AtlasData?: Record<string, unknown>;
+  CharacterData?: Record<string, unknown>;
   themeData?: Record<string, unknown>;
+  itemData?: Record<string, unknown>;
   localizations?: {
     en?: Record<string, unknown>;
     vi?: Record<string, unknown>;
@@ -41,9 +39,9 @@ const configurationSchema = new Schema<IConfiguration>(
   {
     CardsData: { type: Schema.Types.Mixed, default: null },
     MapsData: { type: Schema.Types.Mixed, default: null },
-    AboutData: { type: Schema.Types.Mixed, default: null },
-    AtlasData: { type: Schema.Types.Mixed, default: {} },
+    CharacterData: { type: Schema.Types.Mixed, default: null },
     themeData: { type: Schema.Types.Mixed, default: null },
+    itemData: { type: Schema.Types.Mixed, default: null },
     localizations: {
       en: { type: Schema.Types.Mixed, default: null },
       vi: { type: Schema.Types.Mixed, default: null },

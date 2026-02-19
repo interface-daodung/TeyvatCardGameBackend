@@ -3,11 +3,19 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
+import sharp from 'sharp';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '../..');
-const imagesBasePath = path.resolve(rootDir, '../admin-web/public/assets/images/cards');
+const imagesBasePath = process.env.CARDS_IMAGES_PATH
+  ? path.resolve(process.env.CARDS_IMAGES_PATH)
+  : path.resolve(rootDir, '../admin-web/public/assets/images/cards');
 const uploadsDir = path.join(rootDir, 'uploads');
+/** Thư mục atlas tạm để serve kết quả (all-cards.webp + json), sau có thể đổi sang env */
+const atlasTempDir = path.join(rootDir, 'atlas');
+const teyvatCardsPublicPath = process.env.TEYVAT_CARDS_PUBLIC_PATH
+  ? path.resolve(process.env.TEYVAT_CARDS_PUBLIC_PATH)
+  : path.resolve(rootDir, '../TeyvatCard/public/assets/images/cards');
 
 const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'];
 
@@ -398,6 +406,89 @@ export async function moveUploadedToCardsHandler(req: Request, res: Response) {
   }
 }
 
+const CONVERTIBLE_EXT = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tiff', '.tif'];
+
+function isConvertibleImage(filename: string): boolean {
+  const ext = path.extname(filename).toLowerCase();
+  return CONVERTIBLE_EXT.includes(ext);
+}
+
+export async function convertToWebpHandler(req: Request, res: Response) {
+  try {
+    const { filename, quality } = req.body as { filename?: string; quality?: number };
+    if (!filename || typeof filename !== 'string') {
+      res.status(400).json({ error: 'Thiếu filename' });
+      return;
+    }
+    const base = safeBasename(filename);
+    if (!base) {
+      res.status(400).json({ error: 'Tên file không hợp lệ' });
+      return;
+    }
+    if (!isConvertibleImage(base)) {
+      res.status(400).json({ error: 'Định dạng không hỗ trợ chuyển webp. Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff' });
+      return;
+    }
+    const q = typeof quality === 'number' ? Math.max(70, Math.min(100, Math.round(quality))) : 85;
+    const sourcePath = path.join(uploadsDir, base);
+    if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) {
+      res.status(404).json({ error: 'File không tồn tại' });
+      return;
+    }
+    const baseNameNoExt = path.basename(base, path.extname(base));
+    const outName = `${baseNameNoExt}.webp`;
+    const outPath = path.join(uploadsDir, outName);
+    await sharp(sourcePath)
+      .webp({ quality: q })
+      .toFile(outPath);
+    res.json({ imageUrl: `/uploads/${outName}` });
+  } catch (err) {
+    console.error('Convert to webp failed:', err);
+    res.status(500).json({ error: 'Chuyển webp thất bại' });
+  }
+}
+
+export async function resizeUploadedHandler(req: Request, res: Response) {
+  try {
+    const { filename, width: w, height: h } = req.body as { filename?: string; width?: number; height?: number };
+    if (!filename || typeof filename !== 'string') {
+      res.status(400).json({ error: 'Thiếu filename' });
+      return;
+    }
+    const width = typeof w === 'number' ? Math.max(1, Math.min(4096, Math.round(w))) : 420;
+    const height = typeof h === 'number' ? Math.max(1, Math.min(4096, Math.round(h))) : 720;
+    const base = safeBasename(filename);
+    if (!base) {
+      res.status(400).json({ error: 'Tên file không hợp lệ' });
+      return;
+    }
+    if (!isConvertibleImage(base)) {
+      res.status(400).json({ error: 'Định dạng không hỗ trợ resize. Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff' });
+      return;
+    }
+    const sourcePath = path.join(uploadsDir, base);
+    if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) {
+      res.status(404).json({ error: 'File không tồn tại' });
+      return;
+    }
+    const ext = path.extname(base).toLowerCase();
+    const baseNameNoExt = path.basename(base, ext);
+    const outName = `${baseNameNoExt}-${width}x${height}${ext}`;
+    const outPath = path.join(uploadsDir, outName);
+    if (fs.existsSync(outPath)) {
+      res.status(400).json({ error: `Đã tồn tại file ${outName}` });
+      return;
+    }
+    await sharp(sourcePath)
+      .resize(width, height, { fit: 'cover', position: 'center', withoutEnlargement: false })
+      .toFile(outPath);
+    res.json({ imageUrl: `/uploads/${outName}` });
+  } catch (err) {
+    console.error('Resize uploaded failed:', err);
+    res.status(500).json({ error: 'Resize thất bại' });
+  }
+}
+
 export async function deleteCardFileHandler(req: Request, res: Response) {
   try {
     const { filePath: webPath } = req.body as { filePath?: string };
@@ -424,5 +515,152 @@ export async function deleteCardFileHandler(req: Request, res: Response) {
   } catch (err) {
     console.error('Delete card file failed:', err);
     res.status(500).json({ error: 'Xóa file thất bại' });
+  }
+}
+
+// --- Atlas: bestGrid + createAtlas (chỉ tạo all-cards.webp + all-cards.json) ---
+
+function bestGrid(totalFrames: number, frameWidth: number, frameHeight: number): {
+  columns: number;
+  rows: number;
+  sheetWidth: number;
+  sheetHeight: number;
+  ratio: number;
+} {
+  let best: { columns: number; rows: number; sheetWidth: number; sheetHeight: number; ratio: number } | null = null;
+  let minDiff = Infinity;
+  for (let columns = 1; columns <= totalFrames; columns++) {
+    const rows = Math.ceil(totalFrames / columns);
+    const sheetWidth = columns * frameWidth;
+    const sheetHeight = rows * frameHeight;
+    const ratio = sheetWidth / sheetHeight;
+    const diff = Math.abs(ratio - 1);
+    if (diff < minDiff) {
+      minDiff = diff;
+      best = { columns, rows, sheetWidth, sheetHeight, ratio };
+    }
+  }
+  return best!;
+}
+
+function flattenImageTree(items: FileTreeItem[], prefix = ''): { key: string; path: string }[] {
+  const result: { key: string; path: string }[] = [];
+  for (const item of items) {
+    const name = item.name;
+    const rel = prefix ? `${prefix}/${name}` : name;
+    if (item.type === 'file') {
+      const ext = path.extname(name).toLowerCase();
+      if (IMAGE_EXT.includes(ext)) {
+        const key = rel.replace(/\.[^.]+$/, '').replace(/[/\\]/g, '/');
+        result.push({ key, path: item.path });
+      }
+    } else if (item.type === 'dir' && item.children?.length) {
+      result.push(...flattenImageTree(item.children, rel));
+    }
+  }
+  return result;
+}
+
+export async function generateAllCardsAtlasHandler(req: Request, res: Response) {
+  try {
+    const tree = getImageTree(imagesBasePath, '/assets/images/cards');
+    const assets = flattenImageTree(tree);
+    if (assets.length === 0) {
+      res.status(400).json({ error: 'Không có ảnh nào trong thư mục cards' });
+      return;
+    }
+
+    const firstFullPath = path.join(imagesBasePath, assets[0].path.replace(/^\/assets\/images\/cards\/?/, '').replace(/\//g, path.sep));
+    const firstMeta = await sharp(firstFullPath).metadata();
+    const spriteWidth = firstMeta.width ?? 420;
+    const spriteHeight = firstMeta.height ?? 720;
+
+    const grid = bestGrid(assets.length, spriteWidth, spriteHeight);
+
+    const canvas = sharp({
+      create: {
+        width: grid.sheetWidth,
+        height: grid.sheetHeight,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    });
+
+    const compositeOperations: { input: Buffer | string; top: number; left: number }[] = [];
+    let currentIndex = 0;
+    for (let row = 0; row < grid.rows; row++) {
+      for (let col = 0; col < grid.columns; col++) {
+        if (currentIndex >= assets.length) break;
+        const asset = assets[currentIndex];
+        const relative = asset.path.replace(/^\/assets\/images\/cards\/?/, '').replace(/\//g, path.sep);
+        const imagePath = path.join(imagesBasePath, relative);
+        if (!fs.existsSync(imagePath)) {
+          currentIndex++;
+          continue;
+        }
+        const x = col * spriteWidth;
+        const y = row * spriteHeight;
+        const img = sharp(imagePath);
+        const meta = await img.metadata();
+        const needResize = (meta.width !== spriteWidth || meta.height !== spriteHeight);
+        const input = needResize
+          ? await sharp(imagePath).resize(spriteWidth, spriteHeight, { fit: 'cover', position: 'center' }).toBuffer()
+          : imagePath;
+        compositeOperations.push({ input: input as string | Buffer, top: y, left: x });
+        currentIndex++;
+      }
+    }
+
+    const spriteSheet = await canvas.composite(compositeOperations).webp({ quality: 90 });
+    const webpBuffer = await spriteSheet.toBuffer();
+
+    const allCardsWebpName = 'all-cards.webp';
+    const allCardsJsonName = 'all-cards.json';
+
+    if (!fs.existsSync(teyvatCardsPublicPath)) {
+      fs.mkdirSync(teyvatCardsPublicPath, { recursive: true });
+    }
+    const teyvatWebpPath = path.join(teyvatCardsPublicPath, allCardsWebpName);
+    const teyvatJsonPath = path.join(teyvatCardsPublicPath, allCardsJsonName);
+    await fs.promises.writeFile(teyvatWebpPath, webpBuffer);
+
+    const metadata = {
+      frames: {} as Record<string, { frame: { x: number; y: number; w: number; h: number } }>,
+      meta: {
+        image: allCardsWebpName,
+        size: { w: grid.sheetWidth, h: grid.sheetHeight },
+        scale: '1',
+        path: `assets/images/cards/${allCardsWebpName}`,
+      },
+    };
+    assets.forEach((asset, index) => {
+      const row = Math.floor(index / grid.columns);
+      const col = index % grid.columns;
+      metadata.frames[asset.key] = {
+        frame: {
+          x: col * spriteWidth,
+          y: row * spriteHeight,
+          w: spriteWidth,
+          h: spriteHeight,
+        },
+      };
+    });
+    await fs.promises.writeFile(teyvatJsonPath, JSON.stringify(metadata, null, 2));
+
+    if (!fs.existsSync(atlasTempDir)) {
+      fs.mkdirSync(atlasTempDir, { recursive: true });
+    }
+    await fs.promises.writeFile(path.join(atlasTempDir, allCardsWebpName), webpBuffer);
+    await fs.promises.writeFile(path.join(atlasTempDir, allCardsJsonName), JSON.stringify(metadata, null, 2));
+
+    res.json({
+      imageUrl: '/atlas/all-cards.webp',
+      jsonUrl: '/atlas/all-cards.json',
+      count: assets.length,
+      sheetSize: { w: grid.sheetWidth, h: grid.sheetHeight },
+    });
+  } catch (err) {
+    console.error('Generate all-cards atlas failed:', err);
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Tạo atlas thất bại' });
   }
 }

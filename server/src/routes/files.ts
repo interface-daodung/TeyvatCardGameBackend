@@ -14,6 +14,9 @@ import {
   deleteCardFileHandler,
   moveUploadedFileHandler,
   moveUploadedToCardsHandler,
+  convertToWebpHandler,
+  resizeUploadedHandler,
+  generateAllCardsAtlasHandler,
 } from '../controllers/filesController.js';
 
 export const filesRoutes = Router();
@@ -30,6 +33,9 @@ filesRoutes.patch('/cards/move', moveCardFileHandler);
 filesRoutes.delete('/cards', deleteCardFileHandler);
 filesRoutes.patch('/uploaded/move', moveUploadedFileHandler);
 filesRoutes.patch('/uploaded/to-cards', moveUploadedToCardsHandler);
+filesRoutes.post('/uploaded/convert-webp', convertToWebpHandler);
+filesRoutes.post('/uploaded/resize', resizeUploadedHandler);
+filesRoutes.post('/generate-all-cards-atlas', generateAllCardsAtlasHandler);
 
 filesRoutes.post('/upload', (req: Request, res: Response, next: NextFunction) => {
   uploadMiddleware(req, res, (err: unknown) => {

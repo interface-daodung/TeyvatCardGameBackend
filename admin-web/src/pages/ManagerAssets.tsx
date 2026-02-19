@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { PageHeader } from '../components/PageHeader';
 import { FileTreeNode } from '../components/FileTreeNode';
+import { UploadedImageEditModal } from '../components/assets/UploadedImageEditModal';
 import { filesService, type FileTreeItem } from '../services/filesService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -35,6 +37,7 @@ export default function ManagerAssets() {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [uploadedDetailOpen, setUploadedDetailOpen] = useState(false);
   const [editPath, setEditPath] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editSaving, setEditSaving] = useState(false);
@@ -42,6 +45,15 @@ export default function ManagerAssets() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
   const [moveLoading, setMoveLoading] = useState(false);
+
+  const [atlasLoading, setAtlasLoading] = useState(false);
+  const [atlasError, setAtlasError] = useState<string | null>(null);
+  const [atlasResult, setAtlasResult] = useState<{
+    imageUrl: string;
+    jsonUrl: string;
+    count: number;
+    sheetSize: { w: number; h: number };
+  } | null>(null);
 
   const fetchTrees = useCallback(async () => {
     try {
@@ -96,15 +108,20 @@ export default function ManagerAssets() {
   const isImagePath = (path: string) =>
     /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(path);
 
+  const isUploadedFile = (p: string) =>
+    p.startsWith('/uploads/') && /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(p);
+
   const openEditModal = (filePath: string) => {
     setEditPath(filePath);
     setEditName(basename(filePath));
     setEditError(null);
-    setEditModalOpen(true);
+    if (isUploadedFile(filePath)) {
+      setUploadedDetailOpen(true);
+    } else {
+      setEditModalOpen(true);
+    }
   };
 
-  const isUploadedFile = (p: string) =>
-    p.startsWith('/uploads/') && /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(p);
   const isCardFile = (p: string) =>
     p.startsWith('/assets/images/cards/') && /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(p);
   const canRename = editPath !== null && (isUploadedFile(editPath) || isCardFile(editPath));
@@ -112,6 +129,7 @@ export default function ManagerAssets() {
 
   const closeEditModal = () => {
     setEditModalOpen(false);
+    setUploadedDetailOpen(false);
     setEditPath(null);
     setEditName('');
     setEditError(null);
@@ -205,6 +223,23 @@ export default function ManagerAssets() {
         (uploadedFile && uploadedFolder) ||
         (uploadedFile && cardFolder));
     return result;
+  };
+
+  const handleGenerateAllCardsAtlas = async () => {
+    setAtlasError(null);
+    setAtlasLoading(true);
+    try {
+      const result = await filesService.generateAllCardsAtlas();
+      setAtlasResult(result);
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : 'Tạo atlas thất bại';
+      setAtlasError(msg || 'Tạo atlas thất bại');
+    } finally {
+      setAtlasLoading(false);
+    }
   };
 
   const handleMoveFile = async (targetFolderPath: string, droppedFilePath: string) => {
@@ -309,6 +344,47 @@ export default function ManagerAssets() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>Atlas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Tạo <strong>all-cards.webp</strong> và <strong>all-cards.json</strong> từ toàn bộ ảnh trong thư mục cards. File lưu tại TeyvatCard/public/assets/images/cards/ và bản copy tạm để xem tại đây.
+              </p>
+              <Button
+                type="button"
+                onClick={handleGenerateAllCardsAtlas}
+                disabled={atlasLoading}
+              >
+                {atlasLoading ? 'Đang tạo atlas...' : 'Tạo Atlas All Cards'}
+              </Button>
+              {atlasError && <p className="text-sm text-red-600">{atlasError}</p>}
+              {atlasResult && (
+                <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+                  <p className="text-sm font-medium">Kết quả</p>
+                  <p className="text-xs text-muted-foreground">
+                    {atlasResult.count} ảnh · Sheet {atlasResult.sheetSize.w}×{atlasResult.sheetSize.h}
+                  </p>
+                  <img
+                    src={atlasResult.imageUrl}
+                    alt="all-cards atlas"
+                    className="max-w-full rounded border object-contain max-h-48 bg-muted"
+                  />
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <a href={atlasResult.imageUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                      all-cards.webp
+                    </a>
+                    <a href={atlasResult.jsonUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                      all-cards.json
+                    </a>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Sau này có thể lưu link atlas vào env.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {selectedPath && isImagePath(selectedPath) && (
             <Card>
               <CardHeader>
@@ -327,9 +403,10 @@ export default function ManagerAssets() {
         </div>
       </div>
 
-      {editModalOpen && editPath && (
+      {editModalOpen && editPath &&
+        createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 top-0 left-0 right-0 bottom-0 min-h-screen min-w-screen w-full h-full z-[9999] flex items-center justify-center bg-black/50 p-4"
           onClick={closeEditModal}
         >
           <Card
@@ -386,7 +463,16 @@ export default function ManagerAssets() {
               )}
             </CardContent>
           </Card>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {uploadedDetailOpen && editPath && isUploadedFile(editPath) && (
+        <UploadedImageEditModal
+          filePath={editPath}
+          onClose={closeEditModal}
+          onSuccess={fetchTrees}
+        />
       )}
     </div>
   );

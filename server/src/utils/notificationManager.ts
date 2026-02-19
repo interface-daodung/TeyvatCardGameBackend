@@ -1,11 +1,12 @@
 import { Response } from 'express';
+import { Notification } from '../models/Notification.js';
 
-interface Notification {
+export interface NotificationInput {
   name: string;
   icon: string;
   notif: string;
   path: string;
-  'data-creation': string;
+  'data-creation'?: string;
 }
 
 class NotificationManager {
@@ -13,7 +14,6 @@ class NotificationManager {
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
   constructor() {
-    // Khởi tạo heartbeat interval chung cho tất cả connections
     this.startHeartbeat();
   }
 
@@ -21,7 +21,6 @@ class NotificationManager {
     if (this.heartbeatInterval) {
       return;
     }
-    
     this.heartbeatInterval = setInterval(() => {
       this.sendHeartbeat();
     }, 30000);
@@ -29,28 +28,50 @@ class NotificationManager {
 
   addConnection(res: Response) {
     this.connections.add(res);
-    
     res.on('close', () => {
       this.connections.delete(res);
     });
   }
 
-  sendNotification(notification: Notification) {
-    const message = `data: ${JSON.stringify(notification)}\n\n`;
-    
+  sendNotification(notification: NotificationInput) {
+    Notification.create({
+      name: notification.name,
+      icon: notification.icon,
+      notif: notification.notif,
+      path: notification.path,
+    })
+      .then((doc) => {
+        const payload = {
+          _id: doc._id.toString(),
+          name: doc.name,
+          icon: doc.icon,
+          notif: doc.notif,
+          path: doc.path,
+          'data-creation': doc.createdAt.toISOString(),
+        };
+        this.broadcast(payload);
+      })
+      .catch((err) => {
+        console.error('Failed to save notification to DB:', err);
+        this.broadcast({
+          _id: undefined,
+          ...notification,
+          'data-creation': notification['data-creation'] ?? new Date().toISOString(),
+        });
+      });
+  }
+
+  private broadcast(payload: Record<string, unknown>) {
+    const message = `data: ${JSON.stringify(payload)}\n\n`;
     const closedConnections: Response[] = [];
-    
     this.connections.forEach((res) => {
       try {
         res.write(message);
-      } catch (error) {
+      } catch {
         closedConnections.push(res);
       }
     });
-
-    closedConnections.forEach((res) => {
-      this.connections.delete(res);
-    });
+    closedConnections.forEach((res) => this.connections.delete(res));
   }
 
   sendHeartbeat() {
