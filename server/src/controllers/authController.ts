@@ -7,7 +7,10 @@ import { loginSchema, googleLoginSchema, registerSchema } from '../validators/au
 import { createAuditLog } from '../utils/auditLog.js';
 import { AuthRequest } from '../types/index.js';
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+/** Đọc tại runtime để tránh load trước dotenv trong index.ts */
+function getGoogleClientId(): string {
+  return process.env.GOOGLE_CLIENT_ID?.trim() || '';
+}
 
 const jwtCookieOptions = {
   httpOnly: true,
@@ -29,20 +32,24 @@ export const login = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ email });
     if (!user) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'user_not_found' }, undefined, 'error');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Only allow admin/moderator login
     if (user.role !== 'admin' && user.role !== 'moderator') {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'access_denied_role' }, undefined, 'error');
       return res.status(403).json({ error: 'Access denied' });
     }
 
     if (!user.password) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'no_password' }, undefined, 'error');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'invalid_password' }, undefined, 'error');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -61,7 +68,8 @@ export const login = async (req: Request, res: Response) => {
       'auth',
       user._id.toString(),
       { email: user.email },
-      user._id.toString()
+      user._id.toString(),
+      'info'
     );
 
     res.json({
@@ -75,8 +83,10 @@ export const login = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     if (error.name === 'ZodError') {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'validation_error' }, undefined, 'error');
       return res.status(400).json({ error: error.errors });
     }
+    await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'server_error' }, undefined, 'error');
     res.status(500).json({ error: 'Login failed' });
   }
 };
@@ -87,23 +97,28 @@ export const userLogin = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ email });
     if (!user) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'user_not_found' }, undefined, 'error');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     if (user.role !== 'user') {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'access_denied_not_user' }, undefined, 'error');
       return res.status(403).json({ error: 'Access denied. Admin login at /api/auth/login' });
     }
 
     if (user.isBanned) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'account_banned' }, undefined, 'error');
       return res.status(403).json({ error: 'Account is banned' });
     }
 
     if (!user.password) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'google_only_account' }, undefined, 'error');
       return res.status(401).json({ error: 'Account uses Google login. Please sign in with Google.' });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'invalid_password' }, undefined, 'error');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -124,7 +139,8 @@ export const userLogin = async (req: Request, res: Response) => {
       'auth',
       user._id.toString(),
       { email: user.email },
-      user._id.toString()
+      user._id.toString(),
+      'info'
     );
 
     res.cookie('jwt', accessToken, jwtCookieOptions);
@@ -138,8 +154,10 @@ export const userLogin = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     if (error.name === 'ZodError') {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'validation_error' }, undefined, 'error');
       return res.status(400).json({ error: error.errors });
     }
+    await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'server_error' }, undefined, 'error');
     res.status(500).json({ error: 'Login failed' });
   }
 };
@@ -179,7 +197,8 @@ export const register = async (req: Request, res: Response) => {
       'auth',
       user._id.toString(),
       { email: user.email },
-      user._id.toString()
+      user._id.toString(),
+      'info'
     );
 
     res.cookie('jwt', accessToken, jwtCookieOptions);
@@ -200,21 +219,30 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const googleLogin = async (req: Request, res: Response) => {
+  const googleClientId = getGoogleClientId();
   try {
     const { credential } = googleLoginSchema.parse(req.body);
 
-    if (!GOOGLE_CLIENT_ID) {
-      return res.status(500).json({ error: 'Google OAuth not configured' });
+    if (!googleClientId) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'google_client_id_not_set' }, undefined, 'error');
+      return res.status(500).json({
+        error: 'Đăng nhập Google thất bại',
+        debug: { googleClientId: 'not set', message: 'Server chưa đọc được GOOGLE_CLIENT_ID từ .env' },
+      });
     }
 
-    const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+    const client = new OAuth2Client(googleClientId);
     const ticket = await client.verifyIdToken({
       idToken: credential,
-      audience: GOOGLE_CLIENT_ID,
+      audience: googleClientId,
     });
     const payload = ticket.getPayload();
     if (!payload?.email) {
-      return res.status(401).json({ error: 'Invalid Google credential' });
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'google_token_no_email' }, undefined, 'error');
+      return res.status(401).json({
+        error: 'Đăng nhập Google thất bại',
+        debug: { googleClientId: 'loaded', reason: 'token không có email' },
+      });
     }
 
     const email = payload.email.toLowerCase().trim();
@@ -229,7 +257,11 @@ export const googleLogin = async (req: Request, res: Response) => {
     }
 
     if (user.isBanned) {
-      return res.status(403).json({ error: 'Account is banned' });
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', user._id.toString(), { email: user.email, reason: 'account_banned' }, undefined, 'error');
+      return res.status(403).json({
+        error: 'Đăng nhập Google thất bại',
+        debug: { googleClientId: 'loaded', reason: 'tài khoản bị khóa' },
+      });
     }
 
     const tokenPayload = {
@@ -249,7 +281,8 @@ export const googleLogin = async (req: Request, res: Response) => {
       'auth',
       user._id.toString(),
       { email: user.email, provider: 'google' },
-      user._id.toString()
+      user._id.toString(),
+      'info'
     );
 
     res.cookie('jwt', accessToken, jwtCookieOptions);
@@ -263,11 +296,19 @@ export const googleLogin = async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'name' in error && (error as Error).name === 'ZodError') {
-      return res.status(400).json({ error: (error as { errors?: unknown }).errors });
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'google_validation_error' }, undefined, 'error');
+      return res.status(400).json({
+        error: 'Đăng nhập Google thất bại',
+        debug: { googleClientId: googleClientId ? 'loaded' : 'not set', reason: 'dữ liệu không hợp lệ' },
+      });
     }
     const message = error instanceof Error ? error.message : String(error);
     console.error('Google login failed:', message);
-    res.status(401).json({ error: 'Google login failed' });
+    await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: message.substring(0, 80) }, undefined, 'error');
+    return res.status(401).json({
+      error: 'Đăng nhập Google thất bại',
+      debug: { googleClientId: googleClientId ? 'loaded' : 'not set', reason: message.substring(0, 80) },
+    });
   }
 };
 
@@ -281,10 +322,10 @@ export const getMe = async (req: Request, res: Response) => {
   res.json({ user: { id: userId, email, role } });
 };
 
-/** Refresh: đọc refreshToken từ HttpOnly cookie, kiểm tra với DB, cấp jwt mới. */
+/** Refresh: đọc refreshToken từ cookie hoặc body (SPA), kiểm tra với DB, cấp jwt mới. */
 export const refreshToken = async (req: Request, res: Response) => {
   try {
-    const token = req.cookies?.refreshToken;
+    const token = req.cookies?.refreshToken ?? (req.body as { refreshToken?: string })?.refreshToken;
     if (!token) {
       return res.status(401).json({ error: 'Refresh token required' });
     }
@@ -307,7 +348,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     const newAccessToken = generateAccessToken(tokenPayload);
 
     res.cookie('jwt', newAccessToken, jwtCookieOptions);
-    res.json({ ok: true });
+    res.json({ ok: true, accessToken: newAccessToken });
   } catch (error) {
     res.status(401).json({ error: 'Invalid refresh token' });
   }

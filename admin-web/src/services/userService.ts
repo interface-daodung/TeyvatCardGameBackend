@@ -25,10 +25,16 @@ export interface UsersResponse {
   };
 }
 
+export interface GetUsersParams {
+  search?: string;
+  role?: string;
+  isBanned?: 'true' | 'false';
+}
+
 export const userService = {
-  getUsers: async (page = 1, limit = 20): Promise<UsersResponse> => {
+  getUsers: async (page = 1, limit = 20, params?: GetUsersParams): Promise<UsersResponse> => {
     const response = await api.get<UsersResponse>('/users', {
-      params: { page, limit },
+      params: { page, limit, ...params },
     });
     return response.data;
   },
@@ -52,5 +58,9 @@ export const userService = {
 
   unbanCard: async (userId: string, cardId: string, cardType: 'character' | 'equipment'): Promise<void> => {
     await api.post(`/users/${userId}/unban-card`, { cardId, cardType });
+  },
+
+  revokeRefreshToken: async (userId: string): Promise<void> => {
+    await api.post(`/users/${userId}/revoke-refresh-token`);
   },
 };

@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 const ACCESS_SECRET: string = process.env.JWT_ACCESS_SECRET || 'access-secret';
 const REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || 'refresh-secret';
-const ACCESS_EXPIRES_IN: string = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+const ACCESS_EXPIRES_IN: string = process.env.JWT_ACCESS_EXPIRES_IN || '5m';
 const REFRESH_EXPIRES_IN: string = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
 export interface TokenPayload {

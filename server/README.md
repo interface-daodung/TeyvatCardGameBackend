@@ -26,6 +26,42 @@ npm run seed
 npm run dev
 ```
 
+## Production (PM2)
+
+Trên server Linux sau khi `git pull`:
+
+```bash
+cd /var/www/TeyvatCardGameBackend/server
+npm ci
+npm run build
+pm2 start ecosystem.config.cjs
+# hoặc restart nếu đã add rồi:
+# pm2 restart teyvat-backend
+```
+
+**Xem lỗi / log để biết lỗi gì:**
+
+```bash
+# Realtime (stdout + stderr gộp)
+pm2 logs teyvat-backend
+
+# 200 dòng gần nhất
+pm2 logs teyvat-backend --lines 200
+
+# Chỉ lỗi
+pm2 logs teyvat-backend --err
+
+# Trạng thái process
+pm2 show teyvat-backend
+pm2 list
+```
+
+Log file nằm tại `~/.pm2/logs/teyvat-backend-error.log` và `~/.pm2/logs/teyvat-backend-out.log`.
+
+**Lưu ý:** Phải chạy `npm run build` trước khi start PM2, nếu không sẽ lỗi `Cannot find module '.../dist/index.js'`.
+
+**Đăng nhập Google (tránh 500 "Google OAuth not configured"):** Trong `.env` trên server **bắt buộc** có `GOOGLE_CLIENT_ID` (cùng giá trị với `VITE_GOOGLE_CLIENT_ID` ở TeyvatCard). Sau khi sửa `.env` chạy `pm2 restart teyvat-backend`.
+
 ## API Endpoints
 
 ### Authentication

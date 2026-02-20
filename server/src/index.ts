@@ -29,9 +29,12 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
-// .env.example trước (mặc định), .env sau để ghi đè – tránh .env.example ghi đè GOOGLE_CLIENT_ID, MONGODB_URI...
-dotenv.config({ path: path.join(rootDir, '.env.example') });
-dotenv.config({ path: path.join(rootDir, '.env') });
+const envExamplePath = path.join(rootDir, '.env.example');
+const envPath = path.join(rootDir, '.env');
+
+// .env.example trước (mặc định), .env sau để ghi đè
+const resultExample = dotenv.config({ path: envExamplePath });
+const resultEnv = dotenv.config({ path: envPath });
 
 const logger = pino({
   transport: {
@@ -42,15 +45,43 @@ const logger = pino({
   },
 });
 
+// Log đường dẫn .env và GOOGLE_CLIENT_ID để debug khi server "không đọc được"
+const hasGoogleClientId = Boolean(process.env.GOOGLE_CLIENT_ID?.trim());
+logger.info({
+  envExamplePath,
+  envExampleExists: fs.existsSync(envExamplePath),
+  envExampleError: resultExample.error?.message ?? null,
+  envPath,
+  envExists: fs.existsSync(envPath),
+  envError: resultEnv.error?.message ?? null,
+  GOOGLE_CLIENT_ID: hasGoogleClientId ? 'loaded' : 'not set',
+  GOOGLE_CLIENT_ID_length: (process.env.GOOGLE_CLIENT_ID || '').length,
+}, 'Env load');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware – CORS: khi SERVE_ADMIN_UI=true thì admin cùng gốc, không cần ADMIN_URL
+app.set('trust proxy', 1);
+
+// Middleware – CORS: env + teyvatcard.site + localhost (để dev chạy game local gọi API production)
 const frontendUrl = process.env.GAME_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
 const adminUrl = process.env.ADMIN_URL;
-const corsOrigins = [frontendUrl];
+const corsOrigins: string[] = [
+  frontendUrl,
+  'https://teyvatcard.site',
+  'https://www.teyvatcard.site',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:8000',
+  'http://127.0.0.1:8000',
+];
 if (adminUrl) corsOrigins.push(adminUrl);
-app.use(cors({ origin: corsOrigins, credentials: true }));
+app.use(cors({ origin: [...new Set(corsOrigins)], credentials: true }));
+// COOP: same-origin-allow-popups để Google Sign-In (popup/postMessage) hoạt động khi server serve UI
+app.use((_req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  next();
+});
 app.use(cookieParser());
 app.use(express.json());
 app.use(pinoHttp({ logger }));

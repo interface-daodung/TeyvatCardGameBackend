@@ -4,6 +4,7 @@ import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
 import { Sidebar, type NavItem } from './Sidebar';
 import { AppHeader } from './AppHeader';
+import { DbAuthGuard } from '../DbAuthGuard';
 import type { NotificationItem } from './NotificationDropdown';
 
 const NAV_ITEMS: NavItem[] = [
@@ -210,7 +211,9 @@ export default function Layout() {
         />
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-background via-primary-50/20 to-red-50/20">
-          <Outlet />
+          <DbAuthGuard>
+            <Outlet />
+          </DbAuthGuard>
         </div>
       </main>
     </div>

@@ -14,6 +14,7 @@ export default function UserDetail() {
   const [loading, setLoading] = useState(true);
   const [xu, setXu] = useState(0);
   const [isBanned, setIsBanned] = useState(false);
+  const [revoking, setRevoking] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -50,6 +51,21 @@ export default function UserDetail() {
       alert('Xu updated successfully');
     } catch (error) {
       console.error('Failed to update Xu:', error);
+    }
+  };
+
+  const handleRevokeRefreshToken = async () => {
+    if (!id) return;
+    if (!confirm('Thu hồi refresh token: user sẽ không thể gia hạn phiên, và sẽ bị đăng xuất khi access token hết hạn (5 phút). Tiếp tục?')) return;
+    try {
+      setRevoking(true);
+      await userService.revokeRefreshToken(id);
+      alert('Đã thu hồi refresh token.');
+    } catch (error) {
+      console.error('Failed to revoke refresh token:', error);
+      alert('Không thể thu hồi refresh token.');
+    } finally {
+      setRevoking(false);
     }
   };
 
@@ -137,6 +153,20 @@ export default function UserDetail() {
               >
                 {isBanned ? 'Unban User' : 'Ban User'}
               </Button>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">Phiên đăng nhập</label>
+              <Button
+                onClick={handleRevokeRefreshToken}
+                disabled={revoking}
+                variant="outline"
+                className="border-amber-500 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+              >
+                {revoking ? 'Đang xử lý…' : 'Thu hồi refresh token'}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-1">
+                User sẽ đăng xuất khi access token hết hạn (5 phút). Không thu hồi access token ngay.
+              </p>
             </div>
           </div>
         </CardContent>

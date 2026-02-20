@@ -1,3 +1,4 @@
+import axios from 'axios';
 import api from '../lib/api';
 
 export interface LoginCredentials {
@@ -64,5 +65,30 @@ export const authService = {
 
   isUserRole: (): boolean => {
     return localStorage.getItem('userRole') === 'user';
+  },
+
+  /** Refresh access token (uses raw axios to avoid interceptor loop). Returns true if success. */
+  refreshAccessToken: async (): Promise<boolean> => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return false;
+    try {
+      const response = await axios.post<{ accessToken?: string }>('/api/auth/refresh', {
+        refreshToken,
+      });
+      const { accessToken } = response.data;
+      if (accessToken) {
+        localStorage.setItem('accessToken', accessToken);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  },
+
+  /** Clear tokens and redirect to login (e.g. when refresh fails). */
+  logoutAndRedirect: () => {
+    authService.logout();
+    window.location.href = '/login';
   },
 };

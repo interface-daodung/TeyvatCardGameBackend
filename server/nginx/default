@@ -1,0 +1,20 @@
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name teyvatcard.site;
+
+    ssl_certificate /etc/letsencrypt/live/teyvatcard.site/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/teyvatcard.site/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    root /var/www/TeyvatCard/dist;
+    index index.html;
+
+    # COOP: same-origin-allow-popups để Google Sign-In hoạt động
+    add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+
+    location / {
+        try_files $uri /index.html;
+    }
+}

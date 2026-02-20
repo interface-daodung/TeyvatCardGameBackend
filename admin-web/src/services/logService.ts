@@ -2,14 +2,16 @@ import api from '../lib/api';
 
 export interface AuditLog {
   _id: string;
-  adminId: {
+  adminId?: {
     _id: string;
     email: string;
   };
   action: string;
   resource: string;
   resourceId?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
+  /** 'info' = mặc định, 'log' = sự kiện log, 'error' = thông báo lỗi */
+  content?: 'info' | 'log' | 'error';
   ipAddress?: string;
   createdAt: string;
 }
@@ -25,9 +27,13 @@ export interface LogsResponse {
 }
 
 export const logService = {
-  getLogs: async (page = 1, limit = 20, action?: string, resource?: string): Promise<LogsResponse> => {
+  getLogs: async (
+    page = 1,
+    limit = 20,
+    opts?: { action?: string; resource?: string; content?: 'info' | 'log' | 'error'; email?: string }
+  ): Promise<LogsResponse> => {
     const response = await api.get<LogsResponse>('/logs', {
-      params: { page, limit, action, resource },
+      params: { page, limit, ...opts },
     });
     return response.data;
   },

@@ -9,13 +9,29 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
     const rawPage = parseInt(req.query.page as string) || 1;
     const rawLimit = parseInt(req.query.limit as string) || 20;
+    const search = (req.query.search as string)?.trim() || '';
+    const role = (req.query.role as string) || '';
+    const isBannedRaw = req.query.isBanned as string | undefined;
+
     const limit = Math.min(500, Math.max(1, rawLimit));
-    const total = await User.countDocuments();
+
+    const query: mongoose.FilterQuery<InstanceType<typeof User>> = {};
+    if (search) {
+      query.email = { $regex: search, $options: 'i' };
+    }
+    if (role && ['admin', 'moderator', 'user'].includes(role)) {
+      query.role = role;
+    }
+    if (isBannedRaw === 'true' || isBannedRaw === 'false') {
+      query.isBanned = isBannedRaw === 'true';
+    }
+
+    const total = await User.countDocuments(query);
     const pages = Math.max(1, Math.ceil(total / limit));
     const page = Math.min(pages, Math.max(1, rawPage));
     const skip = (page - 1) * limit;
 
-    const users = await User.find()
+    const users = await User.find(query)
       .select('-password')
       .skip(skip)
       .limit(limit)
@@ -178,5 +194,25 @@ export const unbanCard = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: error.errors });
     }
     res.status(500).json({ error: 'Failed to unban card' });
+  }
+};
+
+/** Thu hồi refresh token của user (accessToken vẫn có hiệu lực đến khi hết hạn, không thu hồi ngay). */
+export const revokeRefreshToken = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await User.findByIdAndUpdate(userId, { $set: { refreshToken: null } });
+    await createAuditLog(req, 'revoke_refresh_token', 'user', userId, { email: user.email }, undefined, 'info');
+
+    res.json({ message: 'Refresh token revoked. User will be logged out when access token expires.' });
+  } catch (error: any) {
+    console.error('revokeRefreshToken error:', error?.message || error);
+    res.status(500).json({ error: 'Failed to revoke refresh token' });
   }
 };
