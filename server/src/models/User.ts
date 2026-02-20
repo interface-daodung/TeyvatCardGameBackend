@@ -6,6 +6,8 @@ export interface IUser extends mongoose.Document {
   role: 'admin' | 'moderator' | 'user';
   isBanned: boolean;
   xu: number;
+  /** Refresh token hiện tại (lưu DB để server kiểm tra, thu hồi khi logout) */
+  refreshToken?: string | null;
   ownedCharacters: mongoose.Types.ObjectId[];
   ownedEquipment: mongoose.Types.ObjectId[];
   bannedCards: {
@@ -43,6 +45,11 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: 0,
       min: 0,
+    },
+    refreshToken: {
+      type: String,
+      required: false,
+      default: null,
     },
     ownedCharacters: [
       {

@@ -29,8 +29,9 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
-dotenv.config({ path: path.join(rootDir, '.env') });
+// .env.example trước (mặc định), .env sau để ghi đè – tránh .env.example ghi đè GOOGLE_CLIENT_ID, MONGODB_URI...
 dotenv.config({ path: path.join(rootDir, '.env.example') });
+dotenv.config({ path: path.join(rootDir, '.env') });
 
 const logger = pino({
   transport: {

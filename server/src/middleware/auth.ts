@@ -8,12 +8,17 @@ export const authenticate = (
   next: NextFunction
 ) => {
   try {
+    let token: string | undefined;
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if (req.cookies?.jwt) {
+      token = req.cookies.jwt;
+    }
+    if (!token) {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const token = authHeader.substring(7);
     const decoded = verifyAccessToken(token);
 
     (req as AuthRequest).user = {

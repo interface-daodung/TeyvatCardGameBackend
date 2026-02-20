@@ -3,11 +3,25 @@ import bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/User.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
-import { loginSchema, googleLoginSchema } from '../validators/auth.js';
+import { loginSchema, googleLoginSchema, registerSchema } from '../validators/auth.js';
 import { createAuditLog } from '../utils/auditLog.js';
 import { AuthRequest } from '../types/index.js';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+
+const jwtCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 15 * 60 * 1000, // 15 minutes
+};
+
+const refreshCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -102,6 +116,8 @@ export const userLogin = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
 
+    await user.updateOne({ $set: { refreshToken } });
+
     await createAuditLog(
       req as AuthRequest,
       'login',
@@ -111,9 +127,9 @@ export const userLogin = async (req: Request, res: Response) => {
       user._id.toString()
     );
 
+    res.cookie('jwt', accessToken, jwtCookieOptions);
+    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
     res.json({
-      accessToken,
-      refreshToken,
       user: {
         id: user._id.toString(),
         email: user.email,
@@ -125,6 +141,61 @@ export const userLogin = async (req: Request, res: Response) => {
       return res.status(400).json({ error: error.errors });
     }
     res.status(500).json({ error: 'Login failed' });
+  }
+};
+
+export const register = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = registerSchema.parse(req.body);
+    const emailNorm = (email as string).toLowerCase().trim();
+
+    const existing = await User.findOne({ email: emailNorm });
+    if (existing) {
+      return res.status(409).json({ error: 'Email đã được sử dụng' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      email: emailNorm,
+      password: hashedPassword,
+      role: 'user',
+      xu: 0,
+    });
+
+    const tokenPayload = {
+      userId: user._id.toString(),
+      role: user.role,
+      email: user.email,
+    };
+
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
+    await user.updateOne({ $set: { refreshToken } });
+
+    await createAuditLog(
+      req as AuthRequest,
+      'register',
+      'auth',
+      user._id.toString(),
+      { email: user.email },
+      user._id.toString()
+    );
+
+    res.cookie('jwt', accessToken, jwtCookieOptions);
+    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
+    res.status(201).json({
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'name' in error && (error as { name: string }).name === 'ZodError') {
+      return res.status(400).json({ error: (error as { errors?: unknown }).errors });
+    }
+    res.status(500).json({ error: 'Đăng ký thất bại' });
   }
 };
 
@@ -170,6 +241,8 @@ export const googleLogin = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
 
+    await user.updateOne({ $set: { refreshToken } });
+
     await createAuditLog(
       req as AuthRequest,
       'login',
@@ -179,17 +252,9 @@ export const googleLogin = async (req: Request, res: Response) => {
       user._id.toString()
     );
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
-      maxAge: 15 * 60 * 1000,
-    };
-    res.cookie('jwt', accessToken, cookieOptions);
-
+    res.cookie('jwt', accessToken, jwtCookieOptions);
+    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
     res.json({
-      accessToken,
-      refreshToken,
       user: {
         id: user._id.toString(),
         email: user.email,
@@ -197,26 +262,38 @@ export const googleLogin = async (req: Request, res: Response) => {
       },
     });
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error && typeof error === 'object' && 'name' in error && (error as Error).name === 'ZodError') {
       return res.status(400).json({ error: (error as { errors?: unknown }).errors });
     }
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Google login failed:', message);
     res.status(401).json({ error: 'Google login failed' });
   }
 };
 
+/** Xác thực user qua cookie jwt (dùng cho client check đã đăng nhập chưa). JS không đọc được token. */
+export const getMe = async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const { userId, email, role } = authReq.user;
+  res.json({ user: { id: userId, email, role } });
+};
+
+/** Refresh: đọc refreshToken từ HttpOnly cookie, kiểm tra với DB, cấp jwt mới. */
 export const refreshToken = async (req: Request, res: Response) => {
   try {
-    const { refreshToken: token } = req.body;
-
+    const token = req.cookies?.refreshToken;
     if (!token) {
-      return res.status(400).json({ error: 'Refresh token required' });
+      return res.status(401).json({ error: 'Refresh token required' });
     }
 
     const { verifyRefreshToken } = await import('../utils/jwt.js');
     const decoded = verifyRefreshToken(token);
 
     const user = await User.findById(decoded.userId);
-    if (!user) {
+    if (!user || user.refreshToken !== token) {
       return res.status(403).json({ error: 'Invalid token' });
     }
 
@@ -229,8 +306,26 @@ export const refreshToken = async (req: Request, res: Response) => {
     const { generateAccessToken } = await import('../utils/jwt.js');
     const newAccessToken = generateAccessToken(tokenPayload);
 
-    res.json({ accessToken: newAccessToken });
+    res.cookie('jwt', newAccessToken, jwtCookieOptions);
+    res.json({ ok: true });
   } catch (error) {
     res.status(401).json({ error: 'Invalid refresh token' });
   }
+};
+
+/** Logout: xóa cookie và refreshToken trong DB (nếu có jwt hợp lệ). */
+export const logout = async (req: Request, res: Response) => {
+  const token = req.cookies?.jwt;
+  if (token) {
+    try {
+      const { verifyAccessToken } = await import('../utils/jwt.js');
+      const decoded = verifyAccessToken(token);
+      await User.findByIdAndUpdate(decoded.userId, { $set: { refreshToken: null } });
+    } catch {
+      // token hết hạn vẫn xóa cookie
+    }
+  }
+  res.clearCookie('jwt', { httpOnly: true, sameSite: 'lax', path: '/' });
+  res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'lax', path: '/', maxAge: 0 });
+  res.json({ ok: true });
 };
