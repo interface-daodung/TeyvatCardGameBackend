@@ -4,6 +4,7 @@ const ACCESS_SECRET: string = process.env.JWT_ACCESS_SECRET || 'access-secret';
 const REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || 'refresh-secret';
 const ACCESS_EXPIRES_IN: string = process.env.JWT_ACCESS_EXPIRES_IN || '5m';
 const REFRESH_EXPIRES_IN: string = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+const isDev = process.env.NODE_ENV === 'development' ;
 
 export interface TokenPayload {
   userId: string;
@@ -12,7 +13,8 @@ export interface TokenPayload {
 }
 
 export const generateAccessToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES_IN as any });
+  const options: jwt.SignOptions = isDev ? {} : { expiresIn: ACCESS_EXPIRES_IN as any };
+  return jwt.sign(payload, ACCESS_SECRET, options);
 };
 
 export const generateRefreshToken = (payload: TokenPayload): string => {

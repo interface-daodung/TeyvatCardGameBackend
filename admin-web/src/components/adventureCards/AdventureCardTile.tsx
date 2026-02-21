@@ -6,11 +6,16 @@ import type { AdventureCard } from '../../services/gameDataService';
 interface AdventureCardTileProps {
   card: AdventureCard;
   onClick: () => void;
+  /** Hiển thị theo locale đã chọn (nếu có) */
+  displayName?: string;
+  displayDescription?: string;
 }
 
-export function AdventureCardTile({ card, onClick }: AdventureCardTileProps) {
+export function AdventureCardTile({ card, onClick, displayName, displayDescription }: AdventureCardTileProps) {
   const imageUrl = getAdventureCardImageUrl(card);
   const typeIcon = getTypeIcon(card.type);
+  const name = displayName ?? card.name;
+  const description = displayDescription ?? card.description ?? '';
 
   return (
     <Card
@@ -29,7 +34,7 @@ export function AdventureCardTile({ card, onClick }: AdventureCardTileProps) {
         <div className="relative w-full aspect-[420/720] overflow-hidden">
           <img
             src={imageUrl}
-            alt={card.name}
+            alt={name}
             className="absolute inset-0 w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src = '/assets/images/cards/empty.webp';
@@ -72,11 +77,11 @@ export function AdventureCardTile({ card, onClick }: AdventureCardTileProps) {
               <CardHeader className="p-0">
                 <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
                   <span className="text-2xl drop-shadow">{typeIcon}</span>
-                  <span className="truncate">{card.name}</span>
+                  <span className="truncate">{name}</span>
                 </CardTitle>
-                {card.description && (
+                {description && (
                   <CardDescription className="mt-1 text-xs text-slate-200/80 line-clamp-2">
-                    {card.description}
+                    {description}
                   </CardDescription>
                 )}
               </CardHeader>

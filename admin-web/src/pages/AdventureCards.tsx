@@ -1,21 +1,34 @@
 import { useEffect, useState, useMemo } from 'react';
 import { gameDataService, type AdventureCard } from '../services/gameDataService';
+import { localizationService } from '../services/localizationService';
 import { PageHeader } from '../components/PageHeader';
-import { LangDropdown } from '../components/LangDropdown';
+import { LangDropdown, type EditLang } from '../components/LangDropdown';
 import { AdventureCardTile } from '../components/adventureCards/AdventureCardTile';
 import { AdventureCardsFilters } from '../components/adventureCards/AdventureCardsFilters';
 import { AdventureCardsLoadingSkeleton } from '../components/adventureCards/AdventureCardsLoadingSkeleton';
+import { Button } from '../components/ui/button';
 import { AdventureCardEditModal } from '../components/adventureCards/AdventureCardEditModal';
+import { AdventureCardCreateModal } from '../components/adventureCards/AdventureCardCreateModal';
 import { sortAdventureCards } from '../components/adventureCards/adventureCardUtils';
 import { useAdventureCardEdit } from '../components/adventureCards/useAdventureCardEdit';
+
+type CardTranslations = Record<string, Record<EditLang, string>>;
 
 export default function AdventureCards() {
   const [cards, setCards] = useState<AdventureCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'type' | 'rarity' | 'name'>('type');
+  const [cardNameTranslations, setCardNameTranslations] = useState<CardTranslations>({});
+  const [cardDescriptionTranslations, setCardDescriptionTranslations] = useState<CardTranslations>({});
 
-  const edit = useAdventureCardEdit(setCards);
+  const edit = useAdventureCardEdit(setCards, (nameId, field, translations) => {
+    if (field === 'name') {
+      setCardNameTranslations((prev) => ({ ...prev, [nameId]: translations as Record<EditLang, string> }));
+    } else {
+      setCardDescriptionTranslations((prev) => ({ ...prev, [nameId]: translations as Record<EditLang, string> }));
+    }
+  });
 
   useEffect(() => {
     const fetchCards = async () => {
@@ -33,6 +46,35 @@ export default function AdventureCards() {
     fetchCards();
   }, [typeFilter]);
 
+  useEffect(() => {
+    if (cards.length === 0) {
+      setCardNameTranslations({});
+      setCardDescriptionTranslations({});
+      return;
+    }
+    const loadTranslations = async () => {
+      const nameMap: CardTranslations = {};
+      const descMap: CardTranslations = {};
+      const promises = cards.flatMap((card) => {
+        const nameId = card.nameId;
+        const nameKey = `adventureCard.${nameId}.name`;
+        const descKey = `adventureCard.${nameId}.description`;
+        return [
+          localizationService.getLocalizationByKey(nameKey).then((loc) => {
+            if (loc.translations) nameMap[nameId] = loc.translations as Record<EditLang, string>;
+          }).catch(() => {}),
+          localizationService.getLocalizationByKey(descKey).then((loc) => {
+            if (loc.translations) descMap[nameId] = loc.translations as Record<EditLang, string>;
+          }).catch(() => {}),
+        ];
+      });
+      await Promise.all(promises);
+      setCardNameTranslations((prev) => ({ ...prev, ...nameMap }));
+      setCardDescriptionTranslations((prev) => ({ ...prev, ...descMap }));
+    };
+    loadTranslations();
+  }, [cards]);
+
   const sortedCards = useMemo(
     () => sortAdventureCards(cards, sortBy),
     [cards, sortBy]
@@ -49,12 +91,17 @@ export default function AdventureCards() {
           title="Adventure Cards"
           description="Manage adventure cards for maps"
         />
-        <LangDropdown
-          value={edit.editLang}
-          onChange={edit.setEditLang}
-          open={edit.langDropdownOpen}
-          onOpenChange={edit.setLangDropdownOpen}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={edit.handleOpenCreate} className="bg-primary-600 hover:bg-primary-700">
+            Thêm mới
+          </Button>
+          <LangDropdown
+            value={edit.editLang}
+            onChange={edit.setEditLang}
+            open={edit.langDropdownOpen}
+            onOpenChange={edit.setLangDropdownOpen}
+          />
+        </div>
       </div>
 
       <AdventureCardsFilters
@@ -70,6 +117,8 @@ export default function AdventureCards() {
           <AdventureCardTile
             key={card._id}
             card={card}
+            displayName={cardNameTranslations[card.nameId]?.[edit.editLang] ?? card.name}
+            displayDescription={cardDescriptionTranslations[card.nameId]?.[edit.editLang] ?? card.description ?? ''}
             onClick={() => edit.handleOpenEdit(card)}
           />
         ))}
@@ -103,6 +152,25 @@ export default function AdventureCards() {
             edit.setI18nField(null);
             edit.setI18nError(null);
           }}
+          onToggleTree={edit.openImageTree}
+          onToggleTreeExpanded={edit.toggleTreeExpanded}
+          onSelectImage={edit.selectImage}
+          onCloseTree={() => edit.setImageTreeOpen(false)}
+        />
+      )}
+
+      {edit.createOpen && (
+        <AdventureCardCreateModal
+          form={edit.formCreate}
+          setForm={edit.setFormCreate}
+          error={edit.error}
+          saveLoading={edit.saveLoading}
+          imageTreeOpen={edit.imageTreeOpen}
+          imageTree={edit.imageTree}
+          imageTreeLoading={edit.imageTreeLoading}
+          imageTreeExpanded={edit.imageTreeExpanded}
+          onClose={edit.closeCreate}
+          onCreate={edit.handleCreateCard}
           onToggleTree={edit.openImageTree}
           onToggleTreeExpanded={edit.toggleTreeExpanded}
           onSelectImage={edit.selectImage}

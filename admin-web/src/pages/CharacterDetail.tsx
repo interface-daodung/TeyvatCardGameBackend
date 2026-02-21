@@ -53,11 +53,12 @@ export default function CharacterDetail() {
         <CharacterDetailInfo
           character={detail.character}
           effectiveElement={effectiveElement}
+          displayName={detail.getDisplayName()}
           displayHp={detail.displayHp}
           displayLevel={detail.displayLevel}
           displayDescription={detail.getDisplayDescription()}
           editingField={detail.editingField}
-          onOpenI18n={detail.openI18nDescriptionPopup}
+          onOpenI18n={detail.openI18nPopup}
           onStartEdit={detail.startEdit}
         />
         <CharacterDetailEditPanel
@@ -88,14 +89,14 @@ export default function CharacterDetail() {
       </Button>
 
       <I18nDescriptionModal
-        open={detail.i18nDescriptionOpen}
-        title="Sửa Description (i18n)"
+        open={detail.i18nModalField !== null}
+        title={detail.i18nModalField === 'name' ? 'Sửa Name (i18n)' : 'Sửa Description (i18n)'}
         editLang={detail.editLang}
         getValue={detail.getFormI18n}
         onChange={(lang, val) => detail.setFormI18n(lang, val)}
         onTranslate={detail.handleI18nTranslate}
-        onSave={detail.handleI18nDescriptionSave}
-        onClose={detail.closeI18nDescriptionPopup}
+        onSave={detail.handleI18nSave}
+        onClose={detail.closeI18nPopup}
         translateLoading={detail.translateLoading}
         error={detail.i18nError}
       />

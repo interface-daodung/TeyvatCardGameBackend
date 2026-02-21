@@ -62,6 +62,8 @@ export const login = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
 
+    await user.updateOne({ $set: { refreshToken } });
+
     await createAuditLog(
       req as AuthRequest,
       'login',
@@ -354,9 +356,9 @@ export const refreshToken = async (req: Request, res: Response) => {
   }
 };
 
-/** Logout: xóa cookie và refreshToken trong DB (nếu có jwt hợp lệ). */
+/** Logout: xóa cookie và refreshToken trong DB (nếu có jwt hợp lệ). Nhận token từ cookie hoặc Authorization (SPA admin). */
 export const logout = async (req: Request, res: Response) => {
-  const token = req.cookies?.jwt;
+  const token = req.cookies?.jwt ?? (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null);
   if (token) {
     try {
       const { verifyAccessToken } = await import('../utils/jwt.js');

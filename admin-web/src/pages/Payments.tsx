@@ -23,6 +23,17 @@ export default function Payments() {
   const [searchEmail, setSearchEmail] = useState('');
   const [amountSort, setAmountSort] = useState<'asc' | 'desc' | null>(null);
 
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      try {
+        setSearchEmail(decodeURIComponent(hash));
+      } catch {
+        setSearchEmail(hash);
+      }
+    }
+  }, []);
+
   const fetchPayments = useCallback(async (p: number) => {
     try {
       setLoading(true);

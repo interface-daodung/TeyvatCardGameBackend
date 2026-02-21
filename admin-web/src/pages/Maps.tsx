@@ -734,7 +734,7 @@ export default function Maps() {
                     <div className="max-h-[280px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-2">
                       <div className="grid grid-cols-3 gap-2">
                         {adventureCards
-                          .filter((c) => c.type !== 'empty' && c.nameId !== 'empty' && c.type !== 'coin')
+                          .filter((c) => c.type !== 'empty' && c.nameId !== 'empty')
                           .map((c) => (
                           <div
                             key={c._id}

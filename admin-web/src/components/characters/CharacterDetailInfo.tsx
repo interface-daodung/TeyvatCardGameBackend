@@ -5,20 +5,24 @@ import { ElementIcon } from '../ElementIcon';
 import type { Character } from '../../services/gameDataService';
 import type { EditingField } from './characterDetailUtils';
 
+type I18nField = 'name' | 'description';
+
 interface CharacterDetailInfoProps {
   character: Character;
   effectiveElement: string;
+  displayName: string;
   displayHp: number;
   displayLevel: number;
   displayDescription: string;
   editingField: EditingField;
-  onOpenI18n: () => void;
+  onOpenI18n: (field: I18nField) => void;
   onStartEdit: (field: EditingField, currentValue?: string | number) => void;
 }
 
 export function CharacterDetailInfo({
   character,
   effectiveElement,
+  displayName,
   displayHp,
   displayLevel,
   displayDescription,
@@ -33,18 +37,28 @@ export function CharacterDetailInfo({
       </h2>
       <Card className="border-0 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl text-gray-700">{character.name}</CardTitle>
-          <div className="flex items-start gap-2 mt-2 group/desc">
-            <CardDescription className="text-base flex-1">{displayDescription}</CardDescription>
-            <button
-              type="button"
-              onClick={onOpenI18n}
-              className="text-muted-foreground hover:text-foreground flex-shrink-0 opacity-0 group-hover/desc:opacity-60 transition-opacity"
-              aria-label="Edit description i18n"
-            >
+          <button
+            type="button"
+            onClick={() => onOpenI18n('name')}
+            className="flex items-start gap-2 group/name w-full text-left rounded-md -m-1 p-1 hover:bg-gray-50 transition-colors cursor-pointer"
+            aria-label="Edit name i18n"
+          >
+            <CardTitle className="text-2xl text-gray-700 flex-1">{displayName}</CardTitle>
+            <span className="text-muted-foreground hover:text-foreground flex-shrink-0 opacity-0 group-hover/name:opacity-60 transition-opacity">
               <FontAwesomeIcon icon={faSquarePen} className="w-3.5 h-3.5" />
-            </button>
-          </div>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenI18n('description')}
+            className="flex items-start gap-2 mt-2 group/desc w-full text-left rounded-md -m-1 p-1 hover:bg-gray-50 transition-colors cursor-pointer"
+            aria-label="Edit description i18n"
+          >
+            <CardDescription className="text-base flex-1">{displayDescription}</CardDescription>
+            <span className="text-muted-foreground hover:text-foreground flex-shrink-0 opacity-0 group-hover/desc:opacity-60 transition-opacity">
+              <FontAwesomeIcon icon={faSquarePen} className="w-3.5 h-3.5" />
+            </span>
+          </button>
         </CardHeader>
         <CardContent className="space-y-4">
           <button

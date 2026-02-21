@@ -29,12 +29,12 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
-const envExamplePath = path.join(rootDir, '.env.example');
-const envPath = path.join(rootDir, '.env');
+const env = process.env.NODE_ENV || 'development';
 
-// .env.example trước (mặc định), .env sau để ghi đè
-const resultExample = dotenv.config({ path: envExamplePath });
-const resultEnv = dotenv.config({ path: envPath });
+// .env (chung/placeholder) trước, sau đó .env.${NODE_ENV} để ghi đè
+dotenv.config({ path: path.join(rootDir, '.env') });
+const resultEnv = dotenv.config({ path: path.join(rootDir, `.env.${env}`) });
+const envPath = path.join(rootDir, `.env.${env}`);
 
 const logger = pino({
   transport: {
@@ -48,9 +48,6 @@ const logger = pino({
 // Log đường dẫn .env và GOOGLE_CLIENT_ID để debug khi server "không đọc được"
 const hasGoogleClientId = Boolean(process.env.GOOGLE_CLIENT_ID?.trim());
 logger.info({
-  envExamplePath,
-  envExampleExists: fs.existsSync(envExamplePath),
-  envExampleError: resultExample.error?.message ?? null,
   envPath,
   envExists: fs.existsSync(envPath),
   envError: resultEnv.error?.message ?? null,

@@ -23,6 +23,17 @@ export default function Users() {
   const [filterRole, setFilterRole] = useState('');
   const [filterBanned, setFilterBanned] = useState('');
 
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      try {
+        setSearch(decodeURIComponent(hash));
+      } catch {
+        setSearch(hash);
+      }
+    }
+  }, []);
+
   const buildParams = useCallback((): GetUsersParams => {
     const params: GetUsersParams = {};
     if (search.trim()) params.search = search.trim();

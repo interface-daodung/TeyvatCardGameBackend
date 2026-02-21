@@ -38,6 +38,17 @@ export default function LocalizationPage() {
   const [emptyOnly, setEmptyOnly] = useState(false);
 
   useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      try {
+        setSearchInput(decodeURIComponent(hash));
+      } catch {
+        setSearchInput(hash);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     const t = setTimeout(() => setSearchKey(searchInput), 350);
     return () => clearTimeout(t);
   }, [searchInput]);

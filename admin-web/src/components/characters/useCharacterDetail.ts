@@ -22,8 +22,9 @@ export function useCharacterDetail(id: string | undefined) {
   const [displayHp, setDisplayHp] = useState(0);
   const [displayElement, setDisplayElement] = useState('');
   const [displayLevel, setDisplayLevel] = useState(0);
+  const [nameTranslations, setNameTranslations] = useState<Record<string, string>>({});
   const [descriptionTranslations, setDescriptionTranslations] = useState<Record<string, string>>({});
-  const [i18nDescriptionOpen, setI18nDescriptionOpen] = useState(false);
+  const [i18nModalField, setI18nModalField] = useState<'name' | 'description' | null>(null);
   const [formI18nEn, setFormI18nEn] = useState('');
   const [formI18nVi, setFormI18nVi] = useState('');
   const [formI18nJa, setFormI18nJa] = useState('');
@@ -69,11 +70,12 @@ export function useCharacterDetail(id: string | undefined) {
 
   useEffect(() => {
     if (!character) return;
-    const key = `character.${character.nameId}.description`;
-    localizationService
-      .getLocalizationByKey(key)
-      .then((loc) => setDescriptionTranslations(loc.translations ?? {}))
-      .catch(() => {});
+    const nameKey = `character.${character.nameId}.name`;
+    const descKey = `character.${character.nameId}.description`;
+    Promise.all([
+      localizationService.getLocalizationByKey(nameKey).then((loc) => setNameTranslations(loc.translations ?? {})).catch(() => {}),
+      localizationService.getLocalizationByKey(descKey).then((loc) => setDescriptionTranslations(loc.translations ?? {})).catch(() => {}),
+    ]);
   }, [character?.nameId]);
 
   useEffect(() => {
@@ -157,16 +159,22 @@ export function useCharacterDetail(id: string | undefined) {
 
   const cancelEdit = () => setEditingField(null);
 
-  const openI18nDescriptionPopup = () => {
-    setI18nDescriptionOpen(true);
+  const openI18nPopup = (field: 'name' | 'description') => {
+    setI18nModalField(field);
     setI18nError(null);
-    setFormI18nEn(descriptionTranslations.en ?? character?.description ?? '');
-    setFormI18nVi(descriptionTranslations.vi ?? '');
-    setFormI18nJa(descriptionTranslations.ja ?? '');
+    if (field === 'name') {
+      setFormI18nEn(nameTranslations.en ?? character?.name ?? '');
+      setFormI18nVi(nameTranslations.vi ?? '');
+      setFormI18nJa(nameTranslations.ja ?? '');
+    } else {
+      setFormI18nEn(descriptionTranslations.en ?? character?.description ?? '');
+      setFormI18nVi(descriptionTranslations.vi ?? '');
+      setFormI18nJa(descriptionTranslations.ja ?? '');
+    }
   };
 
-  const closeI18nDescriptionPopup = () => {
-    setI18nDescriptionOpen(false);
+  const closeI18nPopup = () => {
+    setI18nModalField(null);
     setI18nError(null);
   };
 
@@ -211,9 +219,12 @@ export function useCharacterDetail(id: string | undefined) {
     }
   };
 
-  const handleI18nDescriptionSave = async () => {
-    if (!character) return;
-    const key = `character.${character.nameId}.description`;
+  const handleI18nSave = async () => {
+    if (!character || !i18nModalField) return;
+    const key =
+      i18nModalField === 'name'
+        ? `character.${character.nameId}.name`
+        : `character.${character.nameId}.description`;
     const translations = {
       en: formI18nEn.trim(),
       vi: formI18nVi.trim(),
@@ -222,18 +233,23 @@ export function useCharacterDetail(id: string | undefined) {
     setI18nError(null);
     try {
       await localizationService.updateLocalization(key, translations);
-      setDescriptionTranslations(translations);
-      closeI18nDescriptionPopup();
+      if (i18nModalField === 'name') setNameTranslations(translations);
+      else setDescriptionTranslations(translations);
+      closeI18nPopup();
     } catch {
       try {
         await localizationService.createLocalization(key, translations);
-        setDescriptionTranslations(translations);
-        closeI18nDescriptionPopup();
+        if (i18nModalField === 'name') setNameTranslations(translations);
+        else setDescriptionTranslations(translations);
+        closeI18nPopup();
       } catch {
         setI18nError('Lỗi lưu localization');
       }
     }
   };
+
+  const getDisplayName = () =>
+    nameTranslations[editLang] ?? nameTranslations.en ?? character?.name ?? '';
 
   const getDisplayDescription = () =>
     descriptionTranslations[editLang] ??
@@ -266,8 +282,9 @@ export function useCharacterDetail(id: string | undefined) {
     displayElement,
     displayLevel,
     setDisplayLevel: setDisplayLevelWithValue,
+    nameTranslations,
     descriptionTranslations,
-    i18nDescriptionOpen,
+    i18nModalField,
     formI18nEn,
     formI18nVi,
     formI18nJa,
@@ -287,12 +304,13 @@ export function useCharacterDetail(id: string | undefined) {
     persistChanges,
     saveEdit,
     cancelEdit,
-    openI18nDescriptionPopup,
-    closeI18nDescriptionPopup,
+    openI18nPopup,
+    closeI18nPopup,
     getFormI18n,
     setFormI18n,
     handleI18nTranslate,
-    handleI18nDescriptionSave,
+    handleI18nSave,
+    getDisplayName,
     getDisplayDescription,
     setDisplayElementAndPersist,
   };

@@ -47,6 +47,17 @@ export default function Logs() {
   const [filterContent, setFilterContent] = useState<'' | 'info' | 'log' | 'error'>('');
   const [filterEmail, setFilterEmail] = useState('');
 
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      try {
+        setFilterEmail(decodeURIComponent(hash));
+      } catch {
+        setFilterEmail(hash);
+      }
+    }
+  }, []);
+
   const [debouncedFilters, setDebouncedFilters] = useState({
     action: '',
     resource: '',

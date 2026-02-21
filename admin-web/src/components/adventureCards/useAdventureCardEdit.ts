@@ -4,10 +4,30 @@ import { localizationService } from '../../services/localizationService';
 import { filesService, type FileTreeItem } from '../../services/filesService';
 import type { EditLang } from '../LangDropdown';
 
-export function useAdventureCardEdit(setCards: React.Dispatch<React.SetStateAction<AdventureCard[]>>) {
+const CREATE_DEFAULT: Partial<AdventureCard> = {
+  nameId: '',
+  name: '',
+  description: '',
+  type: 'weapon',
+  status: 'enabled',
+  rarity: 1,
+};
+
+export type AdventureCardEditI18nSaved = (
+  nameId: string,
+  field: 'name' | 'description',
+  translations: Record<string, string>
+) => void;
+
+export function useAdventureCardEdit(
+  setCards: React.Dispatch<React.SetStateAction<AdventureCard[]>>,
+  onI18nSaved?: AdventureCardEditI18nSaved
+) {
   const [editCard, setEditCard] = useState<AdventureCard | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [form, setForm] = useState<Partial<AdventureCard>>({});
+  const [createOpen, setCreateOpen] = useState(false);
+  const [formCreate, setFormCreate] = useState<Partial<AdventureCard>>(CREATE_DEFAULT);
   const [saveLoading, setSaveLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editLang, setEditLang] = useState<EditLang>('vi');
@@ -129,6 +149,7 @@ export function useAdventureCardEdit(setCards: React.Dispatch<React.SetStateActi
       setForm((p) => ({ ...p, description: translations.en || p.description || editCard.description }));
       setDescriptionTranslations(translations);
     }
+    onI18nSaved?.(editCard.nameId, i18nField, translations);
     setI18nField(null);
     setI18nError(null);
   };
@@ -158,7 +179,11 @@ export function useAdventureCardEdit(setCards: React.Dispatch<React.SetStateActi
   };
 
   const selectImage = (path: string) => {
-    setForm((p) => ({ ...p, image: path }));
+    if (createOpen) {
+      setFormCreate((p) => ({ ...p, image: path }));
+    } else {
+      setForm((p) => ({ ...p, image: path }));
+    }
     setImageTreeOpen(false);
   };
 
@@ -197,6 +222,50 @@ export function useAdventureCardEdit(setCards: React.Dispatch<React.SetStateActi
 
   const closeEdit = () => setEditOpen(false);
 
+  const handleOpenCreate = () => {
+    setFormCreate({ ...CREATE_DEFAULT });
+    setCreateOpen(true);
+    setError(null);
+    setImageTreeOpen(false);
+  };
+
+  const closeCreate = () => setCreateOpen(false);
+
+  const handleCreateCard = async () => {
+    const nameId = (formCreate.nameId ?? '').trim();
+    const name = (formCreate.name ?? '').trim();
+    const type = formCreate.type ?? 'weapon';
+    if (!nameId || !name) {
+      setError('Vui lòng nhập Name ID và Name');
+      return;
+    }
+    setSaveLoading(true);
+    setError(null);
+    try {
+      const payload: Partial<AdventureCard> = {
+        nameId,
+        name,
+        description: formCreate.description ?? '',
+        type,
+        status: formCreate.status ?? 'enabled',
+        rarity: formCreate.rarity ?? 1,
+        image: formCreate.image,
+        category: formCreate.category,
+        element: formCreate.element,
+        clan: formCreate.clan,
+      };
+      const created = await gameDataService.createAdventureCard(payload);
+      setCards((prev) => [...prev, created]);
+      setCreateOpen(false);
+    } catch (e: unknown) {
+      setError(
+        e && typeof e === 'object' && 'message' in e ? String((e as Error).message) : 'Failed to create card'
+      );
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
   const nameDisplay =
     (nameTranslations ?? undefined)?.[editLang] ?? form.name ?? editCard?.name ?? '';
   const descriptionDisplay =
@@ -207,6 +276,9 @@ export function useAdventureCardEdit(setCards: React.Dispatch<React.SetStateActi
     editOpen,
     form,
     setForm,
+    createOpen,
+    formCreate,
+    setFormCreate,
     saveLoading,
     error,
     editLang,
@@ -234,6 +306,9 @@ export function useAdventureCardEdit(setCards: React.Dispatch<React.SetStateActi
     handleOpenEdit,
     handleSaveCard,
     closeEdit,
+    handleOpenCreate,
+    closeCreate,
+    handleCreateCard,
     nameDisplay,
     descriptionDisplay,
   };

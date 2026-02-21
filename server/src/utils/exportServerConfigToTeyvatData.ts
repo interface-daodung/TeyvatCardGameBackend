@@ -29,12 +29,14 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
   libraryCards: Record<string, unknown[]>;
   cardCharacterList: unknown[];
   theme: Record<string, unknown>;
+  items: unknown[];
   locales: { en: Record<string, string>; vi: Record<string, string>; ja: Record<string, string> };
 } {
   const maps = (configuration.MapsData as { maps?: RawDoc[] })?.maps ?? [];
   const cards = (configuration.CardsData as { cards?: RawDoc[] })?.cards ?? [];
   const characters = (configuration.CharacterData as { characters?: RawDoc[] })?.characters ?? [];
   const themes = (configuration.themeData as { themes?: RawDoc[] })?.themes ?? [];
+  const rawItems = (configuration.itemData as { items?: RawDoc[] })?.items ?? [];
   const localizations = configuration.localizations as {
     en?: Record<string, string>;
     vi?: Record<string, string>;
@@ -153,11 +155,24 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
     ? { name: (firstTheme as any).name ?? 'default', colors: (firstTheme as any).colors ?? {} }
     : { name: 'default', colors: { primary: '#95245b', secondary: '#96576a', accent: '#FFD700', neutral: '#e0e0e0', background: '#000000', surface: '#1a1a2e', text: '#ffffff' } };
 
+  // items: Item[] -> game format (nameId, basePower, baseCooldown, maxLevel, levelStats)
+  const items = rawItems.map((doc) => {
+    const d = doc as any;
+    return {
+      nameId: d.nameId ?? '',
+      basePower: d.basePower ?? 1,
+      baseCooldown: d.baseCooldown ?? 4,
+      maxLevel: d.maxLevel ?? 10,
+      levelStats: Array.isArray(d.levelStats) ? d.levelStats : [],
+    };
+  });
+
   return {
     dungeonList,
     libraryCards,
     cardCharacterList,
     theme,
+    items,
     locales: {
       en: localizations?.en ?? {},
       vi: localizations?.vi ?? {},
@@ -198,6 +213,7 @@ export function exportServerConfigToTeyvatData(
       { relPath: 'libraryCards.json', data: transformed.libraryCards },
       { relPath: 'cardCharacterList.json', data: transformed.cardCharacterList },
       { relPath: 'theme.json', data: transformed.theme },
+      { relPath: 'items.json', data: transformed.items },
       { relPath: 'locales/en.json', data: transformed.locales.en },
       { relPath: 'locales/vi.json', data: transformed.locales.vi },
       { relPath: 'locales/ja.json', data: transformed.locales.ja },

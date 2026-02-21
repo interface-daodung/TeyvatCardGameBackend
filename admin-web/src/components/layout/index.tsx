@@ -49,11 +49,36 @@ export default function Layout() {
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchValue.trim()) {
-      const searchQuery = encodeURIComponent(searchValue.trim());
-      window.open(`https://www.google.com/search?q=${searchQuery}`, '_blank');
+    if (e.key !== 'Enter') return;
+    const trimmed = searchValue.trim();
+    if (!trimmed) return;
+    if (trimmed.startsWith('logs:')) {
+      const rest = trimmed.slice(5).trim();
+      navigate(`/logs${rest ? `#${encodeURIComponent(rest)}` : ''}`);
       setSearchValue('');
+      return;
     }
+    if (trimmed.startsWith('pays:')) {
+      const rest = trimmed.slice(5).trim();
+      navigate(`/payments${rest ? `#${encodeURIComponent(rest)}` : ''}`);
+      setSearchValue('');
+      return;
+    }
+    if (trimmed.startsWith('users:')) {
+      const rest = trimmed.slice(6).trim();
+      navigate(`/users${rest ? `#${encodeURIComponent(rest)}` : ''}`);
+      setSearchValue('');
+      return;
+    }
+    if (trimmed.startsWith('local:')) {
+      const rest = trimmed.slice(6).trim();
+      navigate(`/localization${rest ? `#${encodeURIComponent(rest)}` : ''}`);
+      setSearchValue('');
+      return;
+    }
+    const searchQuery = encodeURIComponent(trimmed);
+    window.open(`https://www.google.com/search?q=${searchQuery}`, '_blank');
+    setSearchValue('');
   };
 
   const handleNotificationItemClick = (path: string) => {
