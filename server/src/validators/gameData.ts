@@ -46,6 +46,22 @@ export const createAdventureCardSchema = z.object({
   className: z.string().optional(),
   image: z.string().optional(),
   status: z.enum(['enabled', 'disabled', 'hidden']).optional(),
+  // Additional fields based on type
+  healthMin: z.number().optional(),
+  healthMax: z.number().optional(),
+  scoreMin: z.number().optional(),
+  scoreMax: z.number().optional(),
+  damageMin: z.number().optional(),
+  damageMax: z.number().optional(),
+  damage: z.number().optional(),
+  countdown: z.number().optional(),
+  durabilityMin: z.number().optional(),
+  durabilityMax: z.number().optional(),
+  foodMin: z.number().optional(),
+  foodMax: z.number().optional(),
+  food: z.number().optional(),
+  hp: z.number().optional(),
+  resonanceDescription: z.string().optional(),
 });
 
 export const updateAdventureCardSchema = createAdventureCardSchema.partial();
@@ -79,15 +95,15 @@ const levelStatSchema = z.object({
 
 export const createItemSchema = z.object({
   nameId: z.string().min(1),
-  basePower: z.number().min(1).max(20),
-  baseCooldown: z.number().min(4).max(19),
-  maxLevel: z.number().min(1).max(99).optional(),
+  basePower: z.number().min(0, "Base Power không được nhỏ hơn 0").max(50, "Base Power không được vượt quá 50"),
+  baseCooldown: z.number().min(0, "Base Cooldown không được nhỏ hơn 0").max(50, "Base Cooldown không được vượt quá 50"),
+  maxLevel: z.number().min(1, "Max Level tối thiểu là 1").max(99, "Max Level tối đa là 99").optional(),
   levelStats: z.array(levelStatSchema).optional(),
 });
 
 export const updateItemSchema = z.object({
-  basePower: z.number().min(1).max(20).optional(),
-  baseCooldown: z.number().min(4).max(19).optional(),
-  maxLevel: z.number().min(1).max(99).optional(),
+  basePower: z.number().min(0, "Base Power không được nhỏ hơn 0").max(50, "Base Power không được vượt quá 50").optional(),
+  baseCooldown: z.number().min(0, "Base Cooldown không được nhỏ hơn 0").max(50, "Base Cooldown không được vượt quá 50").optional(),
+  maxLevel: z.number().min(1, "Max Level tối thiểu là 1").max(99, "Max Level tối đa là 99").optional(),
   levelStats: z.array(levelStatSchema).optional(),
 });

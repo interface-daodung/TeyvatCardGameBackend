@@ -102,11 +102,29 @@ export const checkServerConfigurationUpdate = async (req: AuthRequest, res: Resp
 
     const configuration: Record<string, unknown> = {
       MapsData: { maps },
-      CardsData: { cards },
-      CharacterData: { characters },
+      CardsData: {
+        cards: (cards as any[]).map((c) => ({
+          ...c,
+          maxLevel: c.maxLevel ?? 10,
+          levelStats: Array.isArray(c.levelStats) ? c.levelStats : [],
+        })),
+      },
+      CharacterData: {
+        characters: (characters as any[]).map((ch) => ({
+          ...ch,
+          maxLevel: ch.maxLevel ?? 10,
+          levelStats: Array.isArray(ch.levelStats) ? ch.levelStats : [],
+        })),
+      },
       localizations: localizationSnapshot,
       themeData: { themes },
-      itemData: { items },
+      itemData: {
+        items: (items as any[]).map((i) => ({
+          ...i,
+          maxLevel: i.maxLevel ?? 10,
+          levelStats: Array.isArray(i.levelStats) ? i.levelStats : [],
+        })),
+      },
     };
 
     const currentHash = hashConfiguration(configuration);
@@ -312,11 +330,29 @@ export const syncServerConfigurationVersion = async (req: AuthRequest, res: Resp
 
     const configuration = {
       MapsData: { maps },
-      CardsData: { cards },
-      CharacterData: { characters },
+      CardsData: {
+        cards: (cards as any[]).map((c) => ({
+          ...c,
+          maxLevel: c.maxLevel ?? 10,
+          levelStats: Array.isArray(c.levelStats) ? c.levelStats : [],
+        })),
+      },
+      CharacterData: {
+        characters: (characters as any[]).map((ch) => ({
+          ...ch,
+          maxLevel: ch.maxLevel ?? 10,
+          levelStats: Array.isArray(ch.levelStats) ? ch.levelStats : [],
+        })),
+      },
       localizations: localizationSnapshot,
       themeData: { themes },
-      itemData: { items },
+      itemData: {
+        items: (items as any[]).map((i) => ({
+          ...i,
+          maxLevel: i.maxLevel ?? 10,
+          levelStats: Array.isArray(i.levelStats) ? i.levelStats : [],
+        })),
+      },
     };
 
     const doc = await ServerConfigurationVersion.create({

@@ -3,6 +3,7 @@ import { Button } from '../ui/button';
 import { AdventureCardImagePicker } from './AdventureCardImagePicker';
 import type { AdventureCard } from '../../services/gameDataService';
 import type { FileTreeItem } from '../../services/filesService';
+import { DualRangeSlider } from '../ui/DualRangeSlider';
 
 const TYPES: AdventureCard['type'][] = [
   'weapon',
@@ -13,6 +14,29 @@ const TYPES: AdventureCard['type'][] = [
   'bomb',
   'coin',
   'empty',
+];
+
+const CLANS = [
+  'abyss',
+  'Automatons',
+  'boss',
+  'eremite',
+  'fatui',
+  'hilichurl',
+  'kairagi',
+  'shroom',
+  'slime',
+];
+
+const ELEMENTS = [
+  'anemo',
+  'cryo',
+  'dendro',
+  'electro',
+  'geo',
+  'hydro',
+  'pyro',
+  'none',
 ];
 const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled', 'hidden'];
 
@@ -164,6 +188,107 @@ export function AdventureCardCreateModal({
                     ))}
                   </select>
                 </div>
+
+                {/* Conditional Fields based on Type */}
+                {type === 'enemy' && (
+                  <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Element</label>
+                        <select
+                          className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-primary-500 transition-all shadow-sm capitalize"
+                          value={form.element ?? ''}
+                          onChange={(e) => setForm((p) => ({ ...p, element: e.target.value }))}
+                        >
+                          <option value="">Chọn Element</option>
+                          {ELEMENTS.map((el) => (
+                            <option key={el} value={el} className="capitalize">
+                              {el}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Clan</label>
+                        <select
+                          className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-primary-500 transition-all shadow-sm capitalize"
+                          value={form.clan ?? ''}
+                          onChange={(e) => setForm((p) => ({ ...p, clan: e.target.value }))}
+                        >
+                          <option value="">Chọn Clan</option>
+                          {CLANS.map((clan) => (
+                            <option key={clan} value={clan} className="capitalize">
+                              {clan}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <DualRangeSlider
+                      min={0}
+                      max={49}
+                      start={[form.healthMin ?? 1, form.healthMax ?? 10]}
+                      label="Health Range (Min - Max)"
+                      onChange={([min, max]) => setForm((p) => ({ ...p, healthMin: min, healthMax: max }))}
+                    />
+                    <DualRangeSlider
+                      min={0}
+                      max={49}
+                      start={[form.scoreMin ?? 1, form.scoreMax ?? 5]}
+                      label="Score Range (Min - Max)"
+                      onChange={([min, max]) => setForm((p) => ({ ...p, scoreMin: min, scoreMax: max }))}
+                    />
+                  </div>
+                )}
+
+                {(type === 'bomb' || type === 'trap') && (
+                  <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+                    <DualRangeSlider
+                      min={0}
+                      max={49}
+                      start={[form.damageMin ?? 1, form.damageMax ?? 10]}
+                      label="Damage Range (Min - Max)"
+                      onChange={([min, max]) => setForm((p) => ({ ...p, damageMin: min, damageMax: max }))}
+                    />
+                    {type === 'bomb' && (
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Countdown</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="49"
+                          className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                          value={form.countdown ?? ''}
+                          onChange={(e) => setForm((p) => ({ ...p, countdown: Math.min(49, Math.max(0, parseInt(e.target.value) || 0)) }))}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {(type === 'treasure' || type === 'weapon') && (
+                  <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                    <DualRangeSlider
+                      min={0}
+                      max={49}
+                      start={[form.durabilityMin ?? 1, form.durabilityMax ?? 5]}
+                      label="Durability Range (Min - Max)"
+                      onChange={([min, max]) => setForm((p) => ({ ...p, durabilityMin: min, durabilityMax: max }))}
+                    />
+                  </div>
+                )}
+
+                {type === 'food' && (
+                  <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                    <DualRangeSlider
+                      min={0}
+                      max={49}
+                      start={[form.foodMin ?? 1, form.foodMax ?? 10]}
+                      label="Food Heal Range (Min - Max)"
+                      onChange={([min, max]) => setForm((p) => ({ ...p, foodMin: min, foodMax: max }))}
+                    />
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1">

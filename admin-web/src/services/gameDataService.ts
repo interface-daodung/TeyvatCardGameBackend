@@ -43,6 +43,22 @@ export interface AdventureCard {
   className?: string;
   image?: string;
   status: 'enabled' | 'disabled' | 'hidden';
+  // Additional fields based on type
+  healthMin?: number;
+  healthMax?: number;
+  scoreMin?: number;
+  scoreMax?: number;
+  damageMin?: number;
+  damageMax?: number;
+  damage?: number;
+  countdown?: number;
+  durabilityMin?: number;
+  durabilityMax?: number;
+  foodMin?: number;
+  foodMax?: number;
+  food?: number;
+  hp?: number;
+  resonanceDescription?: string;
 }
 
 export interface MapTypeRatios {

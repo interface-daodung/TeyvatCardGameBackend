@@ -201,6 +201,7 @@ export function useAdventureCardEdit(
     setError(null);
     try {
       const payload: Partial<AdventureCard> = {
+        ...form,
         name: form.name ?? editCard.name,
         description: form.description ?? editCard.description,
         rarity: form.rarity ?? editCard.rarity,
@@ -243,16 +244,13 @@ export function useAdventureCardEdit(
     setError(null);
     try {
       const payload: Partial<AdventureCard> = {
+        ...formCreate,
         nameId,
         name,
         description: formCreate.description ?? '',
         type,
         status: formCreate.status ?? 'enabled',
         rarity: formCreate.rarity ?? 1,
-        image: formCreate.image,
-        category: formCreate.category,
-        element: formCreate.element,
-        clan: formCreate.clan,
       };
       const created = await gameDataService.createAdventureCard(payload);
       setCards((prev) => [...prev, created]);

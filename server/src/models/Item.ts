@@ -35,14 +35,14 @@ const itemSchema = new Schema<IItem>(
     basePower: {
       type: Number,
       required: true,
-      min: 1,
-      max: 20,
+      min: 0,
+      max: 50,
     },
     baseCooldown: {
       type: Number,
       required: true,
-      min: 4,
-      max: 19,
+      min: 0,
+      max: 50,
     },
     maxLevel: {
       type: Number,

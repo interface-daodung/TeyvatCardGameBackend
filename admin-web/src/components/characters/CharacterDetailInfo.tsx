@@ -2,13 +2,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquarePen } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { ElementIcon } from '../ElementIcon';
-import type { Character } from '../../services/gameDataService';
 import type { EditingField } from './characterDetailUtils';
 
 type I18nField = 'name' | 'description';
 
 interface CharacterDetailInfoProps {
-  character: Character;
   effectiveElement: string;
   displayName: string;
   displayHp: number;
@@ -20,7 +18,6 @@ interface CharacterDetailInfoProps {
 }
 
 export function CharacterDetailInfo({
-  character,
   effectiveElement,
   displayName,
   displayHp,

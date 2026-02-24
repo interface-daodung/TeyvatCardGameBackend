@@ -128,6 +128,26 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
     if ((c as any).element != null) entry.element = (c as any).element;
     if ((c as any).clan != null) entry.clan = (c as any).clan;
     if ((c as any).rarity != null) entry.rarity = (c as any).rarity;
+
+    // Additional fields for different card types
+    if ((c as any).healthMin != null) entry.healthMin = (c as any).healthMin;
+    if ((c as any).healthMax != null) entry.healthMax = (c as any).healthMax;
+    if ((c as any).hp != null) entry.hp = (c as any).hp;
+    if ((c as any).scoreMin != null) entry.scoreMin = (c as any).scoreMin;
+    if ((c as any).scoreMax != null) entry.scoreMax = (c as any).scoreMax;
+    if ((c as any).damageMin != null) entry.damageMin = (c as any).damageMin;
+    if ((c as any).damageMax != null) entry.damageMax = (c as any).damageMax;
+    if ((c as any).damage != null) entry.damage = (c as any).damage;
+    if ((c as any).countdown != null) entry.countdown = (c as any).countdown;
+    if ((c as any).durabilityMin != null) entry.durabilityMin = (c as any).durabilityMin;
+    if ((c as any).durabilityMax != null) entry.durabilityMax = (c as any).durabilityMax;
+    if ((c as any).foodMin != null) entry.foodMin = (c as any).foodMin;
+    if ((c as any).foodMax != null) entry.foodMax = (c as any).foodMax;
+    if ((c as any).food != null) entry.food = (c as any).food;
+    if ((c as any).resonanceDescription != null) entry.resonanceDescription = (c as any).resonanceDescription;
+    if ((c as any).maxLevel != null) entry.maxLevel = (c as any).maxLevel;
+    if ((c as any).levelStats != null) entry.levelStats = (c as any).levelStats;
+
     arr.push(entry);
   }
   const libraryCards: Record<string, unknown[]> = {};
@@ -141,13 +161,18 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
   // cardCharacterList: Character[]
   const cardCharacterList = characters
     .filter((ch) => ((ch as any).status ?? 'enabled') === 'enabled')
-    .map((ch) => ({
-      id: (ch as any).nameId,
-      name: (ch as any).name,
-      description: (ch as any).description ?? '',
-      hp: (ch as any).HP ?? (ch as any).hp ?? 10,
-      element: (ch as any).element ?? 'none',
-    }));
+    .map((ch) => {
+      const d = ch as any;
+      return {
+        id: d.nameId,
+        name: d.name,
+        description: d.description ?? '',
+        hp: d.HP ?? d.hp ?? 10,
+        element: d.element ?? 'none',
+        maxLevel: d.maxLevel ?? 10,
+        levelStats: Array.isArray(d.levelStats) ? d.levelStats : [],
+      };
+    });
 
   // theme: first theme or default
   const firstTheme = Array.isArray(themes) && themes.length > 0 ? themes[0] : null;

@@ -68,6 +68,7 @@ export default function Equipment() {
           setFormI18n={eq.setFormI18n}
           translateLoading={eq.translateLoading}
           i18nError={eq.i18nError}
+          error={eq.error}
           onClose={eq.closeEditModal}
           onSave={eq.handleSave}
           onOpenI18nPopup={eq.openI18nPopup}

@@ -26,6 +26,7 @@ interface EquipmentEditModalProps {
   setFormI18n: (lang: EditLang, val: string) => void;
   translateLoading: boolean;
   i18nError: string | null;
+  error: string | null;
   onClose: () => void;
   onSave: () => void;
   onOpenI18nPopup: (field: 'name' | 'description' | 'level') => void;
@@ -61,6 +62,7 @@ export function EquipmentEditModal({
   setFormI18n,
   translateLoading,
   i18nError,
+  error,
   onClose,
   onSave,
   onOpenI18nPopup,
@@ -283,14 +285,21 @@ export function EquipmentEditModal({
               </div>
             </div>
           </div>
-          <div className="flex justify-end items-center p-4 border-t border-border gap-2">
-            <Button
-              onClick={onSave}
-              disabled={saveLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-            >
-              {saveLoading ? 'Đang lưu...' : 'Lưu'}
-            </Button>
+          <div className="flex flex-col gap-2 p-4 border-t border-border">
+            {error && (
+              <div className="bg-destructive/10 text-destructive text-xs px-3 py-2 rounded-md">
+                {error}
+              </div>
+            )}
+            <div className="flex justify-end items-center gap-2">
+              <Button
+                onClick={onSave}
+                disabled={saveLoading}
+                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+              >
+                {saveLoading ? 'Đang lưu...' : 'Lưu'}
+              </Button>
+            </div>
           </div>
         </div>
 

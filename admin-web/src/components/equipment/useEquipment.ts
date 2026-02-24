@@ -81,6 +81,7 @@ export function useEquipment() {
     setFormValues({ ...item });
     setEditingField(null);
     setI18nPopupField(null);
+    setError(null);
     setEditModalOpen(true);
   };
 
@@ -89,6 +90,7 @@ export function useEquipment() {
     setSelectedItem(null);
     setEditingField(null);
     setI18nPopupField(null);
+    setError(null);
   };
 
   const getFormI18n = (lang: EditLang) =>
@@ -326,9 +328,18 @@ export function useEquipment() {
         p && p._id === selectedItem._id ? { ...p, ...formValues } : p
       );
       closeEditModal();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save failed:', err);
-      setError(err instanceof Error ? err.message : 'Lỗi lưu');
+      let msg = err instanceof Error ? err.message : 'Lỗi lưu';
+      if (err.response?.data?.error) {
+        const serverErr = err.response.data.error;
+        if (Array.isArray(serverErr)) {
+          msg = serverErr.map((e: any) => e.message).join(', ');
+        } else if (typeof serverErr === 'string') {
+          msg = serverErr;
+        }
+      }
+      setError(msg);
     } finally {
       setSaveLoading(false);
     }

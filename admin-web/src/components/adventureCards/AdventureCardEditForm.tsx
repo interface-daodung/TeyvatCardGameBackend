@@ -1,7 +1,31 @@
 import { Badge } from '../ui/badge';
 import type { AdventureCard } from '../../services/gameDataService';
+import { DualRangeSlider } from '../ui/DualRangeSlider';
 
 const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled', 'hidden'];
+
+const CLANS = [
+  'abyss',
+  'Automatons',
+  'boss',
+  'eremite',
+  'fatui',
+  'hilichurl',
+  'kairagi',
+  'shroom',
+  'slime',
+];
+
+const ELEMENTS = [
+  'anemo',
+  'cryo',
+  'dendro',
+  'electro',
+  'geo',
+  'hydro',
+  'pyro',
+  'none',
+];
 
 interface AdventureCardEditFormProps {
   card: AdventureCard;
@@ -139,6 +163,107 @@ export function AdventureCardEditForm({
           </div>
         </div>
       </div>
+
+      {/* Conditional Fields based on Type */}
+      {card.type === 'enemy' && (
+        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Element</label>
+              <select
+                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-primary-500 transition-all shadow-sm capitalize"
+                value={form.element ?? card.element ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, element: e.target.value }))}
+              >
+                <option value="">Chọn Element</option>
+                {ELEMENTS.map((el) => (
+                  <option key={el} value={el} className="capitalize">
+                    {el}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Clan</label>
+              <select
+                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-primary-500 transition-all shadow-sm capitalize"
+                value={form.clan ?? card.clan ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, clan: e.target.value }))}
+              >
+                <option value="">Chọn Clan</option>
+                {CLANS.map((clan) => (
+                  <option key={clan} value={clan} className="capitalize">
+                    {clan}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <DualRangeSlider
+            min={0}
+            max={49}
+            start={[form.healthMin ?? card.healthMin ?? 1, form.healthMax ?? card.healthMax ?? 10]}
+            label="Health Range (Min - Max)"
+            onChange={([min, max]) => setForm((p) => ({ ...p, healthMin: min, healthMax: max }))}
+          />
+          <DualRangeSlider
+            min={0}
+            max={49}
+            start={[form.scoreMin ?? card.scoreMin ?? 1, form.scoreMax ?? card.scoreMax ?? 5]}
+            label="Score Range (Min - Max)"
+            onChange={([min, max]) => setForm((p) => ({ ...p, scoreMin: min, scoreMax: max }))}
+          />
+        </div>
+      )}
+
+      {(card.type === 'bomb' || card.type === 'trap') && (
+        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+          <DualRangeSlider
+            min={0}
+            max={49}
+            start={[form.damageMin ?? card.damageMin ?? 1, form.damageMax ?? card.damageMax ?? 10]}
+            label="Damage Range (Min - Max)"
+            onChange={([min, max]) => setForm((p) => ({ ...p, damageMin: min, damageMax: max }))}
+          />
+          {card.type === 'bomb' && (
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Countdown</label>
+              <input
+                type="number"
+                min="0"
+                max="49"
+                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                value={form.countdown ?? card.countdown ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, countdown: Math.min(49, Math.max(0, parseInt(e.target.value) || 0)) }))}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {(card.type === 'treasure' || card.type === 'weapon') && (
+        <div className="p-4 rounded-lg bg-muted/30 border border-border">
+          <DualRangeSlider
+            min={0}
+            max={49}
+            start={[form.durabilityMin ?? card.durabilityMin ?? 1, form.durabilityMax ?? card.durabilityMax ?? 5]}
+            label="Durability Range (Min - Max)"
+            onChange={([min, max]) => setForm((p) => ({ ...p, durabilityMin: min, durabilityMax: max }))}
+          />
+        </div>
+      )}
+
+      {card.type === 'food' && (
+        <div className="p-4 rounded-lg bg-muted/30 border border-border">
+          <DualRangeSlider
+            min={0}
+            max={49}
+            start={[form.foodMin ?? card.foodMin ?? 1, form.foodMax ?? card.foodMax ?? 10]}
+            label="Food Heal Range (Min - Max)"
+            onChange={([min, max]) => setForm((p) => ({ ...p, foodMin: min, foodMax: max }))}
+          />
+        </div>
+      )}
     </div>
   );
 }

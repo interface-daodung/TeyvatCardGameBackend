@@ -51,7 +51,6 @@ export default function CharacterDetail() {
           effectiveElement={effectiveElement}
         />
         <CharacterDetailInfo
-          character={detail.character}
           effectiveElement={effectiveElement}
           displayName={detail.getDisplayName()}
           displayHp={detail.displayHp}

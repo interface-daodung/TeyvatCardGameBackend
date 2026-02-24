@@ -12,6 +12,22 @@ export interface IAdventureCard extends mongoose.Document {
   className?: string;
   status: 'enabled' | 'disabled' | 'hidden';
   image?: string; // image URI for admin-web
+  // Additional fields based on type
+  healthMin?: number;
+  healthMax?: number;
+  scoreMin?: number;
+  scoreMax?: number;
+  damageMin?: number;
+  damageMax?: number;
+  damage?: number;
+  countdown?: number;
+  durabilityMin?: number;
+  durabilityMax?: number;
+  foodMin?: number;
+  foodMax?: number;
+  food?: number;
+  hp?: number;
+  resonanceDescription?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,6 +63,22 @@ const adventureCardSchema = new Schema<IAdventureCard>(
       enum: ['enabled', 'disabled', 'hidden'],
       default: 'enabled',
     },
+    // Additional fields based on type
+    healthMin: { type: Number },
+    healthMax: { type: Number },
+    scoreMin: { type: Number },
+    scoreMax: { type: Number },
+    damageMin: { type: Number },
+    damageMax: { type: Number },
+    damage: { type: Number },
+    countdown: { type: Number },
+    durabilityMin: { type: Number },
+    durabilityMax: { type: Number },
+    foodMin: { type: Number },
+    foodMax: { type: Number },
+    food: { type: Number },
+    hp: { type: Number },
+    resonanceDescription: { type: String },
   },
   {
     timestamps: true,
