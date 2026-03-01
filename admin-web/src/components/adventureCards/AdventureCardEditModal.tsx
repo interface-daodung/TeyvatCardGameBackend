@@ -3,6 +3,8 @@ import { Button } from '../ui/button';
 import { AdventureCardImagePicker } from './AdventureCardImagePicker';
 import { AdventureCardEditForm } from './AdventureCardEditForm';
 import { I18nEditorPanel } from '../i18n/I18nEditorPanel';
+import { CardDeckBuilder } from '../maps/CardDeckBuilder';
+import { getAdventureCardImageUrl, contentsToIds } from './adventureCardUtils';
 import type { AdventureCard } from '../../services/gameDataService';
 import type { FileTreeItem } from '../../services/filesService';
 import type { EditLang } from '../LangDropdown';
@@ -35,6 +37,7 @@ interface AdventureCardEditModalProps {
   onToggleTreeExpanded: (path: string) => void;
   onSelectImage: (path: string) => void;
   onCloseTree: () => void;
+  allCards: AdventureCard[];
 }
 
 export function AdventureCardEditModal({
@@ -65,6 +68,7 @@ export function AdventureCardEditModal({
   onToggleTreeExpanded,
   onSelectImage,
   onCloseTree,
+  allCards,
 }: AdventureCardEditModalProps) {
   const modal = (
     <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 min-h-screen min-w-screen w-full h-full z-[9999] flex items-center justify-center p-4">
@@ -118,6 +122,20 @@ export function AdventureCardEditModal({
                 onOpenI18n={onOpenI18n}
               />
             </div>
+
+            {/* Full-width Deck Builder for Treasure */}
+            {(form.type ?? editCard.type) === 'treasure' && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <CardDeckBuilder
+                  cardIds={contentsToIds(form.contents ?? editCard.contents)}
+                  availableCards={allCards}
+                  onDeckChange={(newIds) => setForm((p) => ({ ...p, contents: newIds }))}
+                  getImageUrl={getAdventureCardImageUrl}
+                  deckLabel="🎁 Rương (nội dung rương)"
+                  sourceLabel="Thẻ có sẵn (kéo vào rương)"
+                />
+              </div>
+            )}
           </div>
           <div className="px-6 py-4 border-t border-border flex justify-end gap-2">
             <Button variant="outline" type="button" onClick={onClose}>

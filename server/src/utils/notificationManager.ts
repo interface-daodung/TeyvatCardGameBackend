@@ -67,6 +67,7 @@ class NotificationManager {
     this.connections.forEach((res) => {
       try {
         res.write(message);
+        if (typeof (res as any).flush === 'function') (res as any).flush();
       } catch {
         closedConnections.push(res);
       }

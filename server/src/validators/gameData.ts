@@ -53,15 +53,14 @@ export const createAdventureCardSchema = z.object({
   scoreMax: z.number().optional(),
   damageMin: z.number().optional(),
   damageMax: z.number().optional(),
-  damage: z.number().optional(),
   countdown: z.number().optional(),
   durabilityMin: z.number().optional(),
   durabilityMax: z.number().optional(),
   foodMin: z.number().optional(),
   foodMax: z.number().optional(),
-  food: z.number().optional(),
   hp: z.number().optional(),
   resonanceDescription: z.string().optional(),
+  contents: z.array(z.string()).optional(),
 });
 
 export const updateAdventureCardSchema = createAdventureCardSchema.partial();

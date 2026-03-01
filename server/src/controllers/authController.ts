@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/User.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
-import { loginSchema, googleLoginSchema, registerSchema } from '../validators/auth.js';
+import { loginSchema, googleLoginSchema, registerSchema, saveGameSchema } from '../validators/auth.js';
 import { createAuditLog } from '../utils/auditLog.js';
 import { AuthRequest } from '../types/index.js';
 
@@ -322,6 +322,59 @@ export const getMe = async (req: Request, res: Response) => {
   }
   const { userId, email, role } = authReq.user;
   res.json({ user: { id: userId, email, role } });
+};
+
+/** GET save-game: trả về saveGame của user hiện tại. */
+export const getSaveGame = async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const user = await User.findById(authReq.user.userId).select('saveGame').lean();
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    await createAuditLog(
+      authReq,
+      'load_save_game',
+      'auth',
+      authReq.user.userId,
+      { saveGame: user.saveGame ?? null },
+      authReq.user.userId,
+      'info'
+    );
+    res.json({ saveGame: user.saveGame ?? null });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to load save game' });
+  }
+};
+
+/** PUT save-game: cập nhật saveGame của user hiện tại. */
+export const putSaveGame = async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { saveGame } = saveGameSchema.parse(req.body);
+    await User.findByIdAndUpdate(authReq.user.userId, { $set: { saveGame: saveGame ?? null } });
+    await createAuditLog(
+      authReq,
+      'save_game',
+      'auth',
+      authReq.user.userId,
+      { saveGame: saveGame ?? null },
+      authReq.user.userId,
+      'log'
+    );
+    res.json({ ok: true });
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors });
+    }
+    res.status(500).json({ error: 'Failed to save game' });
+  }
 };
 
 /** Refresh: đọc refreshToken từ cookie hoặc body (SPA), kiểm tra với DB, cấp jwt mới. */

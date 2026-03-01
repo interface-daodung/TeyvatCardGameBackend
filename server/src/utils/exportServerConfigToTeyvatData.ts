@@ -137,16 +137,13 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
     if ((c as any).scoreMax != null) entry.scoreMax = (c as any).scoreMax;
     if ((c as any).damageMin != null) entry.damageMin = (c as any).damageMin;
     if ((c as any).damageMax != null) entry.damageMax = (c as any).damageMax;
-    if ((c as any).damage != null) entry.damage = (c as any).damage;
     if ((c as any).countdown != null) entry.countdown = (c as any).countdown;
     if ((c as any).durabilityMin != null) entry.durabilityMin = (c as any).durabilityMin;
     if ((c as any).durabilityMax != null) entry.durabilityMax = (c as any).durabilityMax;
     if ((c as any).foodMin != null) entry.foodMin = (c as any).foodMin;
     if ((c as any).foodMax != null) entry.foodMax = (c as any).foodMax;
-    if ((c as any).food != null) entry.food = (c as any).food;
     if ((c as any).resonanceDescription != null) entry.resonanceDescription = (c as any).resonanceDescription;
-    if ((c as any).maxLevel != null) entry.maxLevel = (c as any).maxLevel;
-    if ((c as any).levelStats != null) entry.levelStats = (c as any).levelStats;
+    if (Array.isArray((c as any).contents)) entry.contents = (c as any).contents;
 
     arr.push(entry);
   }

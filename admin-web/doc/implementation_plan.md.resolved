@@ -1,0 +1,118 @@
+# Refactor Maps.tsx into Smaller Reusable Components
+
+Decompose [Maps.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/Maps.tsx) (848 lines) into focused, reusable components under `admin-web/src/components/maps/`. Special emphasis on making the drag-and-drop card deck builder generic and reusable.
+
+## Proposed Changes
+
+### Utility Functions
+
+#### [NEW] [mapUtils.ts](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/mapUtils.ts)
+
+Extract all pure utility functions from [Maps.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/Maps.tsx):
+- [getRatioInputColorClass(value)](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/Maps.tsx#52-65) — color class for ratio inputs
+- [sumTypeRatios(tr)](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/Maps.tsx#66-70) — sum all type ratio values
+- [getFreeRatio(tr)](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/Maps.tsx#71-75) — calculate remaining free ratio
+- [getFormTypeRatios(tr)](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/Maps.tsx#76-88) — normalize type ratios with defaults
+- [getCardImageUrl(card)](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/Maps.tsx#89-95) — build card image URL
+- Constants: `TYPE_RATIO_KEYS`, `TYPE_RATIO_ICONS`, `MAP_STATUSES`, `DEFAULT_TYPE_RATIOS`
+
+---
+
+### Reusable Drag-and-Drop Components
+
+> [!IMPORTANT]
+> These components are designed to be **reusable** beyond Maps — any feature that needs "pick items from a source list and drop into a target zone" can use them.
+
+#### [NEW] [DraggableCardThumbnail.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/DraggableCardThumbnail.tsx)
+
+A single draggable card thumbnail for the source list panel.
+
+**Props:**
+- `card: AdventureCard` — the card data
+- `getImageUrl: (card) => string` — image URL resolver (default: [getCardImageUrl](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/Maps.tsx#89-95))
+
+Renders the card with `draggable` attribute, sets `cardId` on `dataTransfer` during `onDragStart`.
+
+#### [NEW] [DeckDropZone.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/DeckDropZone.tsx)
+
+The drop target area showing selected cards with remove-on-click.
+
+**Props:**
+- `cardIds: string[]` — current deck card IDs
+- `allCards: AdventureCard[]` — all available cards (for lookup by ID)
+- `onAdd: (cardId: string) => void` — called when a card is dropped
+- `onRemove: (index: number) => void` — called when clicking remove button
+- `getImageUrl?: (card) => string` — optional image URL resolver
+- `emptyMessage?: string` — placeholder when deck is empty
+
+Handles `onDragOver`, `onDragLeave`, `onDrop` with visual feedback (highlight border on drag over).
+
+#### [NEW] [CardDeckBuilder.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/CardDeckBuilder.tsx)
+
+Combines `DeckDropZone` + source list of `DraggableCardThumbnail` in a two-column layout.
+
+**Props:**
+- `cardIds: string[]` — selected card IDs
+- `availableCards: AdventureCard[]` — all cards to choose from
+- `onDeckChange: (newCardIds: string[]) => void` — callback when deck changes
+- `getImageUrl?: (card) => string`
+- `deckLabel?: string` — label for deck section (default: "Deck")
+- `sourceLabel?: string` — label for source list (default: "Thẻ có sẵn")
+
+This is the **main reusable component** for drag-and-drop card selection.
+
+---
+
+### Map-Specific Components
+
+#### [NEW] [TypeRatioEditor.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/TypeRatioEditor.tsx)
+
+The type ratio editor section with icon inputs and free ratio display.
+
+**Props:**
+- `typeRatios: MapTypeRatios`
+- `onChange: (key: keyof MapTypeRatios, value: number) => void`
+
+Manages its own tooltip state internally. Shows validation message when free ratio ≠ 0.
+
+#### [NEW] [MapCard.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/MapCard.tsx)
+
+Renders a single map in the list view (the card element in the grid).
+
+**Props:**
+- `map: MapType`
+- `onEdit: (map: MapType) => void`
+
+#### [NEW] [MapFormModal.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/MapFormModal.tsx)
+
+The full create/edit modal with form fields, using `CardDeckBuilder` and `TypeRatioEditor` internally. Also manages i18n editing using existing [I18nEditorPanel](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/i18n/I18nEditorPanel.tsx#21-99).
+
+**Props:**
+- `open: boolean`
+- `editingMap: MapType | null`
+- `adventureCards: AdventureCard[]`
+- `onClose: () => void`
+- `onSaved: () => void` — called after successful save to trigger refresh
+
+Contains all form state, submit/delete handlers, and i18n logic internally.
+
+---
+
+### Page Component
+
+#### [MODIFY] [Maps.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/Maps.tsx)
+
+Simplified to ~80 lines. Responsibilities:
+- Fetch maps and adventure cards
+- Render loading skeleton
+- Render `PageHeader` + list of `MapCard`
+- Manage modal open/close state
+- Render `MapFormModal`
+
+## Verification Plan
+
+### Automated Verification
+- Run TypeScript compiler: `cd admin-web && npx tsc --noEmit`
+- Run Vite production build: `cd admin-web && npx vite build`
+
+Both commands must complete with zero errors.

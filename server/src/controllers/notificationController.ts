@@ -20,6 +20,7 @@ export const streamNotifications = (req: Request, res: Response) => {
     res.setHeader('X-Accel-Buffering', 'no');
     res.setHeader('Access-Control-Allow-Origin', '*');
 
+    if (typeof (res as any).flushHeaders === 'function') (res as any).flushHeaders();
     notificationManager.addConnection(res);
 
     req.on('close', () => {

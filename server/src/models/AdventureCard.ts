@@ -19,15 +19,14 @@ export interface IAdventureCard extends mongoose.Document {
   scoreMax?: number;
   damageMin?: number;
   damageMax?: number;
-  damage?: number;
   countdown?: number;
   durabilityMin?: number;
   durabilityMax?: number;
   foodMin?: number;
   foodMax?: number;
-  food?: number;
   hp?: number;
   resonanceDescription?: string;
+  contents?: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -70,15 +69,14 @@ const adventureCardSchema = new Schema<IAdventureCard>(
     scoreMax: { type: Number },
     damageMin: { type: Number },
     damageMax: { type: Number },
-    damage: { type: Number },
     countdown: { type: Number },
     durabilityMin: { type: Number },
     durabilityMax: { type: Number },
     foodMin: { type: Number },
     foodMax: { type: Number },
-    food: { type: Number },
     hp: { type: Number },
     resonanceDescription: { type: String },
+    contents: [{ type: Schema.Types.ObjectId, ref: 'AdventureCard' }],
   },
   {
     timestamps: true,

@@ -50,15 +50,15 @@ export interface AdventureCard {
   scoreMax?: number;
   damageMin?: number;
   damageMax?: number;
-  damage?: number;
   countdown?: number;
   durabilityMin?: number;
   durabilityMax?: number;
   foodMin?: number;
   foodMax?: number;
-  food?: number;
   hp?: number;
   resonanceDescription?: string;
+  /** DB lưu mảng ID. API trả về có thể populated (object[]) hoặc IDs (string[]). Form edit lưu string[]. */
+  contents?: string[] | AdventureCard[];
 }
 
 export interface MapTypeRatios {

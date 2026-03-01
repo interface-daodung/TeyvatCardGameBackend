@@ -34,8 +34,7 @@ export default function AdventureCards() {
     const fetchCards = async () => {
       try {
         setLoading(true);
-        const type = typeFilter === 'all' ? undefined : typeFilter;
-        const data = await gameDataService.getAdventureCards(undefined, type);
+        const data = await gameDataService.getAdventureCards();
         setCards(data);
       } catch (err) {
         console.error('Failed to fetch adventure cards:', err);
@@ -44,7 +43,7 @@ export default function AdventureCards() {
       }
     };
     fetchCards();
-  }, [typeFilter]);
+  }, []);
 
   useEffect(() => {
     if (cards.length === 0) {
@@ -62,10 +61,10 @@ export default function AdventureCards() {
         return [
           localizationService.getLocalizationByKey(nameKey).then((loc) => {
             if (loc.translations) nameMap[nameId] = loc.translations as Record<EditLang, string>;
-          }).catch(() => {}),
+          }).catch(() => { }),
           localizationService.getLocalizationByKey(descKey).then((loc) => {
             if (loc.translations) descMap[nameId] = loc.translations as Record<EditLang, string>;
-          }).catch(() => {}),
+          }).catch(() => { }),
         ];
       });
       await Promise.all(promises);
@@ -76,8 +75,11 @@ export default function AdventureCards() {
   }, [cards]);
 
   const sortedCards = useMemo(
-    () => sortAdventureCards(cards, sortBy),
-    [cards, sortBy]
+    () => {
+      const filtered = typeFilter === 'all' ? cards : cards.filter(c => c.type === typeFilter);
+      return sortAdventureCards(filtered, sortBy);
+    },
+    [cards, sortBy, typeFilter]
   );
 
   if (loading) {
@@ -156,6 +158,7 @@ export default function AdventureCards() {
           onToggleTreeExpanded={edit.toggleTreeExpanded}
           onSelectImage={edit.selectImage}
           onCloseTree={() => edit.setImageTreeOpen(false)}
+          allCards={cards}
         />
       )}
 
@@ -175,6 +178,7 @@ export default function AdventureCards() {
           onToggleTreeExpanded={edit.toggleTreeExpanded}
           onSelectImage={edit.selectImage}
           onCloseTree={() => edit.setImageTreeOpen(false)}
+          allCards={cards}
         />
       )}
     </div>

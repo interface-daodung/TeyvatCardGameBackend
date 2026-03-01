@@ -8,6 +8,8 @@ export interface IUser extends mongoose.Document {
   xu: number;
   /** Refresh token hiện tại (lưu DB để server kiểm tra, thu hồi khi logout) */
   refreshToken?: string | null;
+  /** JSON save game từ client (game state, settings, v.v.) */
+  saveGame?: Record<string, unknown> | null;
   ownedCharacters: mongoose.Types.ObjectId[];
   ownedEquipment: mongoose.Types.ObjectId[];
   bannedCards: {
@@ -48,6 +50,11 @@ const userSchema = new Schema<IUser>(
     },
     refreshToken: {
       type: String,
+      required: false,
+      default: null,
+    },
+    saveGame: {
+      type: Schema.Types.Mixed,
       required: false,
       default: null,
     },

@@ -1,5 +1,13 @@
 import type { AdventureCard } from '../../services/gameDataService';
 
+/** DB lưu contents là mảng ID (string[]). API có thể trả về populated (object[]) hoặc IDs. Chuẩn hóa về string[]. */
+export function contentsToIds(contents: unknown): string[] {
+  if (!Array.isArray(contents)) return [];
+  return contents
+    .map((c) => (typeof c === 'string' ? c : (c as { _id?: string })?._id))
+    .filter((id): id is string => Boolean(id));
+}
+
 export const TYPE_ORDER: Record<string, number> = {
   weapon: 1,
   enemy: 2,

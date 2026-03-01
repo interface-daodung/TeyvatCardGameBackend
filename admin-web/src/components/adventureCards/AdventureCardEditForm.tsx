@@ -50,8 +50,8 @@ export function AdventureCardEditForm({
     currentStatus === 'enabled'
       ? 'bg-emerald-500 text-emerald-50 hover:bg-emerald-600'
       : currentStatus === 'hidden'
-      ? 'bg-slate-600 text-slate-50 hover:bg-slate-700'
-      : 'bg-red-500 text-red-50 hover:bg-red-600';
+        ? 'bg-slate-600 text-slate-50 hover:bg-slate-700'
+        : 'bg-red-500 text-red-50 hover:bg-red-600';
 
   const cycleStatus = () => {
     const index = STATUSES.indexOf(currentStatus);
@@ -126,9 +126,8 @@ export function AdventureCardEditForm({
                 <button
                   key={star}
                   type="button"
-                  className={`h-7 w-7 flex items-center justify-center transition-colors ${
-                    isActive ? 'text-amber-400' : 'text-muted-foreground hover:text-amber-200'
-                  }`}
+                  className={`h-7 w-7 flex items-center justify-center transition-colors ${isActive ? 'text-amber-400' : 'text-muted-foreground hover:text-amber-200'
+                    }`}
                   onClick={() => setForm((p) => ({ ...p, rarity: star }))}
                   aria-label={`Set rarity to ${star}`}
                 >

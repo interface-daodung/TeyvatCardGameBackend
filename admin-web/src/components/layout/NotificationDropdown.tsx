@@ -1,6 +1,17 @@
 import { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
+const NOTIFICATION_ICON_MAP: Record<string, string> = {
+  check_circle: '✅',
+  error: '❌',
+  info: 'ℹ️',
+  warning: '⚠️',
+};
+
+function getNotificationIconDisplay(icon: string): string {
+  return NOTIFICATION_ICON_MAP[icon] ?? icon;
+}
+
 export interface NotificationItem {
   _id?: string;
   name: string;
@@ -56,7 +67,7 @@ export const NotificationDropdown = forwardRef<HTMLDivElement, NotificationDropd
                 style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}
               >
                 <div className="flex items-start gap-3">
-                  <div className="text-2xl shrink-0">{notif.icon}</div>
+                  <div className="text-2xl shrink-0">{getNotificationIconDisplay(notif.icon)}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-semibold text-sm text-slate-900">{notif.name}</p>

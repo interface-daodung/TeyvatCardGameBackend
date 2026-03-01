@@ -23,3 +23,7 @@ export const refreshTokenSchema = z.object({
 export const googleLoginSchema = z.object({
   credential: z.string().min(10, 'Invalid Google credential'),
 });
+
+export const saveGameSchema = z.object({
+  saveGame: z.record(z.string(), z.unknown()).nullable().optional(),
+});

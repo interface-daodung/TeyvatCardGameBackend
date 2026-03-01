@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { gameDataService, type AdventureCard } from '../../services/gameDataService';
+import { contentsToIds } from './adventureCardUtils';
 import { localizationService } from '../../services/localizationService';
 import { filesService, type FileTreeItem } from '../../services/filesService';
 import type { EditLang } from '../LangDropdown';
@@ -208,6 +209,9 @@ export function useAdventureCardEdit(
         status: form.status ?? editCard.status,
         image: form.image ?? editCard.image,
       };
+      if ((form.type ?? editCard.type) === 'treasure' && Array.isArray(form.contents)) {
+        payload.contents = contentsToIds(form.contents);
+      }
       const updated = await gameDataService.updateAdventureCard(editCard._id, payload);
       setCards((prev) => prev.map((c) => (c._id === updated._id ? { ...c, ...updated } : c)));
       setEditCard(updated);
@@ -252,6 +256,9 @@ export function useAdventureCardEdit(
         status: formCreate.status ?? 'enabled',
         rarity: formCreate.rarity ?? 1,
       };
+      if (type === 'treasure' && Array.isArray(formCreate.contents)) {
+        payload.contents = contentsToIds(formCreate.contents);
+      }
       const created = await gameDataService.createAdventureCard(payload);
       setCards((prev) => [...prev, created]);
       setCreateOpen(false);

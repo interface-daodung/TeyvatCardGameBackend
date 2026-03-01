@@ -4,6 +4,8 @@ import { AdventureCardImagePicker } from './AdventureCardImagePicker';
 import type { AdventureCard } from '../../services/gameDataService';
 import type { FileTreeItem } from '../../services/filesService';
 import { DualRangeSlider } from '../ui/DualRangeSlider';
+import { CardDeckBuilder } from '../maps/CardDeckBuilder';
+import { getAdventureCardImageUrl, contentsToIds } from './adventureCardUtils';
 
 const TYPES: AdventureCard['type'][] = [
   'weapon',
@@ -55,6 +57,7 @@ interface AdventureCardCreateModalProps {
   onToggleTreeExpanded: (path: string) => void;
   onSelectImage: (path: string) => void;
   onCloseTree: () => void;
+  allCards: AdventureCard[];
 }
 
 export function AdventureCardCreateModal({
@@ -72,6 +75,7 @@ export function AdventureCardCreateModal({
   onToggleTreeExpanded,
   onSelectImage,
   onCloseTree,
+  allCards,
 }: AdventureCardCreateModalProps) {
   const type = form.type ?? 'weapon';
   const status = form.status ?? 'enabled';
@@ -79,8 +83,8 @@ export function AdventureCardCreateModal({
     status === 'enabled'
       ? 'bg-emerald-500 text-emerald-50 hover:bg-emerald-600'
       : status === 'hidden'
-      ? 'bg-slate-600 text-slate-50 hover:bg-slate-700'
-      : 'bg-red-500 text-red-50 hover:bg-red-600';
+        ? 'bg-slate-600 text-slate-50 hover:bg-slate-700'
+        : 'bg-red-500 text-red-50 hover:bg-red-600';
 
   const cycleStatus = () => {
     const index = STATUSES.indexOf(status);
@@ -302,9 +306,8 @@ export function AdventureCardCreateModal({
                           <button
                             key={star}
                             type="button"
-                            className={`h-7 w-7 flex items-center justify-center transition-colors ${
-                              isActive ? 'text-amber-400' : 'text-muted-foreground hover:text-amber-200'
-                            }`}
+                            className={`h-7 w-7 flex items-center justify-center transition-colors ${isActive ? 'text-amber-400' : 'text-muted-foreground hover:text-amber-200'
+                              }`}
                             onClick={() => setForm((p) => ({ ...p, rarity: star }))}
                             aria-label={`Set rarity to ${star}`}
                           >
@@ -343,6 +346,20 @@ export function AdventureCardCreateModal({
                 </div>
               </div>
             </div>
+
+            {/* Full-width Deck Builder for Treasure */}
+            {type === 'treasure' && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <CardDeckBuilder
+                  cardIds={contentsToIds(form.contents)}
+                  availableCards={allCards}
+                  onDeckChange={(newIds) => setForm((p) => ({ ...p, contents: newIds }))}
+                  getImageUrl={getAdventureCardImageUrl}
+                  deckLabel="🎁 Rương (nội dung rương)"
+                  sourceLabel="Thẻ có sẵn (kéo vào rương)"
+                />
+              </div>
+            )}
           </div>
           <div className="px-6 py-4 border-t border-border flex justify-end gap-2">
             <Button variant="outline" type="button" onClick={onClose}>

@@ -11,6 +11,7 @@ import { Item } from '../models/Item.js';
 import { createAuditLog } from '../utils/auditLog.js';
 import { exportServerConfigToTeyvatData } from '../utils/exportServerConfigToTeyvatData.js';
 import { getTeyvatPackageMajor } from '../utils/teyvatPackageVersion.js';
+import { notificationManager } from '../utils/notificationManager.js';
 
 /** Chuẩn hóa object để stringify deterministic (sort keys) */
 function canonicalJson(obj: unknown): string {
@@ -19,6 +20,41 @@ function canonicalJson(obj: unknown): string {
   const keys = Object.keys(obj as object).sort();
   const parts = keys.map((k) => JSON.stringify(k) + ':' + canonicalJson((obj as Record<string, unknown>)[k]));
   return '{' + parts.join(',') + '}';
+}
+
+/**
+ * Build CardsData.cards từ raw cards: chuẩn hóa mỗi card, và chuyển contents (mảng ID) thành mảng className.
+ */
+function buildCardsDataForConfig(cards: any[]): { cards: any[] } {
+  const idToClassName: Record<string, string> = {};
+  for (const c of cards) {
+    const raw = c?._id;
+    const id = raw && typeof raw.toString === 'function' ? raw.toString() : raw ? String(raw) : '';
+    if (id) idToClassName[id] = (c.className ?? c.nameId) ?? id;
+  }
+  const mapContentIdsToClassNames = (contents: unknown): string[] => {
+    if (!Array.isArray(contents)) return [];
+    return contents
+      .map((ref) => {
+        const id = ref && typeof (ref as any).toString === 'function' ? (ref as any).toString() : ref ? String(ref) : '';
+        return id ? (idToClassName[id] ?? id) : '';
+      })
+      .filter(Boolean);
+  };
+
+  return {
+    cards: cards.map((c) => {
+      const card = { ...c };
+      delete (card as any).maxLevel;
+      delete (card as any).levelStats;
+      delete (card as any).damage;
+      delete (card as any).food;
+      if (Array.isArray(c.contents) && c.contents.length > 0) {
+        (card as any).contents = mapContentIdsToClassNames(c.contents);
+      }
+      return card;
+    }),
+  };
 }
 
 /** Hash cấu hình để so sánh */
@@ -102,13 +138,7 @@ export const checkServerConfigurationUpdate = async (req: AuthRequest, res: Resp
 
     const configuration: Record<string, unknown> = {
       MapsData: { maps },
-      CardsData: {
-        cards: (cards as any[]).map((c) => ({
-          ...c,
-          maxLevel: c.maxLevel ?? 10,
-          levelStats: Array.isArray(c.levelStats) ? c.levelStats : [],
-        })),
-      },
+      CardsData: buildCardsDataForConfig(cards as any[]),
       CharacterData: {
         characters: (characters as any[]).map((ch) => ({
           ...ch,
@@ -190,7 +220,7 @@ export const checkServerConfigurationUpdate = async (req: AuthRequest, res: Resp
       const prevItems = (latestCfg?.itemData as { items?: any[] })?.items ?? [];
 
       diff('maps', maps as any[], prevMaps);
-      diff('cards', cards as any[], prevCards);
+      diff('cards', (configuration.CardsData as { cards?: any[] }).cards ?? [], prevCards);
       diff('characters', characters as any[], prevChars);
       diff('themes', themes as any[], prevThemes);
       diff('items', items as any[], prevItems);
@@ -330,13 +360,7 @@ export const syncServerConfigurationVersion = async (req: AuthRequest, res: Resp
 
     const configuration = {
       MapsData: { maps },
-      CardsData: {
-        cards: (cards as any[]).map((c) => ({
-          ...c,
-          maxLevel: c.maxLevel ?? 10,
-          levelStats: Array.isArray(c.levelStats) ? c.levelStats : [],
-        })),
-      },
+      CardsData: buildCardsDataForConfig(cards as any[]),
       CharacterData: {
         characters: (characters as any[]).map((ch) => ({
           ...ch,
@@ -386,6 +410,35 @@ export const syncServerConfigurationVersion = async (req: AuthRequest, res: Resp
       };
     }
 
+    const versionStr = `${doc.version?.major ?? 0}.${doc.version?.minor ?? 0}.${doc.version?.patch ?? 0}`;
+    if (exportResult?.success) {
+      notificationManager.sendNotification({
+        name: 'Server configuration',
+        icon: '✅',
+        notif: `Đã tạo server config thành công (v${versionStr})`,
+        path: '/server-configuration-versions',
+      });
+      await createAuditLog(
+        req,
+        'server_config_export_success',
+        'ServerConfigurationVersion',
+        doc._id.toString(),
+        { version: versionStr, message: 'Đã tạo server config (JSON) thành công' },
+        undefined,
+        'info'
+      );
+    } else if (exportResult && !exportResult.success) {
+      await createAuditLog(
+        req,
+        'server_config_export_error',
+        'ServerConfigurationVersion',
+        doc._id.toString(),
+        { errors: exportResult.errors, message: 'Không ghi được file JSON hoặc export lỗi' },
+        undefined,
+        'error'
+      );
+    }
+
     return res.json({
       success: true,
       version: doc.version,
@@ -394,6 +447,16 @@ export const syncServerConfigurationVersion = async (req: AuthRequest, res: Resp
     });
   } catch (error) {
     console.error('syncServerConfigurationVersion error:', error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    await createAuditLog(
+      req,
+      'server_config_sync_error',
+      'ServerConfigurationVersion',
+      undefined,
+      { message: 'Sync server configuration thất bại', error: errMsg },
+      undefined,
+      'error'
+    );
     return res.status(500).json({
       success: false,
       error: 'Failed to sync server configuration version',

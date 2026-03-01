@@ -1,0 +1,75 @@
+# Add Treasure Card Contents (Rương) Drag-and-Drop Editor
+
+When editing/creating an adventure card of type `treasure`, show a drag-and-drop card picker (reusing [CardDeckBuilder](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/CardDeckBuilder.tsx#23-79) from maps refactoring) to select the cards contained in the treasure chest.
+
+## Proposed Changes
+
+### Backend
+
+#### [MODIFY] [AdventureCard.ts](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/server/src/models/AdventureCard.ts)
+
+Add `contents` field — array of AdventureCard ObjectId references:
+
+```diff
++ contents?: mongoose.Types.ObjectId[];  // interface
++ contents: [{ type: Schema.Types.ObjectId, ref: 'AdventureCard' }]  // schema
+```
+
+#### [MODIFY] [gameData.ts (validator)](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/server/src/validators/gameData.ts)
+
+Add `contents: z.array(z.string()).optional()` to `createAdventureCardSchema`.
+
+#### [MODIFY] [adventureCardController.ts](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/server/src/controllers/adventureCardController.ts)
+
+Populate `contents` with card data when returning adventure cards (`.populate('contents')`).
+
+---
+
+### Frontend Types
+
+#### [MODIFY] [gameDataService.ts](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/services/gameDataService.ts)
+
+Add `contents?: AdventureCard[]` to the [AdventureCard](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/services/gameDataService.ts#33-63) interface.
+
+---
+
+### Frontend Components
+
+#### [MODIFY] [AdventureCardEditForm.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/AdventureCardEditForm.tsx)
+
+- Add `allCards: AdventureCard[]` prop
+- When `card.type === 'treasure'`, render [CardDeckBuilder](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/CardDeckBuilder.tsx#23-79) with:
+  - `cardIds` = `form.contents` (mapped to IDs)
+  - `onDeckChange` → update `form.contents`
+  - `deckLabel="🎁 Rương (nội dung rương)"`
+
+#### [MODIFY] [AdventureCardEditModal.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/AdventureCardEditModal.tsx)
+
+- Add `allCards: AdventureCard[]` prop, pass to [AdventureCardEditForm](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/AdventureCardEditForm.tsx#40-270)
+
+#### [MODIFY] [AdventureCardCreateModal.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/AdventureCardCreateModal.tsx)
+
+- Add `allCards: AdventureCard[]` prop
+- When `type === 'treasure'`, render [CardDeckBuilder](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/CardDeckBuilder.tsx#23-79)
+
+#### [MODIFY] [AdventureCards.tsx](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/pages/AdventureCards.tsx)
+
+- Pass `cards` (all cards) to both [AdventureCardEditModal](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/AdventureCardEditModal.tsx#40-151) and [AdventureCardCreateModal](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/AdventureCardCreateModal.tsx#60-361) as `allCards`
+
+#### [MODIFY] [useAdventureCardEdit.ts](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/useAdventureCardEdit.ts)
+
+- In [handleSaveCard](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/useAdventureCardEdit.ts#198-223), map `form.contents` from `AdventureCard[]` → `string[]` (IDs) before sending to API
+
+---
+
+### Shared Utilities
+
+#### [MODIFY] [mapUtils.ts](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/mapUtils.ts)
+
+Remove the duplicate [getCardImageUrl](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/mapUtils.ts#72-78) — import [getAdventureCardImageUrl](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/adventureCardUtils.ts#49-55) from `adventureCardUtils` instead. Update [CardDeckBuilder](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/maps/CardDeckBuilder.tsx#23-79) default prop to use [getAdventureCardImageUrl](file:///c:/Users/inter/OneDrive/Documents/GitHub/TeyvatCardGameBackend/admin-web/src/components/adventureCards/adventureCardUtils.ts#49-55).
+
+## Verification Plan
+
+### Automated
+- `cd admin-web && npx tsc --noEmit`
+- `cd server && npx tsc --noEmit`

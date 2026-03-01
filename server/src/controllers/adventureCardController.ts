@@ -12,7 +12,7 @@ export const getAdventureCards = async (req: AuthRequest, res: Response) => {
     if (status) query.status = status;
     if (type) query.type = type;
 
-    const cards = await AdventureCard.find(query).sort({ createdAt: -1 });
+    const cards = await AdventureCard.find(query).populate('contents').sort({ type: 1, nameId: 1 });
     res.json({ cards });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch adventure cards' });
@@ -21,7 +21,7 @@ export const getAdventureCards = async (req: AuthRequest, res: Response) => {
 
 export const getAdventureCardById = async (req: AuthRequest, res: Response) => {
   try {
-    const card = await AdventureCard.findById(req.params.id);
+    const card = await AdventureCard.findById(req.params.id).populate('contents');
     if (!card) {
       return res.status(404).json({ error: 'Adventure card not found' });
     }
@@ -50,7 +50,7 @@ export const createAdventureCard = async (req: AuthRequest, res: Response) => {
 export const updateAdventureCard = async (req: AuthRequest, res: Response) => {
   try {
     const data = updateAdventureCardSchema.parse(req.body);
-    const card = await AdventureCard.findByIdAndUpdate(
+    let card = await AdventureCard.findByIdAndUpdate(
       req.params.id,
       data,
       { new: true, runValidators: true }
@@ -59,6 +59,7 @@ export const updateAdventureCard = async (req: AuthRequest, res: Response) => {
     if (!card) {
       return res.status(404).json({ error: 'Adventure card not found' });
     }
+    card = await card.populate('contents');
 
     await createAuditLog(req, 'update_adventure_card', 'adventure_card', card._id.toString());
 
