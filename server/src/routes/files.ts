@@ -18,6 +18,7 @@ import {
   resizeUploadedHandler,
   generateAllCardsAtlasHandler,
 } from '../controllers/filesController.js';
+import { getCardClassTreeHandler } from '../controllers/cardClassTreeController.js';
 
 export const filesRoutes = Router();
 
@@ -25,6 +26,7 @@ filesRoutes.use(authenticate);
 filesRoutes.use(authorize('admin', 'moderator'));
 
 filesRoutes.get('/image-tree', getImageTreeHandler);
+filesRoutes.get('/card-class-tree', getCardClassTreeHandler);
 filesRoutes.get('/uploaded-tree', getUploadedTreeHandler);
 filesRoutes.patch('/uploaded/rename', renameUploadedHandler);
 filesRoutes.delete('/uploaded', deleteUploadedHandler);

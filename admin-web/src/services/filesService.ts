@@ -7,9 +7,22 @@ export interface FileTreeItem {
   children?: FileTreeItem[];
 }
 
+export interface CardClassTreeNode {
+  name: string;
+  type: 'dir' | 'file';
+  path?: string;
+  children?: CardClassTreeNode[];
+  classes?: string[];
+}
+
 export const filesService = {
   getImageTree: async (): Promise<FileTreeItem[]> => {
     const response = await api.get<{ tree: FileTreeItem[] }>('/files/image-tree');
+    return response.data.tree;
+  },
+
+  getCardClassTree: async (): Promise<CardClassTreeNode[]> => {
+    const response = await api.get<{ tree: CardClassTreeNode[] }>('/files/card-class-tree');
     return response.data.tree;
   },
 

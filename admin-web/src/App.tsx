@@ -18,6 +18,7 @@ import Logs from './pages/Logs';
 import Themes from './pages/Themes';
 import About from './pages/About';
 import ManagerAssets from './pages/ManagerAssets';
+import ServerConfigurationVersions from './pages/ServerConfigurationVersions';
 import Layout from './components/layout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -53,6 +54,7 @@ function App() {
         <Route path="localization" element={<Localization />} />
         <Route path="themes" element={<Themes />} />
         <Route path="manager-assets" element={<ManagerAssets />} />
+        <Route path="server-configuration-versions" element={<ServerConfigurationVersions />} />
         <Route path="logs" element={<Logs />} />
         <Route path="about" element={<About />} />
       </Route>

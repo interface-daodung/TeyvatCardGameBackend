@@ -24,6 +24,7 @@ interface AppHeaderProps {
   hasMoreNotifications?: boolean;
   loadingMoreNotifications?: boolean;
   userEmail: string;
+  hasUnreadNotifications?: boolean;
 }
 
 export function AppHeader({
@@ -41,6 +42,7 @@ export function AppHeader({
   hasMoreNotifications = false,
   loadingMoreNotifications = false,
   userEmail,
+  hasUnreadNotifications = false,
 }: AppHeaderProps) {
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
@@ -71,7 +73,7 @@ export function AppHeader({
           className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors"
         >
           <span className="text-slate-600 text-lg">🔔</span>
-          {notifications.length > 0 && (
+          {hasUnreadNotifications && (
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
           )}
         </button>

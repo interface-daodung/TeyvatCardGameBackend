@@ -7,6 +7,7 @@ import {
   refreshToken,
   googleLogin,
   getMe,
+  patchLastViewedNotifications,
   getSaveGame,
   putSaveGame,
   logout,
@@ -19,6 +20,7 @@ authRoutes.post('/login-user', userLogin);
 authRoutes.post('/register', register);
 authRoutes.post('/google', googleLogin);
 authRoutes.get('/me', authenticate, getMe);
+authRoutes.patch('/last-viewed-notifications', authenticate, patchLastViewedNotifications);
 authRoutes.get('/save-game', authenticate, getSaveGame);
 authRoutes.put('/save-game', authenticate, putSaveGame);
 authRoutes.post('/refresh', refreshToken);

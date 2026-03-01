@@ -19,6 +19,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/localization', label: 'Localization', icon: '🌐' },
   { path: '/themes', label: 'Themes', icon: '🎨' },
   { path: '/manager-assets', label: 'Manager Assets', icon: '📁' },
+  { path: '/server-configuration-versions', label: 'Server config', icon: '⚙️' },
   { path: '/logs', label: 'Logs', icon: '📝' },
   { path: '/about', label: 'About', icon: 'ℹ️' },
 ];
@@ -28,6 +29,7 @@ export default function Layout() {
   const [searchValue, setSearchValue] = useState('');
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [lastViewedNotifications, setLastViewedNotifications] = useState<string | null>(null);
   const [notificationPage, setNotificationPage] = useState(1);
   const [notificationPagesTotal, setNotificationPagesTotal] = useState(0);
   const [loadingMoreNotifications, setLoadingMoreNotifications] = useState(false);
@@ -37,6 +39,11 @@ export default function Layout() {
 
   const hasMoreNotifications = notificationPage < notificationPagesTotal;
   const userEmail = authService.getUserEmail() || 'Admin';
+
+  const newestNotificationDate = notifications[0]?.['data-creation'] ?? null;
+  const hasUnreadNotifications =
+    newestNotificationDate != null &&
+    (lastViewedNotifications == null || new Date(newestNotificationDate) > new Date(lastViewedNotifications));
 
   const handleLogout = () => {
     if (eventSourceRef.current) {
@@ -84,6 +91,15 @@ export default function Layout() {
   const handleNotificationItemClick = (path: string) => {
     navigate(path);
     setShowNotifications(false);
+  };
+
+  const handleNotificationToggle = async () => {
+    const next = !showNotifications;
+    if (next) {
+      const updated = await authService.markNotificationsViewed();
+      if (updated) setLastViewedNotifications(updated);
+    }
+    setShowNotifications(next);
   };
 
   const fetchInitialNotifications = async () => {
@@ -195,6 +211,8 @@ export default function Layout() {
     };
 
     const init = async () => {
+      const me = await authService.getMe();
+      if (me?.lastViewedNotifications != null) setLastViewedNotifications(me.lastViewedNotifications);
       await fetchInitialNotifications();
       connectSSE();
     };
@@ -226,13 +244,14 @@ export default function Layout() {
           onSearchKeyDown={handleSearchKeyDown}
           notifications={notifications}
           showNotifications={showNotifications}
-          onNotificationToggle={() => setShowNotifications((o) => !o)}
+          onNotificationToggle={handleNotificationToggle}
           notificationRef={notificationRef}
           onNotificationItemClick={handleNotificationItemClick}
           onNotificationLoadMore={handleNotificationLoadMore}
           hasMoreNotifications={hasMoreNotifications}
           loadingMoreNotifications={loadingMoreNotifications}
           userEmail={userEmail}
+          hasUnreadNotifications={hasUnreadNotifications}
         />
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-background via-primary-50/20 to-red-50/20">

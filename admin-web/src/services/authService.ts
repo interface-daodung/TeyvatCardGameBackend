@@ -64,6 +64,30 @@ export const authService = {
     return localStorage.getItem('userId');
   },
 
+  /** Lấy thông tin user hiện tại (bao gồm lastViewedNotifications). */
+  getMe: async (): Promise<{ id: string; email: string; role: string; lastViewedNotifications: string | null } | null> => {
+    try {
+      const response = await api.get<{
+        user: { id: string; email: string; role: string; lastViewedNotifications: string | null };
+      }>('/auth/me');
+      return response.data.user;
+    } catch {
+      return null;
+    }
+  },
+
+  /** Cập nhật thời điểm xem thông báo lần cuối (gọi khi mở dropdown chuông). */
+  markNotificationsViewed: async (): Promise<string | null> => {
+    try {
+      const response = await api.patch<{ lastViewedNotifications: string }>(
+        '/auth/last-viewed-notifications'
+      );
+      return response.data.lastViewedNotifications;
+    } catch {
+      return null;
+    }
+  },
+
   getUserRole: (): string | null => {
     return localStorage.getItem('userRole');
   },

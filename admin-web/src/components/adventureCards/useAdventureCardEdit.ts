@@ -46,6 +46,8 @@ export function useAdventureCardEdit(
   const [imageTreeLoading, setImageTreeLoading] = useState(false);
   const [imageTreeExpanded, setImageTreeExpanded] = useState<Set<string>>(new Set());
 
+  const [classNamePickerOpen, setClassNamePickerOpen] = useState(false);
+
   useEffect(() => {
     if (!editCard) {
       setNameTranslations(null);
@@ -208,6 +210,7 @@ export function useAdventureCardEdit(
         rarity: form.rarity ?? editCard.rarity,
         status: form.status ?? editCard.status,
         image: form.image ?? editCard.image,
+        className: form.className !== undefined ? form.className : editCard.className,
       };
       if ((form.type ?? editCard.type) === 'treasure' && Array.isArray(form.contents)) {
         payload.contents = contentsToIds(form.contents);
@@ -226,6 +229,13 @@ export function useAdventureCardEdit(
   };
 
   const closeEdit = () => setEditOpen(false);
+
+  const openClassNamePicker = () => setClassNamePickerOpen(true);
+  const closeClassNamePicker = () => setClassNamePickerOpen(false);
+  const selectClassName = (className: string) => {
+    setForm((p) => ({ ...p, className: className || undefined }));
+    setClassNamePickerOpen(false);
+  };
 
   const handleOpenCreate = () => {
     setFormCreate({ ...CREATE_DEFAULT });
@@ -311,6 +321,10 @@ export function useAdventureCardEdit(
     handleOpenEdit,
     handleSaveCard,
     closeEdit,
+    classNamePickerOpen,
+    openClassNamePicker,
+    closeClassNamePicker,
+    selectClassName,
     handleOpenCreate,
     closeCreate,
     handleCreateCard,

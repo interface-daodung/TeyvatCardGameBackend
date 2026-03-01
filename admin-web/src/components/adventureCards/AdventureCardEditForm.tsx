@@ -35,6 +35,7 @@ interface AdventureCardEditFormProps {
   nameDisplay: string;
   descriptionDisplay: string;
   onOpenI18n: (field: 'name' | 'description') => void;
+  onOpenClassNamePicker?: () => void;
 }
 
 export function AdventureCardEditForm({
@@ -44,6 +45,7 @@ export function AdventureCardEditForm({
   nameDisplay,
   descriptionDisplay,
   onOpenI18n,
+  onOpenClassNamePicker,
 }: AdventureCardEditFormProps) {
   const currentStatus = (form.status ?? card.status) as AdventureCard['status'];
   const statusClasses =
@@ -112,6 +114,29 @@ export function AdventureCardEditForm({
           className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background min-h-[80px]"
           readOnly
           value={descriptionDisplay}
+        />
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <label className="block text-xs font-medium text-muted-foreground">Class name</label>
+          {onOpenClassNamePicker && (
+            <button
+              type="button"
+              onClick={onOpenClassNamePicker}
+              className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+            >
+              Chọn từ cây thư mục
+            </button>
+          )}
+        </div>
+        <input
+          type="text"
+          placeholder="Chọn từ cây thư mục"
+          readOnly
+          className="w-full px-3 py-2 text-sm border border-input rounded-md bg-muted/50 cursor-pointer focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          value={form.className ?? card.className ?? ''}
+          onClick={onOpenClassNamePicker}
         />
       </div>
 

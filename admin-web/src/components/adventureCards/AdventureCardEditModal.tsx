@@ -8,6 +8,7 @@ import { getAdventureCardImageUrl, contentsToIds } from './adventureCardUtils';
 import type { AdventureCard } from '../../services/gameDataService';
 import type { FileTreeItem } from '../../services/filesService';
 import type { EditLang } from '../LangDropdown';
+import { ClassNamePickerPanel } from './ClassNamePickerPanel';
 
 interface AdventureCardEditModalProps {
   editCard: AdventureCard;
@@ -38,6 +39,10 @@ interface AdventureCardEditModalProps {
   onSelectImage: (path: string) => void;
   onCloseTree: () => void;
   allCards: AdventureCard[];
+  classNamePickerOpen?: boolean;
+  onOpenClassNamePicker?: () => void;
+  onCloseClassNamePicker?: () => void;
+  onSelectClassName?: (className: string) => void;
 }
 
 export function AdventureCardEditModal({
@@ -69,6 +74,10 @@ export function AdventureCardEditModal({
   onSelectImage,
   onCloseTree,
   allCards,
+  classNamePickerOpen,
+  onOpenClassNamePicker,
+  onCloseClassNamePicker,
+  onSelectClassName,
 }: AdventureCardEditModalProps) {
   const modal = (
     <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 min-h-screen min-w-screen w-full h-full z-[9999] flex items-center justify-center p-4">
@@ -120,6 +129,7 @@ export function AdventureCardEditModal({
                 nameDisplay={nameDisplay}
                 descriptionDisplay={descriptionDisplay}
                 onOpenI18n={onOpenI18n}
+                onOpenClassNamePicker={onOpenClassNamePicker}
               />
             </div>
 
@@ -159,6 +169,13 @@ export function AdventureCardEditModal({
             onClose={onI18nClose}
             translateLoading={translateLoading}
             error={i18nError}
+          />
+        )}
+        {classNamePickerOpen && (
+          <ClassNamePickerPanel
+            currentValue={form.className ?? editCard.className ?? ''}
+            onSelect={onSelectClassName ?? (() => {})}
+            onClose={onCloseClassNamePicker ?? (() => {})}
           />
         )}
       </div>

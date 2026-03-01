@@ -159,6 +159,10 @@ export default function AdventureCards() {
           onSelectImage={edit.selectImage}
           onCloseTree={() => edit.setImageTreeOpen(false)}
           allCards={cards}
+          classNamePickerOpen={edit.classNamePickerOpen}
+          onOpenClassNamePicker={edit.openClassNamePicker}
+          onCloseClassNamePicker={edit.closeClassNamePicker}
+          onSelectClassName={edit.selectClassName}
         />
       )}
 

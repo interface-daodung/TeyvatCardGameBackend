@@ -5,6 +5,7 @@ import {
   getServerConfigurationVersions,
   getServerConfigurationVersionById,
   getLatestServerConfigurationVersion,
+  getServerConfigurationCompare,
   syncServerConfigurationVersion,
   checkServerConfigurationUpdate,
 } from '../controllers/serverConfigurationVersionController.js';
@@ -18,4 +19,5 @@ serverConfigurationVersionRoutes.get('/', getServerConfigurationVersions);
 serverConfigurationVersionRoutes.get('/check', checkServerConfigurationUpdate);
 serverConfigurationVersionRoutes.get('/sync', syncServerConfigurationVersion);
 serverConfigurationVersionRoutes.get('/latest', getLatestServerConfigurationVersion);
+serverConfigurationVersionRoutes.get('/compare', getServerConfigurationCompare);
 serverConfigurationVersionRoutes.get('/:id', getServerConfigurationVersionById);

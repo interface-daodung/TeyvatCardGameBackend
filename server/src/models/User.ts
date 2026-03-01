@@ -8,6 +8,8 @@ export interface IUser extends mongoose.Document {
   xu: number;
   /** Refresh token hiện tại (lưu DB để server kiểm tra, thu hồi khi logout) */
   refreshToken?: string | null;
+  /** Thời điểm admin/moderator mở dropdown thông báo lần cuối (để ẩn chấm đỏ) */
+  lastViewedNotifications?: Date | null;
   /** JSON save game từ client (game state, settings, v.v.) */
   saveGame?: Record<string, unknown> | null;
   ownedCharacters: mongoose.Types.ObjectId[];
@@ -50,6 +52,11 @@ const userSchema = new Schema<IUser>(
     },
     refreshToken: {
       type: String,
+      required: false,
+      default: null,
+    },
+    lastViewedNotifications: {
+      type: Date,
       required: false,
       default: null,
     },

@@ -1,16 +1,8 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
-import { OAuth2Client } from 'google-auth-library';
-import { User } from '../models/User.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import * as authService from '../services/authService.js';
 import { loginSchema, googleLoginSchema, registerSchema, saveGameSchema } from '../validators/auth.js';
 import { createAuditLog } from '../utils/auditLog.js';
 import { AuthRequest } from '../types/index.js';
-
-/** Đọc tại runtime để tránh load trước dotenv trong index.ts */
-function getGoogleClientId(): string {
-  return process.env.GOOGLE_CLIENT_ID?.trim() || '';
-}
 
 const jwtCookieOptions = {
   httpOnly: true,
@@ -29,64 +21,34 @@ const refreshCookieOptions = {
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
+    const result = await authService.loginAdmin(email, password);
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'user_not_found' }, undefined, 'error');
+    if (!result.success) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: result.code }, undefined, 'error');
+      if (result.code === 'access_denied_role') return res.status(403).json({ error: 'Access denied' });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    // Only allow admin/moderator login
-    if (user.role !== 'admin' && user.role !== 'moderator') {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'access_denied_role' }, undefined, 'error');
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
-    if (!user.password) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'no_password' }, undefined, 'error');
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'invalid_password' }, undefined, 'error');
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const tokenPayload = {
-      userId: user._id.toString(),
-      role: user.role,
-      email: user.email,
-    };
-
-    const accessToken = generateAccessToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
-
-    await user.updateOne({ $set: { refreshToken } });
 
     await createAuditLog(
       req as AuthRequest,
       'login',
       'auth',
-      user._id.toString(),
-      { email: user.email },
-      user._id.toString(),
+      result.user.id,
+      { email: result.user.email },
+      result.user.id,
       'info'
     );
 
     res.json({
-      accessToken,
-      refreshToken,
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        role: user.role,
-      },
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      user: result.user,
     });
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    const err = error as { name?: string; errors?: unknown };
+    if (err.name === 'ZodError') {
       await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'validation_error' }, undefined, 'error');
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: err.errors });
     }
     await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'server_error' }, undefined, 'error');
     res.status(500).json({ error: 'Login failed' });
@@ -96,68 +58,34 @@ export const login = async (req: Request, res: Response) => {
 export const userLogin = async (req: Request, res: Response) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
+    const result = await authService.loginUser(email, password);
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'user_not_found' }, undefined, 'error');
+    if (!result.success) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: result.code }, undefined, 'error');
+      if (result.code === 'access_denied_not_user') return res.status(403).json({ error: 'Access denied. Admin login at /api/auth/login' });
+      if (result.code === 'account_banned') return res.status(403).json({ error: 'Account is banned' });
+      if (result.code === 'google_only_account') return res.status(401).json({ error: 'Account uses Google login. Please sign in with Google.' });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    if (user.role !== 'user') {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'access_denied_not_user' }, undefined, 'error');
-      return res.status(403).json({ error: 'Access denied. Admin login at /api/auth/login' });
-    }
-
-    if (user.isBanned) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'account_banned' }, undefined, 'error');
-      return res.status(403).json({ error: 'Account is banned' });
-    }
-
-    if (!user.password) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'google_only_account' }, undefined, 'error');
-      return res.status(401).json({ error: 'Account uses Google login. Please sign in with Google.' });
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: 'invalid_password' }, undefined, 'error');
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const tokenPayload = {
-      userId: user._id.toString(),
-      role: user.role,
-      email: user.email,
-    };
-
-    const accessToken = generateAccessToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
-
-    await user.updateOne({ $set: { refreshToken } });
 
     await createAuditLog(
       req as AuthRequest,
       'login',
       'auth',
-      user._id.toString(),
-      { email: user.email },
-      user._id.toString(),
+      result.user.id,
+      { email: result.user.email },
+      result.user.id,
       'info'
     );
 
-    res.cookie('jwt', accessToken, jwtCookieOptions);
-    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
-    res.json({
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+    res.cookie('jwt', result.accessToken, jwtCookieOptions);
+    res.cookie('refreshToken', result.refreshToken, refreshCookieOptions);
+    res.json({ user: result.user });
+  } catch (error: unknown) {
+    const err = error as { name?: string; errors?: unknown };
+    if (err.name === 'ZodError') {
       await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'validation_error' }, undefined, 'error');
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: err.errors });
     }
     await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'server_error' }, undefined, 'error');
     res.status(500).json({ error: 'Login failed' });
@@ -168,50 +96,26 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { email, password } = registerSchema.parse(req.body);
     const emailNorm = (email as string).toLowerCase().trim();
+    const result = await authService.register(emailNorm, password);
 
-    const existing = await User.findOne({ email: emailNorm });
-    if (existing) {
-      return res.status(409).json({ error: 'Email đã được sử dụng' });
+    if (!result.success) {
+      if (result.code === 'email_exists') return res.status(409).json({ error: 'Email đã được sử dụng' });
+      return res.status(400).json({ error: 'Validation failed' });
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({
-      email: emailNorm,
-      password: hashedPassword,
-      role: 'user',
-      xu: 0,
-    });
-
-    const tokenPayload = {
-      userId: user._id.toString(),
-      role: user.role,
-      email: user.email,
-    };
-
-    const accessToken = generateAccessToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
-
-    await user.updateOne({ $set: { refreshToken } });
 
     await createAuditLog(
       req as AuthRequest,
       'register',
       'auth',
-      user._id.toString(),
-      { email: user.email },
-      user._id.toString(),
+      result.user.id,
+      { email: result.user.email },
+      result.user.id,
       'info'
     );
 
-    res.cookie('jwt', accessToken, jwtCookieOptions);
-    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
-    res.status(201).json({
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        role: user.role,
-      },
-    });
+    res.cookie('jwt', result.accessToken, jwtCookieOptions);
+    res.cookie('refreshToken', result.refreshToken, refreshCookieOptions);
+    res.status(201).json({ user: result.user });
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'name' in error && (error as { name: string }).name === 'ZodError') {
       return res.status(400).json({ error: (error as { errors?: unknown }).errors });
@@ -221,81 +125,50 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const googleLogin = async (req: Request, res: Response) => {
-  const googleClientId = getGoogleClientId();
+  const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim() || '';
   try {
     const { credential } = googleLoginSchema.parse(req.body);
+    const result = await authService.googleLogin(credential);
 
-    if (!googleClientId) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'google_client_id_not_set' }, undefined, 'error');
-      return res.status(500).json({
+    if (!result.success) {
+      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: result.code }, undefined, 'error');
+      if (result.code === 'google_client_id_not_set') {
+        return res.status(500).json({
+          error: 'Đăng nhập Google thất bại',
+          debug: { googleClientId: 'not set', message: 'Server chưa đọc được GOOGLE_CLIENT_ID từ .env' },
+        });
+      }
+      if (result.code === 'google_token_no_email') {
+        return res.status(401).json({
+          error: 'Đăng nhập Google thất bại',
+          debug: { googleClientId: 'loaded', reason: 'token không có email' },
+        });
+      }
+      if (result.code === 'account_banned') {
+        return res.status(403).json({
+          error: 'Đăng nhập Google thất bại',
+          debug: { googleClientId: 'loaded', reason: 'tài khoản bị khóa' },
+        });
+      }
+      return res.status(400).json({
         error: 'Đăng nhập Google thất bại',
-        debug: { googleClientId: 'not set', message: 'Server chưa đọc được GOOGLE_CLIENT_ID từ .env' },
+        debug: { googleClientId: googleClientId ? 'loaded' : 'not set', reason: 'dữ liệu không hợp lệ' },
       });
     }
-
-    const client = new OAuth2Client(googleClientId);
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: googleClientId,
-    });
-    const payload = ticket.getPayload();
-    if (!payload?.email) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'google_token_no_email' }, undefined, 'error');
-      return res.status(401).json({
-        error: 'Đăng nhập Google thất bại',
-        debug: { googleClientId: 'loaded', reason: 'token không có email' },
-      });
-    }
-
-    const email = payload.email.toLowerCase().trim();
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      user = await User.create({
-        email,
-        role: 'user',
-        xu: 0,
-      });
-    }
-
-    if (user.isBanned) {
-      await createAuditLog(req as AuthRequest, 'login_failed', 'auth', user._id.toString(), { email: user.email, reason: 'account_banned' }, undefined, 'error');
-      return res.status(403).json({
-        error: 'Đăng nhập Google thất bại',
-        debug: { googleClientId: 'loaded', reason: 'tài khoản bị khóa' },
-      });
-    }
-
-    const tokenPayload = {
-      userId: user._id.toString(),
-      role: user.role,
-      email: user.email,
-    };
-
-    const accessToken = generateAccessToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
-
-    await user.updateOne({ $set: { refreshToken } });
 
     await createAuditLog(
       req as AuthRequest,
       'login',
       'auth',
-      user._id.toString(),
-      { email: user.email, provider: 'google' },
-      user._id.toString(),
+      result.user.id,
+      { email: result.user.email, provider: 'google' },
+      result.user.id,
       'info'
     );
 
-    res.cookie('jwt', accessToken, jwtCookieOptions);
-    res.cookie('refreshToken', refreshToken, refreshCookieOptions);
-    res.json({
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        role: user.role,
-      },
-    });
+    res.cookie('jwt', result.accessToken, jwtCookieOptions);
+    res.cookie('refreshToken', result.refreshToken, refreshCookieOptions);
+    res.json({ user: result.user });
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'name' in error && (error as Error).name === 'ZodError') {
       await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: 'google_validation_error' }, undefined, 'error');
@@ -304,7 +177,7 @@ export const googleLogin = async (req: Request, res: Response) => {
         debug: { googleClientId: googleClientId ? 'loaded' : 'not set', reason: 'dữ liệu không hợp lệ' },
       });
     }
-    const message = error instanceof Error ? error.message : String(error);
+    const message = error instanceof Error ? (error as Error).message : String(error);
     console.error('Google login failed:', message);
     await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { reason: message.substring(0, 80) }, undefined, 'error');
     return res.status(401).json({
@@ -317,35 +190,52 @@ export const googleLogin = async (req: Request, res: Response) => {
 /** Xác thực user qua cookie jwt (dùng cho client check đã đăng nhập chưa). JS không đọc được token. */
 export const getMe = async (req: Request, res: Response) => {
   const authReq = req as AuthRequest;
-  if (!authReq.user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const user = await authService.getMe(authReq.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      user: {
+        id: authReq.user.userId,
+        email: user.email,
+        role: user.role,
+        lastViewedNotifications: user.lastViewedNotifications?.toISOString() ?? null,
+      },
+    });
+  } catch {
+    res.status(500).json({ error: 'Failed to get user' });
   }
-  const { userId, email, role } = authReq.user;
-  res.json({ user: { id: userId, email, role } });
+};
+
+/** PATCH last-viewed-notifications: lưu thời điểm user mở dropdown thông báo (ẩn chấm đỏ). */
+export const patchLastViewedNotifications = async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const data = await authService.patchLastViewedNotifications(authReq.user.userId);
+    res.json(data);
+  } catch {
+    res.status(500).json({ error: 'Failed to update last viewed notifications' });
+  }
 };
 
 /** GET save-game: trả về saveGame của user hiện tại. */
 export const getSaveGame = async (req: Request, res: Response) => {
   const authReq = req as AuthRequest;
-  if (!authReq.user) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const user = await User.findById(authReq.user.userId).select('saveGame').lean();
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const saveGame = await authService.getSaveGame(authReq.user.userId);
     await createAuditLog(
       authReq,
       'load_save_game',
       'auth',
       authReq.user.userId,
-      { saveGame: user.saveGame ?? null },
+      { saveGame },
       authReq.user.userId,
       'info'
     );
-    res.json({ saveGame: user.saveGame ?? null });
-  } catch (error: any) {
+    res.json({ saveGame });
+  } catch {
     res.status(500).json({ error: 'Failed to load save game' });
   }
 };
@@ -353,12 +243,10 @@ export const getSaveGame = async (req: Request, res: Response) => {
 /** PUT save-game: cập nhật saveGame của user hiện tại. */
 export const putSaveGame = async (req: Request, res: Response) => {
   const authReq = req as AuthRequest;
-  if (!authReq.user) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const { saveGame } = saveGameSchema.parse(req.body);
-    await User.findByIdAndUpdate(authReq.user.userId, { $set: { saveGame: saveGame ?? null } });
+    await authService.putSaveGame(authReq.user.userId, saveGame ?? null);
     await createAuditLog(
       authReq,
       'save_game',
@@ -369,10 +257,9 @@ export const putSaveGame = async (req: Request, res: Response) => {
       'log'
     );
     res.json({ ok: true });
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
-      return res.status(400).json({ error: error.errors });
-    }
+  } catch (error: unknown) {
+    const err = error as { name?: string; errors?: unknown };
+    if (err.name === 'ZodError') return res.status(400).json({ error: err.errors });
     res.status(500).json({ error: 'Failed to save game' });
   }
 };
@@ -381,46 +268,24 @@ export const putSaveGame = async (req: Request, res: Response) => {
 export const refreshToken = async (req: Request, res: Response) => {
   try {
     const token = req.cookies?.refreshToken ?? (req.body as { refreshToken?: string })?.refreshToken;
-    if (!token) {
-      return res.status(401).json({ error: 'Refresh token required' });
-    }
+    const result = await authService.refreshToken(token);
 
-    const { verifyRefreshToken } = await import('../utils/jwt.js');
-    const decoded = verifyRefreshToken(token);
-
-    const user = await User.findById(decoded.userId);
-    if (!user || user.refreshToken !== token) {
+    if (!result.success) {
+      if (result.code === 'no_token') return res.status(401).json({ error: 'Refresh token required' });
       return res.status(403).json({ error: 'Invalid token' });
     }
 
-    const tokenPayload = {
-      userId: user._id.toString(),
-      role: user.role,
-      email: user.email,
-    };
-
-    const { generateAccessToken } = await import('../utils/jwt.js');
-    const newAccessToken = generateAccessToken(tokenPayload);
-
-    res.cookie('jwt', newAccessToken, jwtCookieOptions);
-    res.json({ ok: true, accessToken: newAccessToken });
-  } catch (error) {
+    res.cookie('jwt', result.accessToken, jwtCookieOptions);
+    res.json({ ok: true, accessToken: result.accessToken });
+  } catch {
     res.status(401).json({ error: 'Invalid refresh token' });
   }
 };
 
-/** Logout: xóa cookie và refreshToken trong DB (nếu có jwt hợp lệ). Nhận token từ cookie hoặc Authorization (SPA admin). */
+/** Logout: xóa cookie và refreshToken trong DB (nếu có jwt hợp lệ). */
 export const logout = async (req: Request, res: Response) => {
   const token = req.cookies?.jwt ?? (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null);
-  if (token) {
-    try {
-      const { verifyAccessToken } = await import('../utils/jwt.js');
-      const decoded = verifyAccessToken(token);
-      await User.findByIdAndUpdate(decoded.userId, { $set: { refreshToken: null } });
-    } catch {
-      // token hết hạn vẫn xóa cookie
-    }
-  }
+  await authService.logout(token);
   res.clearCookie('jwt', { httpOnly: true, sameSite: 'lax', path: '/' });
   res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'lax', path: '/', maxAge: 0 });
   res.json({ ok: true });
