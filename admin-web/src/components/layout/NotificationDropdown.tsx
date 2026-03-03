@@ -1,5 +1,7 @@
 import { forwardRef } from 'react';
+import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { zoomInPopup, slideUpItem } from '../animations/motionPresets';
 
 const NOTIFICATION_ICON_MAP: Record<string, string> = {
   check_circle: '✅',
@@ -43,28 +45,33 @@ export const NotificationDropdown = forwardRef<HTMLDivElement, NotificationDropd
     ref
   ) => {
     return (
-      <div
+      <motion.div
         ref={ref}
         className={cn(
-          'absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 flex flex-col max-h-96 animate-slide-in',
+          'absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 z-[120] flex flex-col max-h-96',
           className
         )}
+        variants={zoomInPopup}
+        initial="hidden"
+        animate="visible"
       >
         <div className="p-2 overflow-y-auto flex-1 min-h-0">
           {notifications.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-6">Chưa có thông báo</p>
           ) : (
             notifications.map((notif, index) => (
-              <div
+              <motion.div
                 key={notif._id ?? `notif-${index}`}
                 onClick={() => onItemClick(notif.path)}
                 className={cn(
                   'p-4 mb-2 rounded-lg cursor-pointer transition-all duration-300 transform',
                   'hover:bg-slate-50 hover:shadow-md hover:scale-[1.02]',
-                  'border border-slate-100 hover:border-indigo-200',
-                  'animate-slide-in'
+                  'border border-slate-100 hover:border-indigo-200'
                 )}
-                style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}
+                variants={slideUpItem}
+                initial="hidden"
+                animate="visible"
+                custom={index}
               >
                 <div className="flex items-start gap-3">
                   <div className="text-2xl shrink-0">{getNotificationIconDisplay(notif.icon)}</div>
@@ -81,7 +88,7 @@ export const NotificationDropdown = forwardRef<HTMLDivElement, NotificationDropd
                     <p className="text-sm text-slate-600 line-clamp-2">{notif.notif}</p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))
           )}
         </div>
@@ -100,7 +107,7 @@ export const NotificationDropdown = forwardRef<HTMLDivElement, NotificationDropd
             </button>
           </div>
         )}
-      </div>
+      </motion.div>
     );
   }
 );

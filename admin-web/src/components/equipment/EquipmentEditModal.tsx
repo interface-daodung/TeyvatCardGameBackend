@@ -1,9 +1,11 @@
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquarePen } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '../ui/button';
 import { getItemImageUrl, onlyPositiveInt, renderColoredDescription } from './equipmentUtils';
 import { EquipmentI18nPanel } from './EquipmentI18nPanel';
+import { scaleInModal, fadeInOverlay, zoomInPopup } from '../animations/motionPresets';
 import type { GameItem } from './equipmentUtils';
 import type { EditLang } from '../LangDropdown';
 
@@ -83,10 +85,24 @@ export function EquipmentEditModal({
   const baseCooldown = formValues.baseCooldown ?? selectedItem.baseCooldown ?? 0;
 
   const content = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      variants={fadeInOverlay}
+      initial="hidden"
+      animate="visible"
+    >
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div className="relative z-10 flex items-stretch gap-4">
-        <div className="w-full max-w-lg rounded-xl bg-card shadow-2xl border border-border overflow-hidden flex-shrink-0">
+      <motion.div
+        className="relative z-10 flex items-stretch gap-4"
+        variants={scaleInModal}
+        layout
+        transition={{ layout: { duration: 0.2, ease: 'easeOut' } }}
+      >
+        <motion.div
+          layout
+          transition={{ layout: { duration: 0.2, ease: 'easeOut' } }}
+          className="w-full max-w-lg rounded-xl bg-card shadow-2xl border border-border overflow-hidden flex-shrink-0"
+        >
           <div
             className={`p-4 flex items-center justify-between gap-4 ${
               formValues.status === 'ban'
@@ -113,7 +129,11 @@ export function EquipmentEditModal({
               ×
             </button>
           </div>
-          <div className="p-6 flex gap-6">
+          <motion.div
+            layout
+            transition={{ layout: { duration: 0.2, ease: 'easeOut' } }}
+            className="p-6 flex gap-6"
+          >
             <div className="flex-shrink-0">
               <img
                 src={getItemImageUrl(selectedItem.image)}
@@ -121,7 +141,11 @@ export function EquipmentEditModal({
                 className="aspect-square w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-lg"
               />
             </div>
-            <div className="flex-1 min-w-0 space-y-2 text-sm">
+            <motion.div
+              layout
+              transition={{ layout: { duration: 0.2, ease: 'easeOut' } }}
+              className="flex-1 min-w-0 space-y-2 text-sm"
+            >
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-muted-foreground">NameId:</span>
                 <code className="bg-muted px-1 rounded">
@@ -283,14 +307,27 @@ export function EquipmentEditModal({
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 p-4 border-t border-border">
-            {error && (
-              <div className="bg-destructive/10 text-destructive text-xs px-3 py-2 rounded-md">
-                {error}
-              </div>
-            )}
+            </motion.div>
+          </motion.div>
+          <motion.div
+            layout
+            transition={{ layout: { duration: 0.18, ease: 'easeOut' } }}
+            className="flex flex-col gap-2 p-4 border-t border-border"
+          >
+            <AnimatePresence initial={false}>
+              {error && (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className="bg-destructive/10 text-destructive text-xs px-3 py-2 rounded-md"
+                >
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="flex justify-end items-center gap-2">
               <Button
                 onClick={onSave}
@@ -300,32 +337,34 @@ export function EquipmentEditModal({
                 {saveLoading ? 'Đang lưu...' : 'Lưu'}
               </Button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {i18nPopupField && (
-          <EquipmentI18nPanel
-            field={i18nPopupField}
-            editLang={editLang}
-            getFormI18n={getFormI18n}
-            setFormI18n={setFormI18n}
-            formLevelMax={formLevelMax}
-            formLevelStats={formLevelStats}
-            expandedLevels={expandedLevels}
-            translateLoading={translateLoading}
-            i18nError={i18nError}
-            onLevelMaxChange={onLevelMaxChange}
-            onToggleLevelExpanded={onToggleLevelExpanded}
-            onUpdateLevelStat={onUpdateLevelStat}
-            onTranslate={onI18nTranslate}
-            onSave={
-              i18nPopupField === 'level' ? onLevelSave : onI18nSave
-            }
-            onClose={onCloseI18nPopup}
-          />
+          <motion.div variants={zoomInPopup} layout>
+            <EquipmentI18nPanel
+              field={i18nPopupField}
+              editLang={editLang}
+              getFormI18n={getFormI18n}
+              setFormI18n={setFormI18n}
+              formLevelMax={formLevelMax}
+              formLevelStats={formLevelStats}
+              expandedLevels={expandedLevels}
+              translateLoading={translateLoading}
+              i18nError={i18nError}
+              onLevelMaxChange={onLevelMaxChange}
+              onToggleLevelExpanded={onToggleLevelExpanded}
+              onUpdateLevelStat={onUpdateLevelStat}
+              onTranslate={onI18nTranslate}
+              onSave={
+                i18nPopupField === 'level' ? onLevelSave : onI18nSave
+              }
+              onClose={onCloseI18nPopup}
+            />
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 
   return createPortal(content, document.body);

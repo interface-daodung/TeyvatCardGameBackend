@@ -1,9 +1,11 @@
+import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
 import { LangDropdown } from '../components/LangDropdown';
 import { EquipmentLoading } from '../components/equipment/EquipmentLoading';
 import { EquipmentItemCard } from '../components/equipment/EquipmentItemCard';
 import { EquipmentEditModal } from '../components/equipment/EquipmentEditModal';
 import { useEquipment } from '../components/equipment/useEquipment';
+import { fadeSlideCard, slideUpItem } from '../components/animations/motionPresets';
 
 export { type GameItem, type LevelStat } from '../components/equipment/equipmentUtils';
 
@@ -26,26 +28,37 @@ export default function Equipment() {
       </div>
 
       {eq.error && (
-        <div className="rounded-lg bg-destructive/10 text-destructive px-4 py-2 text-sm">
+        <motion.div
+          className="rounded-lg bg-destructive/10 text-destructive px-4 py-2 text-sm"
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+        >
           {eq.error}
-        </div>
+        </motion.div>
       )}
 
       {eq.loading ? (
         <EquipmentLoading />
       ) : (
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-          {eq.items.map((item) => (
-            <EquipmentItemCard
-              key={item.nameId}
-              item={item}
-              editLang={eq.editLang}
-              getItemDisplayName={eq.getItemDisplayName}
-              getItemDisplayDescription={eq.getItemDisplayDescription}
-              onClick={() => eq.openEditModal(item)}
-            />
+        <motion.div
+          className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2"
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+        >
+          {eq.items.map((item, index) => (
+            <motion.div key={item.nameId} variants={slideUpItem} initial="hidden" animate="visible" custom={index}>
+              <EquipmentItemCard
+                item={item}
+                editLang={eq.editLang}
+                getItemDisplayName={eq.getItemDisplayName}
+                getItemDisplayDescription={eq.getItemDisplayDescription}
+                onClick={() => eq.openEditModal(item)}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {eq.editModalOpen && eq.selectedItem && (

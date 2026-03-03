@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '../components/ui/button';
 import { PageHeader } from '../components/PageHeader';
 import { LangDropdown } from '../components/LangDropdown';
+import { fadeSlideCard } from '../components/animations/motionPresets';
 import { I18nDescriptionModal } from '../components/i18n/I18nDescriptionModal';
 import { CharacterDetailLoading } from '../components/characters/CharacterDetailLoading';
 import { CharacterDetailError } from '../components/characters/CharacterDetailError';
@@ -45,7 +47,12 @@ export default function CharacterDetail() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
+      >
         <CharacterDetailImage
           character={detail.character}
           effectiveElement={effectiveElement}
@@ -78,7 +85,7 @@ export default function CharacterDetail() {
           onStartPriceEdit={detail.startPriceEdit}
           onSetDisplayElementAndPersist={detail.setDisplayElementAndPersist}
         />
-      </div>
+      </motion.div>
 
       <Button
         onClick={() => navigate('/characters')}

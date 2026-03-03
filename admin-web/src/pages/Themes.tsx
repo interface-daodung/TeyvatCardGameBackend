@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -12,6 +13,7 @@ import {
   type Theme,
   type ThemeColors,
 } from '../services/themeService';
+import { scaleInModal, fadeInOverlay, fadeSlideCard } from '../components/animations/motionPresets';
 
 const COLOR_KEYS: (keyof ThemeColors)[] = [
   'primary',
@@ -115,14 +117,25 @@ function ThemeFormModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
-      <div
-        className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      <motion.div
+        className="absolute inset-0 bg-black/50 cursor-pointer"
+        aria-hidden
+        variants={fadeInOverlay}
+        initial="hidden"
+        animate="visible"
+        onClick={onClose}
+      />
+      <motion.div
+        className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative z-10"
         onClick={(e) => e.stopPropagation()}
+        variants={scaleInModal}
+        initial="hidden"
+        animate="visible"
       >
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <h2 className="text-xl font-semibold text-slate-800">
@@ -175,7 +188,7 @@ function ThemeFormModal({
             </Button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>,
     document.body
   );
@@ -260,16 +273,26 @@ export default function Themes() {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-destructive/10 text-destructive px-4 py-2 text-sm">
+        <motion.div
+          className="rounded-lg bg-destructive/10 text-destructive px-4 py-2 text-sm"
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+        >
           {error}
-        </div>
+        </motion.div>
       )}
 
       {loading ? (
         <div className="text-slate-500">Đang tải...</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
+          <motion.div
+            className="space-y-4"
+            variants={fadeSlideCard}
+            initial="hidden"
+            animate="visible"
+          >
             <h3 className="text-lg font-medium text-slate-700">Danh sách theme</h3>
             {themes.length === 0 ? (
               <Card>
@@ -279,51 +302,64 @@ export default function Themes() {
               </Card>
             ) : (
               <div className="space-y-3">
-                {themes.map((theme) => (
-                  <Card key={theme._id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">{theme.name}</CardTitle>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setPreviewColors(theme.colors)}
-                          >
-                            Xem trước
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => openEdit(theme)}>
-                            Sửa
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDelete(theme)}
-                          >
-                            Xóa
-                          </Button>
+                {themes.map((theme, index) => (
+                  <motion.div
+                    key={theme._id}
+                    variants={fadeSlideCard}
+                    initial="hidden"
+                    animate="visible"
+                    custom={index}
+                  >
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base">{theme.name}</CardTitle>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setPreviewColors(theme.colors)}
+                            >
+                              Xem trước
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => openEdit(theme)}>
+                              Sửa
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDelete(theme)}
+                            >
+                              Xóa
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex flex-wrap gap-1">
-                        {COLOR_KEYS.map((key) => (
-                          <div
-                            key={key}
-                            className="w-8 h-8 rounded border border-slate-200"
-                            style={{ backgroundColor: theme.colors[key] }}
-                            title={`${key}: ${theme.colors[key]}`}
-                          />
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex flex-wrap gap-1">
+                          {COLOR_KEYS.map((key) => (
+                            <div
+                              key={key}
+                              className="w-8 h-8 rounded border border-slate-200"
+                              style={{ backgroundColor: theme.colors[key] }}
+                              title={`${key}: ${theme.colors[key]}`}
+                            />
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
-          <div className="space-y-4">
+          <motion.div
+            className="space-y-4"
+            variants={fadeSlideCard}
+            initial="hidden"
+            animate="visible"
+          >
             <h3 className="text-lg font-medium text-slate-700">Xem trước bộ màu</h3>
             {previewColors ? (
               <ThemePreview colors={previewColors} />
@@ -334,7 +370,7 @@ export default function Themes() {
                 </CardContent>
               </Card>
             )}
-          </div>
+          </motion.div>
         </div>
       )}
 

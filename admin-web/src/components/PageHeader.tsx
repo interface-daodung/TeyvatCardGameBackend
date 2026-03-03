@@ -1,3 +1,6 @@
+import { motion } from 'framer-motion';
+import { fadeInText } from './animations/motionPresets';
+
 interface PageHeaderProps {
   title: string;
   description?: string;
@@ -6,11 +9,15 @@ interface PageHeaderProps {
 /** Gradient trải theo chiều chữ (w-fit) + màu tương phản rõ (slate-700 → blue-500) */
 export function PageHeader({ title, description }: PageHeaderProps) {
   return (
-    <div>
+    <motion.div
+      variants={fadeInText}
+      initial="hidden"
+      animate="visible"
+    >
       <h1 className="w-fit text-4xl font-bold bg-gradient-to-r from-slate-700 to-blue-500 bg-clip-text text-transparent mb-2">
         {title}
       </h1>
       {description && <p className="text-muted-foreground">{description}</p>}
-    </div>
+    </motion.div>
   );
 }

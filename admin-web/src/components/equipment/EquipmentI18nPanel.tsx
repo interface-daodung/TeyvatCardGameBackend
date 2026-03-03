@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/button';
 import { onlyPositiveInt, type LevelStat, type I18nPopupField } from './equipmentUtils';
 import type { EditLang } from '../LangDropdown';
@@ -52,7 +53,9 @@ export function EquipmentI18nPanel({
         : 'Level';
 
   return (
-    <div
+    <motion.div
+      layout
+      transition={{ layout: { duration: 0.2, ease: 'easeOut' } }}
       className={`w-full max-w-md rounded-lg 
         bg-card overflow-hidden shadow-xl border border-border 
         flex-shrink-0 flex flex-col 
@@ -73,7 +76,11 @@ export function EquipmentI18nPanel({
         className={`p-6 flex-1 overflow-auto ${field === 'level' ? 'min-h-[380px]' : ''}`}
       >
         {field === 'level' ? (
-          <div className="space-y-4 min-h-[360px] flex flex-col">
+          <motion.div
+            layout
+            transition={{ layout: { duration: 0.2, ease: 'easeOut' } }}
+            className="space-y-4 min-h-[360px] flex flex-col"
+          >
             <div className="flex-shrink-0">
               <label className="block text-sm font-medium mb-1">Max Level</label>
               <div className="flex items-center justify-between">
@@ -102,13 +109,19 @@ export function EquipmentI18nPanel({
                 </div>
               </div>
             </div>
-            <div className="space-y-1 h-[280px] overflow-y-scroll overflow-x-hidden shrink-0 [scrollbar-gutter:stable]">
+            <motion.div
+              layout
+              transition={{ layout: { duration: 0.18, ease: 'easeOut' } }}
+              className="space-y-1 h-[280px] overflow-y-scroll overflow-x-hidden shrink-0 [scrollbar-gutter:stable]"
+            >
               {formLevelStats.map((stat, idx) => {
                 const lvl = idx + 1;
                 const expanded = expandedLevels.has(lvl);
                 return (
-                  <div
+                  <motion.div
                     key={lvl}
+                    layout
+                    transition={{ layout: { duration: 0.18, ease: 'easeOut' } }}
                     className={`border rounded overflow-hidden ${expanded ? 'border-blue-400 ring-1 ring-blue-200' : ''}`}
                   >
                     <button
@@ -127,72 +140,81 @@ export function EquipmentI18nPanel({
                       <span className="text-blue-600">Cooldown {stat.cooldown}</span>
                       <span className="text-amber-600">Price 🪙 : {stat.price}</span>
                     </button>
-                    {expanded && (
-                      <div className="px-4 pb-3 pt-2 grid grid-cols-3 gap-3 bg-slate-50/50 border-t border-slate-200">
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground block mb-1">
-                            Power
-                          </label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={stat.power}
-                            onChange={(e) =>
-                              onUpdateLevelStat(
-                                idx,
-                                'power',
-                                Math.max(0, Math.floor(Number(e.target.value) || 0))
-                              )
-                            }
-                            onKeyDown={onlyPositiveInt}
-                            className="w-full border rounded px-2 py-1 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground block mb-1">
-                            Cooldown
-                          </label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={stat.cooldown}
-                            onChange={(e) =>
-                              onUpdateLevelStat(
-                                idx,
-                                'cooldown',
-                                Math.max(0, Math.floor(Number(e.target.value) || 0))
-                              )
-                            }
-                            onKeyDown={onlyPositiveInt}
-                            className="w-full border rounded px-2 py-1 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground block mb-1">
-                            Price 🪙
-                          </label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={stat.price}
-                            onChange={(e) =>
-                              onUpdateLevelStat(
-                                idx,
-                                'price',
-                                Math.max(0, Math.floor(Number(e.target.value) || 0))
-                              )
-                            }
-                            onKeyDown={onlyPositiveInt}
-                            className="w-full border rounded px-2 py-1 text-sm"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    <AnimatePresence initial={false}>
+                      {expanded && (
+                        <motion.div
+                          key="expanded"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.18, ease: 'easeOut' }}
+                          className="px-4 pb-3 pt-2 grid grid-cols-3 gap-3 bg-slate-50/50 border-t border-slate-200"
+                        >
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground block mb-1">
+                              Power
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={stat.power}
+                              onChange={(e) =>
+                                onUpdateLevelStat(
+                                  idx,
+                                  'power',
+                                  Math.max(0, Math.floor(Number(e.target.value) || 0))
+                                )
+                              }
+                              onKeyDown={onlyPositiveInt}
+                              className="w-full border rounded px-2 py-1 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground block mb-1">
+                              Cooldown
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={stat.cooldown}
+                              onChange={(e) =>
+                                onUpdateLevelStat(
+                                  idx,
+                                  'cooldown',
+                                  Math.max(0, Math.floor(Number(e.target.value) || 0))
+                                )
+                              }
+                              onKeyDown={onlyPositiveInt}
+                              className="w-full border rounded px-2 py-1 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground block mb-1">
+                              Price 🪙
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={stat.price}
+                              onChange={(e) =>
+                                onUpdateLevelStat(
+                                  idx,
+                                  'price',
+                                  Math.max(0, Math.floor(Number(e.target.value) || 0))
+                                )
+                              }
+                              onKeyDown={onlyPositiveInt}
+                              className="w-full border rounded px-2 py-1 text-sm"
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 );
               })}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         ) : (
           <div className="space-y-4">
             {([editLang, ...LANG_OPTIONS.filter((l) => l !== editLang)] as EditLang[]).map(
@@ -249,6 +271,6 @@ export function EquipmentI18nPanel({
           Lưu
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }

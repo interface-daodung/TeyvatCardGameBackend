@@ -1,5 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { slideUpItem, fadeSlideCard } from '../animations/motionPresets';
 
 export interface NavItem {
   path: string;
@@ -17,14 +19,23 @@ export function Sidebar({ isOpen, navItems, onLogout }: SidebarProps) {
   const location = useLocation();
 
   return (
-    <aside
+    <motion.aside
+      initial={{ opacity: 0, x: -24 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
       className={cn(
         'transition-all duration-300 ease-in-out bg-white border-r border-slate-200 flex flex-col z-50',
         isOpen ? 'w-64' : 'w-20'
       )}
     >
       <div className="p-6 flex items-center justify-between">
-        <div className={cn('flex items-center gap-3 overflow-hidden', !isOpen && 'justify-center')}>
+        <NavLink
+          to="/"
+          className={cn(
+            'flex items-center gap-3 overflow-hidden cursor-pointer',
+            !isOpen && 'justify-center'
+          )}
+        >
           <div className="overflow-hidden rounded-md w-10 h-10">
             <img src="../../icon-192.webp" className="w-full h-full object-cover" alt="Logo" />
           </div>
@@ -33,31 +44,43 @@ export function Sidebar({ isOpen, navItems, onLogout }: SidebarProps) {
               Teyvat Admin
             </span>
           )}
-        </div>
+        </NavLink>
       </div>
 
       <nav className="flex-1 mt-4 px-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {navItems.map((item, index) => {
           const isActive = location.pathname === item.path;
           return (
-            <NavLink
+            <motion.div
               key={item.path}
-              to={item.path}
-              className={cn(
-                'flex items-center gap-3 px-3 py-3 rounded-xl transition-all',
-                isActive ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
-                !isOpen && 'justify-center'
-              )}
+              variants={slideUpItem}
+              initial="hidden"
+              animate="visible"
+              custom={index}
             >
-              <span className="shrink-0 text-lg">{item.icon}</span>
-              {isOpen && <span className="font-medium text-sm">{item.label}</span>}
-              {isOpen && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
-            </NavLink>
+              <NavLink
+                to={item.path}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-3 rounded-xl transition-all',
+                  isActive ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                  !isOpen && 'justify-center'
+                )}
+              >
+                <span className="shrink-0 text-lg">{item.icon}</span>
+                {isOpen && <span className="font-medium text-sm">{item.label}</span>}
+                {isOpen && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+              </NavLink>
+            </motion.div>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-100">
+      <motion.div
+        className="p-4 border-t border-slate-100"
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
+      >
         <button
           onClick={onLogout}
           className={cn(
@@ -84,7 +107,7 @@ export function Sidebar({ isOpen, navItems, onLogout }: SidebarProps) {
           </span>
           {isOpen && <span className="font-medium text-sm">Logout</span>}
         </button>
-      </div>
-    </aside>
+      </motion.div>
+    </motion.aside>
   );
 }

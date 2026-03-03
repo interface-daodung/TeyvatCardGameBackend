@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { dashboardService, DashboardStats } from '../services/dashboardService';
+import { fadeSlideCard } from '../components/animations/motionPresets';
 import { Card, CardHeader, CardTitle } from '../components/ui/card';
 import { PageHeader } from '../components/PageHeader';
 import { StatCard } from '../components/StatCard';
@@ -188,7 +190,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
+    <div className="relative z-0 p-6 space-y-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
       <PageHeader
         title="Dashboard"
         description="Overview of your game statistics"
@@ -196,10 +198,24 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat, index) => (
-          <StatCard key={index} {...stat} />
+          <motion.div
+            key={stat.title}
+            variants={fadeSlideCard}
+            initial="hidden"
+            animate="visible"
+            custom={index}
+          >
+            <StatCard {...stat} />
+          </motion.div>
         ))}
       </div>
-      <Card className="overflow-hidden border-0 shadow-lg">
+      <motion.div
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
+        className="overflow-hidden border-0 shadow-lg"
+      >
+        <Card className="overflow-hidden border-0 shadow-lg">
         <div className="bg-gradient-to-r from-slate-50 to-blue-50/50 px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -379,17 +395,32 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-      </Card>
+        </Card>
+      </motion.div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RevenueChart data={stats.revenueByDate} />
-        <RevenueChart
-          data={stats.usersByDate}
-          title="User Registrations"
-          description="New user signups over time"
-          dataKey="count"
-          color="hsl(215, 20%, 45%)"
-          name="New Users"
-        />
+        <motion.div
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+          custom={0}
+        >
+          <RevenueChart data={stats.revenueByDate} />
+        </motion.div>
+        <motion.div
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+          custom={1}
+        >
+          <RevenueChart
+            data={stats.usersByDate}
+            title="User Registrations"
+            description="New user signups over time"
+            dataKey="count"
+            color="hsl(215, 20%, 45%)"
+            name="New Users"
+          />
+        </motion.div>
       </div>
     </div>
   );

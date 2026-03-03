@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import { logService, AuditLog } from '../services/logService';
@@ -9,6 +10,7 @@ import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 import { PageHeader } from '../components/PageHeader';
 import { Pagination } from '../components/Pagination';
+import { fadeSlideCard } from '../components/animations/motionPresets';
 
 function LogDetailTree({ log }: { log: AuditLog }) {
   const payload = {
@@ -151,7 +153,8 @@ export default function Logs() {
     <div className="p-6 space-y-6">
       <PageHeader title="Audit Logs" description="Track all admin actions and changes" />
 
-      <Card className="border-0 shadow-lg p-5 bg-gradient-to-br from-slate-50/80 to-blue-50/50">
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible">
+        <Card className="border-0 shadow-lg p-5 bg-gradient-to-br from-slate-50/80 to-blue-50/50">
         <div className="flex flex-wrap items-end gap-4">
           <div className="min-w-[200px]">
             <label className="block text-sm font-semibold text-slate-600 mb-1.5">Email</label>
@@ -216,10 +219,12 @@ export default function Logs() {
             <FontAwesomeIcon icon={faArrowsRotate} className={loading ? 'animate-spin' : ''} />
           </Button>
         </div>
-      </Card>
+        </Card>
+      </motion.div>
 
-      <Card className="border-0 shadow-lg overflow-hidden">
-        <CardContent className="p-0">
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible">
+        <Card className="border-0 shadow-lg overflow-hidden">
+          <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-slate-50 to-blue-50">
@@ -295,7 +300,8 @@ export default function Logs() {
             </table>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </motion.div>
 
       {detailLog && (
         <div

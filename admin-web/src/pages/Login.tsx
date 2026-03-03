@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { motion } from 'framer-motion';
 import Particles, { initParticlesEngine } from '@tsparticles/react';
 import { loadSlim } from '@tsparticles/slim';
 import type { Engine } from '@tsparticles/engine';
 import { authService } from '../services/authService';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { fadeInText, fadeSlideCard } from '../components/animations/motionPresets';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -115,14 +117,24 @@ export default function Login() {
       <div className="absolute bottom-0 right-0 w-72 h-72 bg-pink-400/20 rounded-full blur-3xl z-[1]"></div>
       
       <div className="max-w-md w-full space-y-8 relative z-10">
-        <div className="text-center">
+        <motion.div
+          className="text-center"
+          variants={fadeInText}
+          initial="hidden"
+          animate="visible"
+        >
           <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 animate-pulse">
             Teyvat Admin
           </h1>
           <p className="text-purple-600/80 font-medium">Sign in to your admin account</p>
-        </div>
-        
-        <Card className="border-0 shadow-2xl bg-gradient-to-br from-white via-blue-50/50 to-purple-50/50 backdrop-blur-sm">
+        </motion.div>
+
+        <motion.div
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+        >
+          <Card className="border-0 shadow-2xl bg-gradient-to-br from-white via-blue-50/50 to-purple-50/50 backdrop-blur-sm">
           {/* <CardHeader className="space-y-1 pb-4 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 rounded-t-lg">
             <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-blue-700 to-purple-700 bg-clip-text text-transparent">Welcome Back</CardTitle>
             <CardDescription className="text-center text-purple-600/70">
@@ -189,10 +201,16 @@ export default function Login() {
             </form>
           </CardContent>
         </Card>
-        
-        <p className="text-center text-sm text-purple-600/70 font-medium bg-purple-50/50 px-4 py-2 rounded-lg border border-purple-200/50">
+        </motion.div>
+
+        <motion.p
+          className="text-center text-sm text-purple-600/70 font-medium bg-purple-50/50 px-4 py-2 rounded-lg border border-purple-200/50"
+          variants={fadeInText}
+          initial="hidden"
+          animate="visible"
+        >
           Default: admin@example.com / admin123
-        </p>
+        </motion.p>
       </div>
     </div>
   );

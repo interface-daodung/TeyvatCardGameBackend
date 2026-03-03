@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { userService, User } from '../services/userService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 import { PageHeader } from '../components/PageHeader';
+import { fadeSlideCard } from '../components/animations/motionPresets';
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
@@ -106,6 +108,7 @@ export default function UserDetail() {
 
       <PageHeader title="User Details" description="Manage user account and permissions" />
 
+      <motion.div className="space-y-6" variants={fadeSlideCard} initial="hidden" animate="visible">
       <Card className="border-0 shadow-lg">
         <CardHeader>
           <div className="flex items-center space-x-4">
@@ -233,6 +236,7 @@ export default function UserDetail() {
           </CardContent>
         </Card>
       </div>
+      </motion.div>
     </div>
   );
 }

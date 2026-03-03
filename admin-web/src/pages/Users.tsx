@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import { userService, User, GetUsersParams } from '../services/userService';
@@ -8,6 +9,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import { PageHeader } from '../components/PageHeader';
 import { Pagination } from '../components/Pagination';
 import { UserRow } from '../components/users/UserRow';
+import { fadeSlideCard } from '../components/animations/motionPresets';
 
 const LIMIT = 20;
 
@@ -104,7 +106,8 @@ export default function Users() {
         description="Manage user accounts and permissions"
       />
 
-      <Card className="border-0 shadow-lg p-5 bg-gradient-to-br from-slate-50/80 to-blue-50/50">
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible">
+        <Card className="border-0 shadow-lg p-5 bg-gradient-to-br from-slate-50/80 to-blue-50/50">
         <div className="flex flex-wrap items-end gap-4">
           <div className="min-w-[200px]">
             <label className="block text-sm font-semibold text-slate-600 mb-1.5">Email</label>
@@ -155,19 +158,22 @@ export default function Users() {
             <FontAwesomeIcon icon={faArrowsRotate} className={loading ? 'animate-spin' : ''} />
           </Button>
         </div>
-      </Card>
+        </Card>
+      </motion.div>
 
-      <Card className="border-0 shadow-lg">
-        <CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {users.length === 0 ? (
-              <div className="p-12 text-center text-muted-foreground">No users found</div>
-            ) : (
-              users.map((user) => <UserRow key={user._id} user={user} />)
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible">
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {users.length === 0 ? (
+                <div className="p-12 text-center text-muted-foreground">No users found</div>
+              ) : (
+                users.map((user, index) => <UserRow key={user._id} user={user} index={index} />)
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <Pagination
         page={page}

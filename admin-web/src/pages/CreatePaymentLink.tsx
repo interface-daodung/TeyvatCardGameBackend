@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { paymentService, PayosPaymentLinkData } from '../services/paymentService';
 import { userService, User } from '../services/userService';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { PageHeader } from '../components/PageHeader';
 import { QRCodeSVG } from 'qrcode.react';
+import { fadeSlideCard } from '../components/animations/motionPresets';
 
 const PACKAGES = ['Gói 100', 'Gói 500', 'Gói 1000', 'Gói 5000', 'Gói 10000'];
 
@@ -82,6 +84,7 @@ export default function CreatePaymentLink() {
         description="Dành cho Admin/Mod: tạo link thanh toán PayOS khi người chơi yêu cầu hỗ trợ nạp tiền."
       />
 
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible" className="space-y-6">
       <Card className="border border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-white max-w-2xl shadow-sm">
         <CardContent className="p-6">
           <h3 className="text-lg font-semibold text-slate-800 mb-1">
@@ -137,6 +140,7 @@ export default function CreatePaymentLink() {
       </Card>
 
       {paymentData && (
+        <motion.div variants={fadeSlideCard} initial="hidden" animate="visible">
         <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 max-w-2xl shadow-sm">
           <CardContent className="p-6">
             <h3 className="text-lg font-bold text-slate-800 mb-1">
@@ -238,7 +242,9 @@ export default function CreatePaymentLink() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
       )}
+      </motion.div>
     </div>
   );
 }

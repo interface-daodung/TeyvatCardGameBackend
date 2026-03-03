@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
 import { FileTreeNode } from '../components/FileTreeNode';
+import { fadeSlideCard } from '../components/animations/motionPresets';
 import { UploadedImageEditModal } from '../components/assets/UploadedImageEditModal';
 import { filesService, type FileTreeItem } from '../services/filesService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -284,7 +286,12 @@ export default function ManagerAssets() {
         description="Quản lý file ảnh: xem cây thư mục và upload ảnh lên thư mục uploaded (REST + Multer)"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
+      >
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>File tree</CardTitle>
@@ -397,11 +404,11 @@ export default function ManagerAssets() {
                   className="max-w-full rounded-lg border object-contain max-h-64 bg-muted"
                 />
                 <p className="mt-2 text-xs text-muted-foreground break-all">{selectedPath}</p>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
           )}
         </div>
-      </div>
+        </motion.div>
 
       {editModalOpen && editPath &&
         createPortal(

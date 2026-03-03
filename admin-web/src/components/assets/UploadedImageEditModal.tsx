@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { filesService } from '../../services/filesService';
+import { scaleInModal, fadeInOverlay } from '../animations/motionPresets';
 
 const SUPPORTED_EXT = /\.(png|jpg|jpeg|gif|webp|bmp|tiff|tif)$/i;
 // Tỉ lệ mặc định 420×720
@@ -123,13 +125,25 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
 
   const modal = (
     <div
-      className="fixed inset-0 top-0 left-0 right-0 bottom-0 min-h-screen min-w-screen w-full h-full z-[9999] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 top-0 left-0 right-0 bottom-0 min-h-screen min-w-screen w-full h-full z-[9999] flex items-center justify-center p-4"
       onClick={onClose}
     >
-      <Card
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto"
+      <motion.div
+        className="absolute inset-0 bg-black/50 cursor-pointer"
+        aria-hidden
+        variants={fadeInOverlay}
+        initial="hidden"
+        animate="visible"
+        onClick={onClose}
+      />
+      <motion.div
+        variants={scaleInModal}
+        initial="hidden"
+        animate="visible"
+        className="relative z-10 w-full max-w-lg"
         onClick={(e) => e.stopPropagation()}
       >
+        <Card className="w-full max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Chi tiết ảnh - Uploaded</CardTitle>
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>
@@ -243,7 +257,8 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </motion.div>
     </div>
   );
 

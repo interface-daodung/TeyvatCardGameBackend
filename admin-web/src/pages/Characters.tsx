@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { gameDataService, type Character } from '../services/gameDataService';
 import { localizationService } from '../services/localizationService';
 import { PageHeader } from '../components/PageHeader';
 import { LangDropdown } from '../components/LangDropdown';
 import type { EditLang } from '../components/LangDropdown';
 import { CharacterCard } from '../components/characters/CharacterCard';
+import { fadeSlideCard, slideUpItem } from '../components/animations/motionPresets';
 
 export default function Characters() {
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -72,15 +74,21 @@ export default function Characters() {
         />
       </div>
 
-      <div className="flex flex-wrap gap-4">
-        {characters.map((character) => (
-          <CharacterCard
-            key={character._id}
-            character={character}
-            descriptionDisplay={descriptionByNameId[character.nameId]}
-          />
+      <motion.div
+        className="flex flex-wrap gap-4"
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
+      >
+        {characters.map((character, index) => (
+          <motion.div key={character._id} variants={slideUpItem} initial="hidden" animate="visible" custom={index}>
+            <CharacterCard
+              character={character}
+              descriptionDisplay={descriptionByNameId[character.nameId]}
+            />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

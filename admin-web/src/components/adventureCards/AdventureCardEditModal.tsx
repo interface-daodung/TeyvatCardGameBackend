@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 import { Button } from '../ui/button';
 import { AdventureCardImagePicker } from './AdventureCardImagePicker';
 import { AdventureCardEditForm } from './AdventureCardEditForm';
@@ -9,6 +10,7 @@ import type { AdventureCard } from '../../services/gameDataService';
 import type { FileTreeItem } from '../../services/filesService';
 import type { EditLang } from '../LangDropdown';
 import { ClassNamePickerPanel } from './ClassNamePickerPanel';
+import { scaleInModal, fadeInOverlay } from '../animations/motionPresets';
 
 interface AdventureCardEditModalProps {
   editCard: AdventureCard;
@@ -81,8 +83,20 @@ export function AdventureCardEditModal({
 }: AdventureCardEditModalProps) {
   const modal = (
     <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 min-h-screen min-w-screen w-full h-full z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div className="relative z-10 flex items-stretch gap-4">
+      <motion.div
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+        aria-hidden
+        variants={fadeInOverlay}
+        initial="hidden"
+        animate="visible"
+      />
+      <motion.div
+        className="relative z-10 flex items-stretch gap-4"
+        variants={scaleInModal}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="w-full max-w-3xl rounded-xl bg-card shadow-2xl border border-border overflow-hidden">
           <div className="px-6 py-4 bg-gradient-to-r from-primary-600 to-red-600 flex items-center justify-between">
             <div>
@@ -178,7 +192,7 @@ export function AdventureCardEditModal({
             onClose={onCloseClassNamePicker ?? (() => {})}
           />
         )}
-      </div>
+      </motion.div>
     </div>
   );
   return createPortal(modal, document.body);

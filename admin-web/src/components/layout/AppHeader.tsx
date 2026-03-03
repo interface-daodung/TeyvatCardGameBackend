@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion';
 import { NotificationDropdown, type NotificationItem } from './NotificationDropdown';
+import { fadeSlideCard } from '../animations/motionPresets';
 
 function stringToSafeColor(str: string): string {
   let hash = 0;
@@ -45,7 +47,12 @@ export function AppHeader({
   hasUnreadNotifications = false,
 }: AppHeaderProps) {
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
+    <motion.header
+      className="relative z-20 h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0"
+      variants={fadeSlideCard}
+      initial="hidden"
+      animate="visible"
+    >
       <div className="flex items-center gap-4">
         <button
           onClick={onToggleSidebar}
@@ -103,6 +110,6 @@ export function AppHeader({
           </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

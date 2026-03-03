@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUser,
@@ -15,6 +16,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import { fadeSlideCard, slideUpItem } from '../components/animations/motionPresets';
 
 const DEVELOPER = {
   name: 'Đào Mạnh Dũng',
@@ -42,6 +44,7 @@ const FRONTEND_TECH = [
   'Vite',
   'React Router',
   'Tailwind CSS',
+  'Framer Motion',
   'Axios',
   'Recharts',
   'React Hook Form + Zod',
@@ -95,7 +98,12 @@ const EXTERNAL_SERVICES = [
 export default function About() {
   return (
     <div className="p-4 space-y-6">
-      <div className="rounded-2xl bg-gradient-to-br from-violet-500/10 via-fuchsia-500/10 to-amber-500/10 p-6 border border-violet-200/50">
+      <motion.div
+        className="rounded-2xl bg-gradient-to-br from-violet-500/10 via-fuchsia-500/10 to-amber-500/10 p-6 border border-violet-200/50"
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
+      >
         <PageHeader
           title="About"
           description="Thông tin dự án, công nghệ sử dụng và dịch vụ bên thứ ba"
@@ -104,8 +112,9 @@ export default function About() {
           <FontAwesomeIcon icon={faRocket} className="text-violet-500" />
           Made with care for Teyvat Card Game
         </p>
-      </div>
+      </motion.div>
 
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible" custom={0}>
       <Card className="overflow-hidden border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50/50 to-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
@@ -141,7 +150,9 @@ export default function About() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible" custom={1}>
       <Card className="overflow-hidden border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50/50 to-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
@@ -152,17 +163,29 @@ export default function About() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
-            {BACKEND_TECH.map((tech) => (
-              <li key={tech} className="flex items-center gap-2">
+          <motion.ul
+            className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700"
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.04, delayChildren: 0.1 } } }}
+          >
+            {BACKEND_TECH.map((tech, i) => (
+              <motion.li
+                key={tech}
+                variants={slideUpItem}
+                custom={i}
+                className="flex items-center gap-2"
+              >
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 {tech}
-              </li>
+              </motion.li>
             ))}
-          </ul>
+          </motion.ul>
         </CardContent>
       </Card>
+      </motion.div>
 
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible" custom={2}>
       <Card className="overflow-hidden border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/50 to-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
@@ -173,17 +196,29 @@ export default function About() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
-            {FRONTEND_TECH.map((tech) => (
-              <li key={tech} className="flex items-center gap-2">
+          <motion.ul
+            className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700"
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.04, delayChildren: 0.1 } } }}
+          >
+            {FRONTEND_TECH.map((tech, i) => (
+              <motion.li
+                key={tech}
+                variants={slideUpItem}
+                custom={i}
+                className="flex items-center gap-2"
+              >
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                 {tech}
-              </li>
+              </motion.li>
             ))}
-          </ul>
+          </motion.ul>
         </CardContent>
       </Card>
+      </motion.div>
 
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible" custom={3}>
       <Card className="overflow-hidden border-l-4 border-l-fuchsia-500 bg-gradient-to-r from-fuchsia-50/50 to-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
@@ -203,37 +238,54 @@ export default function About() {
               <FontAwesomeIcon icon={faCog} className="text-fuchsia-500 text-sm" />
               Core
             </h4>
-            <ul className="list-disc list-inside space-y-1 text-slate-700 text-sm">
-              {TEYVAT_CARD_TECH.core.map((tech) => (
-                <li key={tech}>{tech}</li>
+            <motion.ul
+              className="list-disc list-inside space-y-1 text-slate-700 text-sm"
+              initial="hidden"
+              animate="visible"
+              variants={{ visible: { transition: { staggerChildren: 0.03, delayChildren: 0.05 } } }}
+            >
+              {TEYVAT_CARD_TECH.core.map((tech, i) => (
+                <motion.li key={tech} variants={slideUpItem} custom={i}>{tech}</motion.li>
               ))}
-            </ul>
+            </motion.ul>
           </div>
           <div>
             <h4 className="font-medium text-slate-800 mb-2 flex items-center gap-2">
               <FontAwesomeIcon icon={faRocket} className="text-fuchsia-500 text-sm" />
               Công cụ bổ sung
             </h4>
-            <ul className="list-disc list-inside space-y-1 text-slate-700 text-sm">
-              {TEYVAT_CARD_TECH.additional.map((tech) => (
-                <li key={tech}>{tech}</li>
+            <motion.ul
+              className="list-disc list-inside space-y-1 text-slate-700 text-sm"
+              initial="hidden"
+              animate="visible"
+              variants={{ visible: { transition: { staggerChildren: 0.03, delayChildren: 0.05 } } }}
+            >
+              {TEYVAT_CARD_TECH.additional.map((tech, i) => (
+                <motion.li key={tech} variants={slideUpItem} custom={i}>{tech}</motion.li>
               ))}
-            </ul>
+            </motion.ul>
           </div>
           <div>
             <h4 className="font-medium text-slate-800 mb-2 flex items-center gap-2">
               <FontAwesomeIcon icon={faPalette} className="text-fuchsia-500 text-sm" />
               Tính năng kỹ thuật
             </h4>
-            <ul className="list-disc list-inside space-y-1 text-slate-700 text-sm">
-              {TEYVAT_CARD_TECH.highlights.map((item) => (
-                <li key={item}>{item}</li>
+            <motion.ul
+              className="list-disc list-inside space-y-1 text-slate-700 text-sm"
+              initial="hidden"
+              animate="visible"
+              variants={{ visible: { transition: { staggerChildren: 0.03, delayChildren: 0.05 } } }}
+            >
+              {TEYVAT_CARD_TECH.highlights.map((item, i) => (
+                <motion.li key={item} variants={slideUpItem} custom={i}>{item}</motion.li>
               ))}
-            </ul>
+            </motion.ul>
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible" custom={4}>
       <Card className="overflow-hidden border-l-4 border-l-violet-500 bg-gradient-to-r from-violet-50/50 to-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
@@ -244,9 +296,14 @@ export default function About() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {EXTERNAL_SERVICES.map((service) => (
-            <div
+          {EXTERNAL_SERVICES.map((service, i) => (
+            <motion.div
               key={service.name}
+              initial="hidden"
+              animate="visible"
+              variants={slideUpItem}
+              custom={i}
+              whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
               className={`rounded-xl border ${service.borderColor} ${service.bgLight} p-4 transition-shadow hover:shadow-md`}
             >
               <h4 className="font-semibold text-slate-800 flex items-center gap-2 mb-1">
@@ -267,10 +324,11 @@ export default function About() {
                 <FontAwesomeIcon icon={faPlug} className="text-xs" />
                 {service.link}
               </a>
-            </div>
+            </motion.div>
           ))}
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }

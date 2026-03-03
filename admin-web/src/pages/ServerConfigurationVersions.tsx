@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import api from '../lib/api';
 import { PageHeader } from '../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
+import { fadeSlideCard } from '../components/animations/motionPresets';
 
 interface VersionDoc {
   _id: string;
@@ -93,6 +95,7 @@ export default function ServerConfigurationVersions() {
         </Button>
       </div>
 
+      <motion.div className="space-y-6" variants={fadeSlideCard} initial="hidden" animate="visible">
       {!latest ? (
         <Card>
           <CardContent className="pt-6">
@@ -215,6 +218,7 @@ export default function ServerConfigurationVersions() {
           </Card>
         </>
       )}
+      </motion.div>
     </div>
   );
 }

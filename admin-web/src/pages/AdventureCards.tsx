@@ -1,10 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { gameDataService, type AdventureCard } from '../services/gameDataService';
 import { localizationService } from '../services/localizationService';
 import { PageHeader } from '../components/PageHeader';
 import { LangDropdown, type EditLang } from '../components/LangDropdown';
 import { AdventureCardTile } from '../components/adventureCards/AdventureCardTile';
 import { AdventureCardsFilters } from '../components/adventureCards/AdventureCardsFilters';
+import { fadeSlideCard, slideUpItem } from '../components/animations/motionPresets';
 import { AdventureCardsLoadingSkeleton } from '../components/adventureCards/AdventureCardsLoadingSkeleton';
 import { Button } from '../components/ui/button';
 import { AdventureCardEditModal } from '../components/adventureCards/AdventureCardEditModal';
@@ -106,25 +108,33 @@ export default function AdventureCards() {
         </div>
       </div>
 
-      <AdventureCardsFilters
-        typeFilter={typeFilter}
-        onTypeFilterChange={setTypeFilter}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
-        totalCount={sortedCards.length}
-      />
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible">
+        <AdventureCardsFilters
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
+          totalCount={sortedCards.length}
+        />
+      </motion.div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {sortedCards.map((card) => (
-          <AdventureCardTile
-            key={card._id}
-            card={card}
-            displayName={cardNameTranslations[card.nameId]?.[edit.editLang] ?? card.name}
-            displayDescription={cardDescriptionTranslations[card.nameId]?.[edit.editLang] ?? card.description ?? ''}
-            onClick={() => edit.handleOpenEdit(card)}
-          />
+      <motion.div
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
+      >
+        {sortedCards.map((card, index) => (
+          <motion.div key={card._id} variants={slideUpItem} initial="hidden" animate="visible" custom={index}>
+            <AdventureCardTile
+              card={card}
+              displayName={cardNameTranslations[card.nameId]?.[edit.editLang] ?? card.name}
+              displayDescription={cardDescriptionTranslations[card.nameId]?.[edit.editLang] ?? card.description ?? ''}
+              onClick={() => edit.handleOpenEdit(card)}
+            />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {edit.editOpen && edit.editCard && (
         <AdventureCardEditModal

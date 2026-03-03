@@ -235,7 +235,7 @@ export default function Layout() {
         onLogout={handleLogout}
       />
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <main className="relative flex-1 flex flex-col min-w-0 overflow-hidden">
         <AppHeader
           isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
@@ -254,7 +254,7 @@ export default function Layout() {
           hasUnreadNotifications={hasUnreadNotifications}
         />
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-background via-primary-50/20 to-red-50/20">
+        <div className="relative z-0 flex-1 overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-background via-primary-50/20 to-red-50/20">
           <DbAuthGuard>
             <Outlet />
           </DbAuthGuard>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import {
   localizationService,
   Localization,
@@ -13,6 +14,7 @@ import { Pagination } from '../components/Pagination';
 import { LocalizationFilters } from '../components/localization/LocalizationFilters';
 import { LocalizationTable } from '../components/localization/LocalizationTable';
 import { LocalizationFormModal } from '../components/localization/LocalizationFormModal';
+import { fadeSlideCard } from '../components/animations/motionPresets';
 
 export default function LocalizationPage() {
   const [localizations, setLocalizations] = useState<Localization[]>([]);
@@ -206,26 +208,30 @@ export default function LocalizationPage() {
         </Button>
       </div>
 
-      <LocalizationFilters
-        searchInput={searchInput}
-        onSearchChange={setSearchInput}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
-        sortOrder={sortOrder}
-        onSortOrderChange={setSortOrder}
-        emptyOnly={emptyOnly}
-        onEmptyOnlyChange={setEmptyOnly}
-      />
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible">
+        <LocalizationFilters
+          searchInput={searchInput}
+          onSearchChange={setSearchInput}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
+          sortOrder={sortOrder}
+          onSortOrderChange={setSortOrder}
+          emptyOnly={emptyOnly}
+          onEmptyOnlyChange={setEmptyOnly}
+        />
+      </motion.div>
 
-      <Card className="border-0 shadow-lg overflow-hidden">
-        <LocalizationTable
+      <motion.div variants={fadeSlideCard} initial="hidden" animate="visible">
+        <Card className="border-0 shadow-lg overflow-hidden">
+          <LocalizationTable
           items={localizations}
           expandedKeys={expandedKeys}
           onToggleExpand={toggleExpand}
           onEdit={openEditModal}
           onDelete={handleDelete}
         />
-      </Card>
+        </Card>
+      </motion.div>
 
       <Pagination
         page={page}

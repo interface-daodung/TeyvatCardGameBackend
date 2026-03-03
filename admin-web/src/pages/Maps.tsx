@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   gameDataService,
   type Map as MapType,
@@ -10,6 +11,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import { PageHeader } from '../components/PageHeader';
 import { MapCard } from '../components/maps/MapCard';
 import { MapFormModal } from '../components/maps/MapFormModal';
+import { fadeSlideCard, slideUpItem } from '../components/animations/motionPresets';
 
 export default function Maps() {
   const [maps, setMaps] = useState<MapType[]>([]);
@@ -95,16 +97,28 @@ export default function Maps() {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-2 text-destructive text-sm">
+        <motion.div
+          className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-2 text-destructive text-sm"
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+        >
           {error}
-        </div>
+        </motion.div>
       )}
 
-      <div className="grid grid-cols-1 gap-6">
-        {maps.map((map) => (
-          <MapCard key={map._id} map={map} onEdit={openEditModal} />
+      <motion.div
+        className="grid grid-cols-1 gap-6"
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
+      >
+        {maps.map((map, index) => (
+          <motion.div key={map._id} variants={slideUpItem} initial="hidden" animate="visible" custom={index}>
+            <MapCard map={map} onEdit={openEditModal} />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       <MapFormModal
         open={modalOpen}
