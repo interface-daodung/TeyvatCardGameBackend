@@ -1,10 +1,23 @@
 import api from '../lib/api';
 
+export interface FileMetadata {
+  size: number;
+  mtimeMs: number;
+  ctimeMs: number;
+}
+
 export interface FileTreeItem {
   name: string;
   path: string;
   type: 'dir' | 'file';
   children?: FileTreeItem[];
+  meta?: FileMetadata;
+}
+
+export interface FullImageMetadata {
+  file: FileMetadata;
+  image: Record<string, unknown>;
+  exifBase64?: string;
 }
 
 export interface CardClassTreeNode {
@@ -16,8 +29,10 @@ export interface CardClassTreeNode {
 }
 
 export const filesService = {
-  getImageTree: async (): Promise<FileTreeItem[]> => {
-    const response = await api.get<{ tree: FileTreeItem[] }>('/files/image-tree');
+  getImageTree: async (scope?: string): Promise<FileTreeItem[]> => {
+    const response = await api.get<{ tree: FileTreeItem[] }>('/files/image-tree', {
+      params: scope ? { scope } : undefined,
+    });
     return response.data.tree;
   },
 
@@ -118,6 +133,31 @@ export const filesService = {
       count: number;
       sheetSize: { w: number; h: number };
     }>('/files/generate-all-cards-atlas');
+    return response.data;
+  },
+
+  generateCustomAtlas: async (
+    images: string[],
+    name: string
+  ): Promise<{
+    imageUrl: string;
+    jsonUrl: string;
+    count: number;
+    sheetSize: { w: number; h: number };
+  }> => {
+    const response = await api.post<{
+      imageUrl: string;
+      jsonUrl: string;
+      count: number;
+      sheetSize: { w: number; h: number };
+    }>('/files/generate-atlas', { images, name });
+    return response.data;
+  },
+
+  getFileMetadata: async (path: string): Promise<FullImageMetadata> => {
+    const response = await api.get<FullImageMetadata>('/files/metadata', {
+      params: { path },
+    });
     return response.data;
   },
 };

@@ -17,6 +17,8 @@ import {
   convertToWebpHandler,
   resizeUploadedHandler,
   generateAllCardsAtlasHandler,
+  getFileMetadataHandler,
+  generateCustomAtlasHandler,
 } from '../controllers/filesController.js';
 import { getCardClassTreeHandler } from '../controllers/cardClassTreeController.js';
 
@@ -28,6 +30,8 @@ filesRoutes.use(authorize('admin', 'moderator'));
 filesRoutes.get('/image-tree', getImageTreeHandler);
 filesRoutes.get('/card-class-tree', getCardClassTreeHandler);
 filesRoutes.get('/uploaded-tree', getUploadedTreeHandler);
+filesRoutes.get('/metadata', getFileMetadataHandler);
+filesRoutes.post('/generate-atlas', generateCustomAtlasHandler);
 filesRoutes.patch('/uploaded/rename', renameUploadedHandler);
 filesRoutes.delete('/uploaded', deleteUploadedHandler);
 filesRoutes.patch('/cards/rename', renameCardFileHandler);

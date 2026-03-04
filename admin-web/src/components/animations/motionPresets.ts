@@ -1,6 +1,12 @@
 import type { Variants, Transition } from 'framer-motion';
 
 const defaultEase: Transition['ease'] = 'easeOut';
+const modalSpring: Transition = {
+  type: 'spring',
+  stiffness: 260,
+  damping: 22,
+  mass: 0.9,
+};
 
 export const fadeInText: Variants = {
   hidden: { opacity: 0 },
@@ -45,16 +51,24 @@ export const slideUpItem: Variants = {
 };
 
 export const scaleInModal: Variants = {
-  hidden: { opacity: 0, scale: 0.9 },
+  hidden: { opacity: 0, scale: 0.9, y: 8 },
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.25, ease: defaultEase },
+    y: 0,
+    transition: {
+      ...modalSpring,
+      duration: 0.3,
+    },
   },
   exit: {
     opacity: 0,
-    scale: 0.92,
-    transition: { duration: 0.2, ease: defaultEase },
+    scale: 0.96,
+    y: 8,
+    transition: {
+      ...modalSpring,
+      duration: 0.22,
+    },
   },
 };
 
@@ -62,7 +76,7 @@ export const fadeInOverlay: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { duration: 0.2, ease: defaultEase },
+    transition: { duration: 0.25, ease: defaultEase },
   },
   exit: {
     opacity: 0,
@@ -76,13 +90,19 @@ export const zoomInPopup: Variants = {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: { duration: 0.22, ease: defaultEase },
+    transition: {
+      ...modalSpring,
+      duration: 0.26,
+    },
   },
   exit: {
     opacity: 0,
     scale: 0.96,
     y: -4,
-    transition: { duration: 0.18, ease: defaultEase },
+    transition: {
+      ...modalSpring,
+      duration: 0.2,
+    },
   },
 };
 

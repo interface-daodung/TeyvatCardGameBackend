@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { filesService } from '../../services/filesService';
@@ -144,119 +144,157 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
         onClick={(e) => e.stopPropagation()}
       >
         <Card className="w-full max-h-[90vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Chi tiết ảnh - Uploaded</CardTitle>
-          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-            ✕
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div>
-            <img
-              src={filePath}
-              alt={fileName}
-              className="max-w-full rounded-lg border object-contain max-h-48 bg-muted"
-            />
-            <p className="mt-2 text-xs text-muted-foreground break-all">{fileName}</p>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Đổi tên</label>
-            <input
-              type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-
-          {canConvertWebp && (
-            <div className="space-y-3 border-t pt-4">
-              <h4 className="text-sm font-medium">Chuyển đổi WebP (Lossy)</h4>
-              <p className="text-xs text-muted-foreground">
-                Chất lượng {webpQuality} (70–100). Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 rounded-lg bg-muted px-2 py-2">
-                  <input
-                    type="range"
-                    min={70}
-                    max={100}
-                    value={webpQuality}
-                    onChange={(e) => setWebpQuality(Number(e.target.value))}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-primary"
-                  />
-                </div>
-                <span className="text-sm font-mono w-8">{webpQuality}</span>
-              </div>
-              <Button
-                onClick={handleConvertWebp}
-                disabled={webpLoading}
-              >
-                {webpLoading ? 'Đang xử lý...' : isWebp ? 'Nén lại WebP' : 'Đổi đuôi thành WebP'}
-              </Button>
-            </div>
-          )}
-
-          {canConvertWebp && (
-            <div className="space-y-3 border-t pt-4">
-              <h4 className="text-sm font-medium">Resize (tỉ lệ 420×720)</h4>
-              <p className="text-xs text-muted-foreground">
-                Tạo ảnh mới: <code>tên_ảnh-WxH</code> (fit cover, crop nếu cần)
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {RESIZE_PRESETS.map(({ w, h }) => {
-                  const key = `${w}x${h}`;
-                  return (
-                    <Button
-                      key={key}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleResize(w, h)}
-                      disabled={resizeLoading !== null}
-                    >
-                      {resizeLoading === key ? '...' : `${w}×${h}`}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          <div className="flex flex-wrap gap-2 border-t pt-4">
-            <Button onClick={handleRename} disabled={editSaving}>
-              Lưu tên
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Chi tiết ảnh - Uploaded</CardTitle>
+            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+              ✕
             </Button>
-            <Button type="button" variant="outline" onClick={handleDeleteClick} disabled={editSaving}>
-              Xóa file
-            </Button>
-            <Button type="button" variant="ghost" onClick={onClose}>
-              Đóng
-            </Button>
-          </div>
-
-          {deleteConfirmOpen && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
-              <p className="text-sm font-medium text-amber-800">Bạn có chắc muốn xóa file này?</p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteConfirm}
-                  disabled={editSaving}
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <AnimatePresence mode="wait">
+              {deleteConfirmOpen ? (
+                <motion.div
+                  key="confirm-delete-uploaded"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  layout
                 >
-                  Có, xóa
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => setDeleteConfirmOpen(false)}>
-                  Không
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-destructive">
+                        Xóa file?
+                      </p>
+                      <p className="text-xs text-muted-foreground break-all">
+                        {fileName}
+                      </p>
+                    </div>
+                    <div className="space-y-2 rounded-lg border border-amber-300/70 bg-amber-950/40 p-3">
+                      <p className="text-sm font-medium text-amber-100">
+                        Bạn có chắc muốn xóa file này? Hành động này không thể hoàn tác.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={handleDeleteConfirm}
+                          disabled={editSaving}
+                        >
+                          Có, xóa vĩnh viễn
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeleteConfirmOpen(false)}
+                          disabled={editSaving}
+                        >
+                          Hủy, giữ lại file
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="edit-uploaded"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  layout
+                >
+                  <div>
+                    <img
+                      src={filePath}
+                      alt={fileName}
+                      className="max-w-full rounded-lg border object-contain max-h-48 bg-muted"
+                    />
+                    <p className="mt-2 text-xs text-muted-foreground break-all">{fileName}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">Đổi tên</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+
+                  {canConvertWebp && (
+                    <div className="space-y-3 border-t pt-4">
+                      <h4 className="text-sm font-medium">Chuyển đổi WebP (Lossy)</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Chất lượng {webpQuality} (70–100). Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 rounded-lg bg-muted px-2 py-2">
+                          <input
+                            type="range"
+                            min={70}
+                            max={100}
+                            value={webpQuality}
+                            onChange={(e) => setWebpQuality(Number(e.target.value))}
+                            className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-primary"
+                          />
+                        </div>
+                        <span className="text-sm font-mono w-8">{webpQuality}</span>
+                      </div>
+                      <Button
+                        onClick={handleConvertWebp}
+                        disabled={webpLoading}
+                      >
+                        {webpLoading ? 'Đang xử lý...' : isWebp ? 'Nén lại WebP' : 'Đổi đuôi thành WebP'}
+                      </Button>
+                    </div>
+                  )}
+
+                  {canConvertWebp && (
+                    <div className="space-y-3 border-t pt-4">
+                      <h4 className="text-sm font-medium">Resize (tỉ lệ 420×720)</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Tạo ảnh mới: <code>tên_ảnh-WxH</code> (fit cover, crop nếu cần)
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {RESIZE_PRESETS.map(({ w, h }) => {
+                          const key = `${w}x${h}`;
+                          return (
+                            <Button
+                              key={key}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleResize(w, h)}
+                              disabled={resizeLoading !== null}
+                            >
+                              {resizeLoading === key ? '...' : `${w}×${h}`}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {error && <p className="text-sm text-red-600">{error}</p>}
+
+                  <div className="flex flex-wrap gap-2 border-t pt-4">
+                    <Button onClick={handleRename} disabled={editSaving}>
+                      Lưu tên
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleDeleteClick} disabled={editSaving}>
+                      Xóa file
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={onClose}>
+                      Đóng
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </CardContent>
         </Card>
       </motion.div>
     </div>

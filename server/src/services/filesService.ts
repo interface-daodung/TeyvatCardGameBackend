@@ -17,6 +17,11 @@ export function getImagesBasePath(): string {
     : path.resolve(rootDir, '../admin-web/public/assets/images/cards');
 }
 
+export function getImagesRootPath(): string {
+  const base = getImagesBasePath();
+  return path.dirname(base);
+}
+
 export function getUploadsDir(): string {
   return path.join(rootDir, 'uploads');
 }
@@ -31,11 +36,18 @@ export function getTeyvatCardsPublicPath(): string {
     : path.resolve(rootDir, '../TeyvatCard/public/assets/images/cards');
 }
 
+export interface FileMetadata {
+  size: number;
+  mtimeMs: number;
+  ctimeMs: number;
+}
+
 export interface FileTreeItem {
   name: string;
   path: string;
   type: 'dir' | 'file';
   children?: FileTreeItem[];
+  meta?: FileMetadata;
 }
 
 export function getImageTree(dirPath: string, webPath: string, imageOnly = false): FileTreeItem[] {
@@ -54,7 +66,17 @@ export function getImageTree(dirPath: string, webPath: string, imageOnly = false
         children: getImageTree(fullPath, relativeWebPath, imageOnly),
       });
     } else if (entry.isFile() && (!imageOnly || isImage(entry.name))) {
-      result.push({ name: entry.name, path: relativeWebPath, type: 'file' });
+      const stat = fs.statSync(fullPath);
+      result.push({
+        name: entry.name,
+        path: relativeWebPath,
+        type: 'file',
+        meta: {
+          size: stat.size,
+          mtimeMs: stat.mtimeMs,
+          ctimeMs: stat.ctimeMs,
+        },
+      });
     }
   }
   return result.sort((a, b) => (a.type !== b.type ? (a.type === 'dir' ? -1 : 1) : a.name.localeCompare(b.name)));
@@ -78,6 +100,19 @@ export function resolveCardFilePath(webPath: string, imagesBasePath: string): st
   const fullPath = path.join(imagesBasePath, relative);
   const normalized = path.normalize(fullPath);
   if (!normalized.startsWith(path.normalize(imagesBasePath))) return null;
+  return normalized;
+}
+
+export function resolveUploadedFilePath(webPath: string): string | null {
+  const prefix = '/uploads/';
+  if (!webPath.startsWith(prefix) && webPath !== '/uploads') return null;
+  const uploadsDir = getUploadsDir();
+  if (webPath === '/uploads') return null;
+  const relative = webPath.slice(prefix.length).replace(/\\/g, '/');
+  if (!relative || relative.includes('..') || path.isAbsolute(relative)) return null;
+  const fullPath = path.join(uploadsDir, relative);
+  const normalized = path.normalize(fullPath);
+  if (!normalized.startsWith(path.normalize(uploadsDir))) return null;
   return normalized;
 }
 
@@ -259,6 +294,42 @@ export function deleteCardFile(webPath: string, imagesBasePath: string): { succe
   return { success: true };
 }
 
+export async function getFullImageMetadata(
+  webPath: string
+): Promise<
+  | {
+      file: FileMetadata;
+      image: Omit<sharp.Metadata, 'exif' | 'icc' | 'xmp'>;
+      exifBase64?: string;
+    }
+  | { error: string }
+> {
+  let fullPath: string | null = null;
+
+  if (webPath.startsWith(CARDS_WEB_PREFIX)) {
+    fullPath = resolveCardFilePath(webPath, getImagesBasePath());
+  } else if (webPath.startsWith('/uploads/')) {
+    fullPath = resolveUploadedFilePath(webPath);
+  }
+
+  if (!fullPath) return { error: 'Đường dẫn không hợp lệ (chỉ hỗ trợ /assets/images/cards và /uploads)' };
+  if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) return { error: 'File không tồn tại' };
+
+  const stat = fs.statSync(fullPath);
+  const rawMeta = await sharp(fullPath).metadata();
+  const { exif, icc, xmp, ...rest } = rawMeta;
+
+  return {
+    file: {
+      size: stat.size,
+      mtimeMs: stat.mtimeMs,
+      ctimeMs: stat.ctimeMs,
+    },
+    image: rest,
+    exifBase64: exif ? exif.toString('base64') : undefined,
+  };
+}
+
 function flattenImageTree(items: FileTreeItem[], prefix = ''): { key: string; path: string }[] {
   const result: { key: string; path: string }[] = [];
   for (const item of items) {
@@ -386,6 +457,134 @@ export async function generateAllCardsAtlas(): Promise<
     imageUrl: '/atlas/all-cards.webp',
     jsonUrl: '/atlas/all-cards.json',
     count: assets.length,
+    sheetSize: { w: grid.sheetWidth, h: grid.sheetHeight },
+  };
+}
+
+export async function generateCustomAtlas(
+  webPaths: string[],
+  baseName: string
+): Promise<
+  { imageUrl: string; jsonUrl: string; count: number; sheetSize: { w: number; h: number } } | { error: string }
+> {
+  const name = baseName.trim();
+  if (!name || !/^[a-zA-Z0-9_-]{1,50}$/.test(name)) {
+    return { error: 'Tên atlas không hợp lệ. Chỉ cho phép a-z, A-Z, 0-9, -, _ (tối đa 50 ký tự).' };
+  }
+
+  const uniquePaths = Array.from(new Set(webPaths.filter((p) => typeof p === 'string' && p.trim().length > 0)));
+  if (uniquePaths.length === 0) return { error: 'Danh sách ảnh trống.' };
+
+  const imagesRoot = getImagesRootPath();
+  const uploadsDir = getUploadsDir();
+
+  const resolvedFiles: string[] = [];
+
+  for (const webPath of uniquePaths) {
+    let fullPath: string | null = null;
+
+    if (webPath.startsWith('/assets/images/')) {
+      const relative = webPath.replace(/^\/assets\/images\/?/, '').replace(/\\/g, '/');
+      if (!relative || relative.includes('..') || path.isAbsolute(relative)) continue;
+      fullPath = path.join(imagesRoot, relative);
+    } else if (webPath.startsWith('/uploads/')) {
+      fullPath = resolveUploadedFilePath(webPath);
+    }
+
+    if (!fullPath) continue;
+    const normalized = path.normalize(fullPath);
+    const ext = path.extname(normalized).toLowerCase();
+    if (!IMAGE_EXT.includes(ext)) continue;
+    if (!fs.existsSync(normalized) || !fs.statSync(normalized).isFile()) continue;
+
+    resolvedFiles.push(normalized);
+  }
+
+  if (resolvedFiles.length === 0) return { error: 'Không tìm thấy ảnh hợp lệ để tạo atlas.' };
+
+  const firstFullPath = resolvedFiles[0];
+  const firstMeta = await sharp(firstFullPath).metadata();
+  const spriteWidth = firstMeta.width ?? 420;
+  const spriteHeight = firstMeta.height ?? 720;
+  const grid = bestGrid(resolvedFiles.length, spriteWidth, spriteHeight);
+
+  const canvas = sharp({
+    create: { width: grid.sheetWidth, height: grid.sheetHeight, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  });
+
+  const compositeOperations: { input: Buffer | string; top: number; left: number }[] = [];
+
+  for (let index = 0; index < resolvedFiles.length; index++) {
+    const imagePath = resolvedFiles[index];
+    if (!fs.existsSync(imagePath)) continue;
+
+    const row = Math.floor(index / grid.columns);
+    const col = index % grid.columns;
+    const x = col * spriteWidth;
+    const y = row * spriteHeight;
+
+    const img = sharp(imagePath);
+    const meta = await img.metadata();
+    const needResize = meta.width !== spriteWidth || meta.height !== spriteHeight;
+    const input = needResize
+      ? await sharp(imagePath).resize(spriteWidth, spriteHeight, { fit: 'cover', position: 'center' }).toBuffer()
+      : imagePath;
+
+    compositeOperations.push({ input, top: y, left: x });
+  }
+
+  if (compositeOperations.length === 0) return { error: 'Không thể xử lý ảnh để tạo atlas.' };
+
+  const spriteSheet = await canvas.composite(compositeOperations).webp({ quality: 90 });
+  const webpBuffer = await spriteSheet.toBuffer();
+
+  const atlasBaseName = name;
+  const webpName = `${atlasBaseName}.webp`;
+  const jsonName = `${atlasBaseName}.json`;
+
+  const teyvatCardsPublicPath = getTeyvatCardsPublicPath();
+  const atlasTempDir = getAtlasTempDir();
+
+  if (!fs.existsSync(teyvatCardsPublicPath)) fs.mkdirSync(teyvatCardsPublicPath, { recursive: true });
+  const teyvatWebpPath = path.join(teyvatCardsPublicPath, webpName);
+  const teyvatJsonPath = path.join(teyvatCardsPublicPath, jsonName);
+
+  const metadata: {
+    frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
+    meta: { image: string; size: { w: number; h: number }; scale: string; path: string };
+  } = {
+    frames: {},
+    meta: {
+      image: webpName,
+      size: { w: grid.sheetWidth, h: grid.sheetHeight },
+      scale: '1',
+      path: `assets/images/cards/${webpName}`,
+    },
+  };
+
+  resolvedFiles.forEach((filePath, index) => {
+    const row = Math.floor(index / grid.columns);
+    const col = index % grid.columns;
+    const baseKey = path
+      .basename(filePath)
+      .replace(/\.[^.]+$/, '')
+      .replace(/[/\\]/g, '_');
+    metadata.frames[baseKey] = {
+      frame: { x: col * spriteWidth, y: row * spriteHeight, w: spriteWidth, h: spriteHeight },
+    };
+  });
+
+  await fs.promises.writeFile(teyvatWebpPath, webpBuffer);
+  await fs.promises.writeFile(teyvatJsonPath, JSON.stringify(metadata, null, 2));
+
+  if (!fs.existsSync(atlasTempDir)) fs.mkdirSync(atlasTempDir, { recursive: true });
+  await fs.promises.writeFile(path.join(atlasTempDir, webpName), webpBuffer);
+  await fs.promises.writeFile(path.join(atlasTempDir, jsonName), JSON.stringify(metadata, null, 2));
+
+  return {
+    imageUrl: `/atlas/${webpName}`,
+    jsonUrl: `/atlas/${jsonName}`,
+    count: resolvedFiles.length,
     sheetSize: { w: grid.sheetWidth, h: grid.sheetHeight },
   };
 }

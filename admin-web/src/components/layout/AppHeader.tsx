@@ -48,7 +48,7 @@ export function AppHeader({
 }: AppHeaderProps) {
   return (
     <motion.header
-      className="relative z-20 h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0"
+      className="relative z-40 h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0"
       variants={fadeSlideCard}
       initial="hidden"
       animate="visible"

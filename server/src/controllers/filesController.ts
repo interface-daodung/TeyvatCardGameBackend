@@ -28,9 +28,13 @@ export const uploadMiddleware = multer({
 
 export type { FileTreeItem } from '../services/filesService.js';
 
-export async function getImageTreeHandler(_req: Request, res: Response) {
+export async function getImageTreeHandler(req: Request, res: Response) {
   try {
-    const tree = filesService.getImageTree(filesService.getImagesBasePath(), '/assets/images/cards');
+    const scope = typeof req.query.scope === 'string' ? req.query.scope : undefined;
+    const isManagerAssets = scope === 'manager-assets';
+    const basePath = isManagerAssets ? filesService.getImagesRootPath() : filesService.getImagesBasePath();
+    const webRoot = isManagerAssets ? '/assets/images' : '/assets/images/cards';
+    const tree = filesService.getImageTree(basePath, webRoot);
     res.json({ tree });
   } catch (err) {
     console.error('Failed to read image tree:', err);
@@ -243,5 +247,43 @@ export async function generateAllCardsAtlasHandler(_req: Request, res: Response)
   } catch (err) {
     console.error('Generate all-cards atlas failed:', err);
     res.status(500).json({ error: err instanceof Error ? err.message : 'Tạo atlas thất bại' });
+  }
+}
+
+export async function generateCustomAtlasHandler(req: Request, res: Response) {
+  try {
+    const { images, name } = req.body as { images?: string[]; name?: string };
+    if (!name || !Array.isArray(images) || images.length === 0) {
+      res.status(400).json({ error: 'Thiếu name hoặc danh sách images' });
+      return;
+    }
+    const result = await filesService.generateCustomAtlas(images, name);
+    if ('error' in result) {
+      return res.status(400).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Generate custom atlas failed:', err);
+    res.status(500).json({ error: 'Tạo atlas thất bại' });
+  }
+}
+
+export async function getFileMetadataHandler(req: Request, res: Response) {
+  try {
+    const webPath = typeof req.query.path === 'string' ? req.query.path : undefined;
+    if (!webPath) {
+      res.status(400).json({ error: 'Thiếu path' });
+      return;
+    }
+    const result = await filesService.getFullImageMetadata(webPath);
+    if ('error' in result) {
+      const status =
+        result.error === 'File không tồn tại' ? 404 : 400;
+      return res.status(status).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Get file metadata failed:', err);
+    res.status(500).json({ error: 'Đọc metadata thất bại' });
   }
 }

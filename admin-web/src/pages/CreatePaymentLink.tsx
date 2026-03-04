@@ -20,6 +20,7 @@ export default function CreatePaymentLink() {
   const [selectedUid, setSelectedUid] = useState('');
   const [selectedPackage, setSelectedPackage] = useState(PACKAGES[0]?.name ?? '');
   const [userQuery, setUserQuery] = useState('');
+  const [isUserInputFocused, setIsUserInputFocused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,10 +32,6 @@ export default function CreatePaymentLink() {
       try {
         const data = await userService.getUsers(1, 200);
         setUsers(data.users);
-        if (data.users.length > 0) {
-          setSelectedUid(data.users[0]._id);
-          setUserQuery(data.users[0].email);
-        }
       } catch {
         setError('Không thể tải danh sách người chơi');
       } finally {
@@ -51,6 +48,7 @@ export default function CreatePaymentLink() {
   }, [users, userQuery]);
 
   const shouldShowUserSuggestions = useMemo(() => {
+    if (!isUserInputFocused) return false;
     if (filteredUsers.length === 0) return false;
     const q = userQuery.trim().toLowerCase();
     if (!q) return true;
@@ -58,7 +56,7 @@ export default function CreatePaymentLink() {
       return false;
     }
     return true;
-  }, [filteredUsers, userQuery]);
+  }, [filteredUsers, userQuery, isUserInputFocused]);
 
   const handleCreatePayment = async () => {
     if (!selectedUid) {
@@ -131,6 +129,8 @@ export default function CreatePaymentLink() {
                     setUserQuery(e.target.value);
                     setSelectedUid('');
                   }}
+                  onFocus={() => setIsUserInputFocused(true)}
+                  onBlur={() => setIsUserInputFocused(false)}
                   placeholder="Nhập email người chơi để tìm kiếm..."
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
                 />
@@ -140,6 +140,7 @@ export default function CreatePaymentLink() {
                       <button
                         key={u._id}
                         type="button"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           setSelectedUid(u._id);
                           setUserQuery(u.email);
