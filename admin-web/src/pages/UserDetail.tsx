@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { userService, User } from '../services/userService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 import { PageHeader } from '../components/PageHeader';
-import { fadeSlideCard } from '../components/animations/motionPresets';
+import { fadeSlideCard, fadeInOverlay, zoomInPopup } from '../components/animations/motionPresets';
+import { CharacterCard, type CharacterCardData } from '../components/characters/CharacterCard';
+import { gameDataService, type Item } from '../services/gameDataService';
+import { getItemImageUrl } from '../components/equipment/equipmentUtils';
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +21,9 @@ export default function UserDetail() {
   const [xu, setXu] = useState(0);
   const [isBanned, setIsBanned] = useState(false);
   const [revoking, setRevoking] = useState(false);
+  const [xuConfirmOpen, setXuConfirmOpen] = useState(false);
+  const [updatingXu, setUpdatingXu] = useState(false);
+  const [items, setItems] = useState<Item[]>([]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -36,6 +43,15 @@ export default function UserDetail() {
     fetchUser();
   }, [id]);
 
+  useEffect(() => {
+    gameDataService
+      .getItems()
+      .then(setItems)
+      .catch((err) => {
+        console.error('Failed to fetch items:', err);
+      });
+  }, []);
+
   const handleBanToggle = async () => {
     if (!id) return;
     try {
@@ -49,16 +65,26 @@ export default function UserDetail() {
   const handleUpdateXu = async () => {
     if (!id) return;
     try {
+      setUpdatingXu(true);
       await userService.updateUserXu(id, xu);
       alert('Xu updated successfully');
+      setXuConfirmOpen(false);
     } catch (error) {
       console.error('Failed to update Xu:', error);
+    } finally {
+      setUpdatingXu(false);
     }
   };
 
   const handleRevokeRefreshToken = async () => {
     if (!id) return;
-    if (!confirm('Thu hồi refresh token: user sẽ không thể gia hạn phiên, và sẽ bị đăng xuất khi access token hết hạn (5 phút). Tiếp tục?')) return;
+    if (
+      !confirm(
+        'Thu hồi refresh token: user sẽ không thể gia hạn phiên, và sẽ bị đăng xuất khi access token hết hạn (5 phút). Tiếp tục?',
+      )
+    ) {
+      return;
+    }
     try {
       setRevoking(true);
       await userService.revokeRefreshToken(id);
@@ -73,9 +99,9 @@ export default function UserDetail() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="relative z-0 p-6 space-y-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
         <Skeleton className="h-8 w-32" />
-        <Card>
+        <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
             <Skeleton className="h-64 w-full" />
           </CardContent>
@@ -86,8 +112,8 @@ export default function UserDetail() {
 
   if (!user) {
     return (
-      <div className="p-6">
-        <Card className="border-destructive">
+      <div className="relative z-0 p-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
+        <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="text-destructive">User not found</CardTitle>
           </CardHeader>
@@ -96,147 +122,388 @@ export default function UserDetail() {
     );
   }
 
+  const saveGame = (user.saveGame ?? null) as Record<string, unknown> | null;
+
+  const characterLevels: Record<string, number> = (() => {
+    if (!saveGame || typeof saveGame !== 'object') return {};
+    const raw = (saveGame as Record<string, unknown>).characterLevel as unknown;
+    const out: Record<string, number> = {};
+
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+        if (typeof value === 'number') {
+          out[key] = value;
+        }
+      }
+    } else if (Array.isArray(raw)) {
+      for (const entry of raw as unknown[]) {
+        if (
+          entry &&
+          typeof entry === 'object' &&
+          typeof (entry as any).id === 'string' &&
+          typeof (entry as any).level === 'number'
+        ) {
+          out[(entry as any).id] = (entry as any).level;
+        }
+      }
+    }
+
+    return out;
+  })();
+
+  const unlockedCharactersFromSave: string[] = (() => {
+    if (!saveGame || typeof saveGame !== 'object') return [];
+    const raw = (saveGame as any).unlockedCharacters as unknown;
+    if (Array.isArray(raw)) {
+      return (raw as unknown[]).filter((id): id is string => typeof id === 'string');
+    }
+    return Object.keys(characterLevels);
+  })();
+
+  const ownedCharactersFromDb = Array.isArray(user.ownedCharacters) ? user.ownedCharacters : [];
+
+  const ownedCharacterCards = unlockedCharactersFromSave.map((nameId) => {
+    const fromDb = ownedCharactersFromDb.find(
+      (c: any) => c && typeof c.nameId === 'string' && c.nameId === nameId,
+    );
+    const level = characterLevels[nameId];
+
+    const characterCard: CharacterCardData = fromDb
+      ? {
+          _id: String((fromDb as any)._id ?? nameId),
+          name: String((fromDb as any).name ?? nameId),
+          nameId,
+          description: typeof (fromDb as any).description === 'string' ? (fromDb as any).description : undefined,
+          element: typeof (fromDb as any).element === 'string' ? (fromDb as any).element : undefined,
+          status: (fromDb as any).status,
+        }
+      : {
+          _id: nameId,
+          name: nameId,
+          nameId,
+        };
+
+    return { nameId, level, characterCard };
+  });
+
+  const totalCoin = typeof (saveGame as any)?.totalCoin === 'number' ? (saveGame as any).totalCoin : 0;
+
+  const itemLevelMap: Record<string, number> = (() => {
+    if (!saveGame || typeof saveGame !== 'object') return {};
+    const raw = (saveGame as any).itemLevel as unknown;
+    const out: Record<string, number> = {};
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+        if (typeof value === 'number') {
+          out[key] = value;
+        }
+      }
+    }
+    return out;
+  })();
+
+  const unlockedItems = Object.entries(itemLevelMap)
+    .filter(([, lvl]) => lvl >= 1)
+    .map(([nameId, lvl]) => {
+      const base = items.find((it) => it.nameId === nameId);
+      return { nameId, level: lvl, base };
+    });
+
   return (
-    <div className="p-6 space-y-6">
-      <Button
-        onClick={() => navigate('/users')}
-        variant="ghost"
-        className="text-primary-700 hover:text-primary-800"
+    <div className="relative z-[1000] p-6 space-y-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <Button
+          onClick={() => navigate('/users')}
+          variant="ghost"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white/60 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
+        >
+          <span className="text-base">←</span>
+          <span>Back to Users</span>
+        </Button>
+
+        <div className="flex items-center gap-2 text-xs sm:text-sm">
+          <span className="text-slate-500">Status:</span>
+          {isBanned ? (
+            <Badge variant="destructive">Banned</Badge>
+          ) : (
+            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+              Active
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      <PageHeader
+        title="User Details"
+        description={`Manage account & permissions for ${user.email}`}
+      />
+
+      <motion.div
+        className="grid grid-cols-1 xl:grid-cols-3 gap-6"
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
       >
-        ← Back to Users
-      </Button>
-
-      <PageHeader title="User Details" description="Manage user account and permissions" />
-
-      <motion.div className="space-y-6" variants={fadeSlideCard} initial="hidden" animate="visible">
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <div className="flex items-center space-x-4">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary-400 to-red-400 flex items-center justify-center text-white font-bold text-2xl shadow-md">
-              {user.email.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <CardTitle className="text-2xl">{user.email}</CardTitle>
-              <div className="text-base mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                {user.role} •
-                {isBanned ? (
-                  <Badge variant="destructive">Banned</Badge>
-                ) : (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Active</Badge>
-                )}
+        <Card className="border-0 shadow-lg xl:col-span-2">
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-2xl shadow-md">
+                {user.email.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <CardTitle className="text-xl sm:text-2xl text-slate-900">{user.email}</CardTitle>
+                <p className="mt-1 text-sm text-slate-500">
+                  Role:{' '}
+                  <span className="font-medium text-slate-700">
+                    {user.role}
+                  </span>
+                </p>
               </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">💰 Currency (Xu)</label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={xu}
-                  onChange={(e) => setXu(Number(e.target.value))}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
+          </CardHeader>
+          <CardContent className="pt-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                  💰 Currency (Xu)
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="number"
+                    value={xu}
+                    onChange={(e) => setXu(Number(e.target.value))}
+                    className="flex h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 py-2 text-sm text-slate-900 shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                  />
+                  <Button
+                    onClick={() => setXuConfirmOpen(true)}
+                    className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md"
+                  >
+                    Update
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                  Account Status
+                </p>
                 <Button
-                  onClick={handleUpdateXu}
-                  className="bg-gradient-to-r from-primary-600 to-red-600 hover:from-primary-700 hover:to-red-700"
+                  onClick={handleBanToggle}
+                  variant={isBanned ? 'default' : 'destructive'}
+                  className={`w-full sm:w-auto ${
+                    isBanned
+                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md'
+                      : ''
+                  }`}
                 >
-                  Update
+                  {isBanned ? 'Unban User' : 'Ban User'}
                 </Button>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">Account Status</label>
-              <Button
-                onClick={handleBanToggle}
-                variant={isBanned ? 'default' : 'destructive'}
-                className={isBanned ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800' : ''}
-              >
-                {isBanned ? 'Unban User' : 'Ban User'}
-              </Button>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">Phiên đăng nhập</label>
-              <Button
-                onClick={handleRevokeRefreshToken}
-                disabled={revoking}
-                variant="outline"
-                className="border-amber-500 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
-              >
-                {revoking ? 'Đang xử lý…' : 'Thu hồi refresh token'}
-              </Button>
-              <p className="text-xs text-muted-foreground mt-1">
-                User sẽ đăng xuất khi access token hết hạn (5 phút). Không thu hồi access token ngay.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-primary-700">⚔️ Owned Characters</CardTitle>
-            <CardDescription>{user.ownedCharacters.length} characters</CardDescription>
+        <Card className="border-0 shadow-lg h-full">
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="text-sm font-semibold text-slate-800">
+              Session & Security
+            </CardTitle>
+            <CardDescription>
+              Quản lý phiên đăng nhập và refresh token của user
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            {user.ownedCharacters.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No characters owned</p>
+          <CardContent className="pt-6 space-y-3">
+            <Button
+              onClick={handleRevokeRefreshToken}
+              disabled={revoking}
+              variant="outline"
+              className="w-full justify-center border-amber-500 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+            >
+              {revoking ? 'Đang xử lý…' : 'Thu hồi refresh token'}
+            </Button>
+            <p className="text-xs text-slate-500">
+              User sẽ tự động đăng xuất khi access token hiện tại hết hạn (khoảng 5 phút). Hành động
+              này không thu hồi access token ngay lập tức.
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        variants={fadeSlideCard}
+        initial="hidden"
+        animate="visible"
+      >
+        <Card className="border-0 shadow-lg">
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+              <span>⚔️</span>
+              <span>Owned Characters</span>
+            </CardTitle>
+            <CardDescription className="text-xs text-slate-500">
+              {ownedCharacterCards.length} characters unlocked (theo saveGame)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {ownedCharacterCards.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-6">
+                No characters in saveGame
+              </p>
             ) : (
-              <div className="grid grid-cols-1 gap-3">
-                {user.ownedCharacters.map((char: any) => (
-                  <div key={char._id} className="p-3 border border-primary-100 rounded-lg bg-primary-50/30 hover:bg-primary-50 transition-colors">
-                    <div className="font-semibold text-foreground">{char.name}</div>
-                    <div className="text-sm text-muted-foreground mt-1">{char.description}</div>
-                  </div>
-                ))}
-              </div>
+              <motion.div
+                className="flex flex-wrap gap-1"
+                variants={fadeSlideCard}
+                initial="hidden"
+                animate="visible"
+              >
+                {ownedCharacterCards.map(({ nameId, level, characterCard }, index) => {
+                  const safeLevel = typeof level === 'number' ? level : 1;
+                  return (
+                    <motion.div
+                      key={nameId}
+                      className="relative z-0 scale-25 origin-top-left hover:z-20"
+                      variants={fadeSlideCard}
+                      initial="hidden"
+                      animate="visible"
+                      custom={index}
+                    >
+                      <div className="transform scale-25 origin-top-left w-[50px]">
+                        <CharacterCard character={characterCard} />
+                      </div>
+                      <div className="pointer-events-none absolute top-2 left-2 z-10">
+                        <span className="inline-flex items-center rounded-full bg-amber-500/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow">
+                          Lv. {safeLevel}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
             )}
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-red-700">🚫 Banned Cards</CardTitle>
-            <CardDescription>
-              {user.bannedCards.characters.length + user.bannedCards.equipment.length} cards banned
+          <CardHeader className="border-b border-slate-100 pb-4 flex flex-col gap-1">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <span>🎁</span>
+                <span>Unlocked Items</span>
+              </CardTitle>
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200">
+                Coin: {totalCoin.toLocaleString()}
+              </Badge>
+            </div>
+            <CardDescription className="text-xs text-slate-500">
+              Item level & trạng thái mở khóa (từ saveGame)
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Banned Characters ({user.bannedCards.characters.length})</h3>
-              {user.bannedCards.characters.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No banned characters</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {user.bannedCards.characters.map((char: any) => (
-                    <Badge key={char._id} variant="destructive">
-                      {char.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground mb-2">Banned Equipment ({user.bannedCards.equipment.length})</h3>
-              {user.bannedCards.equipment.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No banned equipment</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {user.bannedCards.equipment.map((eq: any) => (
-                    <Badge key={eq._id} variant="destructive">
-                      {eq.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
+          <CardContent className="pt-4 space-y-3">
+            {unlockedItems.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-4">
+                Chưa có item nào được mở khóa trong saveGame
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {unlockedItems.map(({ nameId, level, base }) => {
+                  const displayLevel = Math.max(1, level);
+                  const imageSrc = getItemImageUrl(nameId);
+                  const displayName = base?.nameId ? `item.${base.nameId}` : nameId;
+                  return (
+                    <div
+                      key={nameId}
+                      className="relative rounded-lg bg-slate-50 border border-slate-200 p-2 flex flex-col items-center gap-1"
+                    >
+                      <div className="relative w-full max-w-[72px] aspect-square">
+                        <img
+                          src={imageSrc}
+                          alt={displayName}
+                          className="absolute inset-0 w-full h-full object-cover rounded-md shadow-sm"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              '/assets/images/item/empty.webp';
+                          }}
+                        />
+                        <div className="absolute top-1 right-1">
+                          <span className="inline-flex items-center rounded-full bg-emerald-600/90 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow">
+                            Lv.{displayLevel}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full text-center">
+                        <p className="text-[11px] font-semibold text-slate-800 truncate">
+                          {nameId}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-mono truncate">
+                          {nameId}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
-      </div>
       </motion.div>
+
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {xuConfirmOpen && (
+              <motion.div
+                className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40"
+                variants={fadeInOverlay}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <motion.div
+                  className="w-full max-w-sm rounded-xl bg-white shadow-xl border border-slate-200 p-5 space-y-4"
+                  variants={zoomInPopup}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <div className="space-y-1">
+                    <h2 className="text-sm font-semibold text-slate-900">Xác nhận cập nhật Xu</h2>
+                    <p className="text-xs text-slate-500">
+                      Bạn có chắc muốn đặt số Xu của user này thành{' '}
+                      <span className="font-semibold text-slate-900">
+                        {xu.toLocaleString()}
+                      </span>
+                      ?
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-slate-600 border-slate-200"
+                      disabled={updatingXu}
+                      onClick={() => setXuConfirmOpen(false)}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm"
+                      onClick={handleUpdateXu}
+                      disabled={updatingXu}
+                    >
+                      {updatingXu ? 'Đang cập nhật...' : 'Xác nhận'}
+                    </Button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
     </div>
   );
 }
+

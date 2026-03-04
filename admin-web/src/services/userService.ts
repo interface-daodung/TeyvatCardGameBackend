@@ -6,6 +6,8 @@ export interface User {
   role: string;
   isBanned: boolean;
   xu: number;
+  /** Raw JSON save from game client (cloud save). */
+  saveGame?: Record<string, unknown> | null;
   ownedCharacters: any[];
   ownedEquipment: any[];
   bannedCards: {

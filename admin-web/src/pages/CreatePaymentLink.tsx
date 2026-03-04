@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { paymentService, PayosPaymentLinkData } from '../services/paymentService';
 import { userService, User } from '../services/userService';
@@ -8,12 +8,18 @@ import { PageHeader } from '../components/PageHeader';
 import { QRCodeSVG } from 'qrcode.react';
 import { fadeSlideCard } from '../components/animations/motionPresets';
 
-const PACKAGES = ['Gói 100', 'Gói 500', 'Gói 1000', 'Gói 5000', 'Gói 10000'];
+const PACKAGES = [
+  { name: 'Gói tân thủ', label: 'Gói tân thủ (2.000₫ → 20.000 xu)' },
+  { name: 'Gói 10k', label: 'Gói 10k (10.000₫ → 10.000 xu)' },
+  { name: 'Gói 20k', label: 'Gói 20k (20.000₫ → 25.000 xu)' },
+  { name: 'Gói 50k', label: 'Gói 50k (50.000₫ → 75.000 xu)' },
+];
 
 export default function CreatePaymentLink() {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUid, setSelectedUid] = useState('');
-  const [selectedPackage, setSelectedPackage] = useState(PACKAGES[0]);
+  const [selectedPackage, setSelectedPackage] = useState(PACKAGES[0]?.name ?? '');
+  const [userQuery, setUserQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +29,12 @@ export default function CreatePaymentLink() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const data = await userService.getUsers(1, 50);
+        const data = await userService.getUsers(1, 200);
         setUsers(data.users);
-        if (data.users.length > 0) setSelectedUid(data.users[0]._id);
+        if (data.users.length > 0) {
+          setSelectedUid(data.users[0]._id);
+          setUserQuery(data.users[0].email);
+        }
       } catch {
         setError('Không thể tải danh sách người chơi');
       } finally {
@@ -34,6 +43,22 @@ export default function CreatePaymentLink() {
     };
     fetchUsers();
   }, []);
+
+  const filteredUsers = useMemo(() => {
+    const q = userQuery.trim().toLowerCase();
+    if (!q) return users.slice(0, 10);
+    return users.filter((u) => u.email.toLowerCase().includes(q)).slice(0, 10);
+  }, [users, userQuery]);
+
+  const shouldShowUserSuggestions = useMemo(() => {
+    if (filteredUsers.length === 0) return false;
+    const q = userQuery.trim().toLowerCase();
+    if (!q) return true;
+    if (filteredUsers.length === 1 && filteredUsers[0].email.toLowerCase() === q) {
+      return false;
+    }
+    return true;
+  }, [filteredUsers, userQuery]);
 
   const handleCreatePayment = async () => {
     if (!selectedUid) {
@@ -98,18 +123,45 @@ export default function CreatePaymentLink() {
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Người chơi (user cần hỗ trợ)
               </label>
-              <select
-                value={selectedUid}
-                onChange={(e) => setSelectedUid(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
-              >
-                <option value="">-- Chọn người chơi --</option>
-                {users.map((u) => (
-                  <option key={u._id} value={u._id}>
-                    {u.email} {u.role === 'user' ? '' : `(${u.role})`}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={userQuery}
+                  onChange={(e) => {
+                    setUserQuery(e.target.value);
+                    setSelectedUid('');
+                  }}
+                  placeholder="Nhập email người chơi để tìm kiếm..."
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+                />
+                {shouldShowUserSuggestions && (
+                  <div className="absolute z-20 mt-1 w-full max-h-56 overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                    {filteredUsers.map((u) => (
+                      <button
+                        key={u._id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedUid(u._id);
+                          setUserQuery(u.email);
+                        }}
+                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-slate-50 ${
+                          selectedUid === u._id ? 'bg-emerald-50' : ''
+                        }`}
+                      >
+                        <span className="font-medium text-slate-800">{u.email}</span>
+                        <span className="ml-2 text-xs text-slate-500">
+                          {u.role === 'user' ? 'player' : u.role}
+                        </span>
+                      </button>
+                    ))}
+                    {users.length > filteredUsers.length && (
+                      <div className="px-3 py-1 text-xs text-slate-400 border-t border-slate-100">
+                        Đang hiển thị {filteredUsers.length} / {users.length} users (lọc theo email)
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -121,8 +173,8 @@ export default function CreatePaymentLink() {
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
               >
                 {PACKAGES.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
+                  <option key={p.name} value={p.name}>
+                    {p.label}
                   </option>
                 ))}
               </select>

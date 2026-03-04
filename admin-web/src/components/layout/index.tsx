@@ -1,28 +1,85 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
-import { Sidebar, type NavItem } from './Sidebar';
+import { Sidebar, type NavItem, type NavSection } from './Sidebar';
 import { AppHeader } from './AppHeader';
 import { DbAuthGuard } from '../DbAuthGuard';
 import type { NotificationItem } from './NotificationDropdown';
 
-const NAV_ITEMS: NavItem[] = [
-  { path: '/', label: 'Dashboard', icon: '📊' },
-  { path: '/users', label: 'Users', icon: '👥' },
-  { path: '/payments', label: 'Payments', icon: '💳' },
-  { path: '/payment-link', label: 'Tạo link thanh toán', icon: '🔗' },
-  { path: '/characters', label: 'Characters', icon: '⚔️' },
-  { path: '/equipment', label: 'Equipment', icon: '🛡️' },
-  { path: '/adventure-cards', label: 'Adventure Cards', icon: '🎴' },
-  { path: '/maps', label: 'Maps', icon: '🗺️' },
-  { path: '/localization', label: 'Localization', icon: '🌐' },
-  { path: '/themes', label: 'Themes', icon: '🎨' },
-  { path: '/manager-assets', label: 'Manager Assets', icon: '📁' },
-  { path: '/server-configuration-versions', label: 'Server config', icon: '⚙️' },
-  { path: '/logs', label: 'Logs', icon: '📝' },
-  { path: '/about', label: 'About', icon: 'ℹ️' },
+export const NAV_SECTIONS: NavSection[] = [
+  {
+    id: 'overview',
+    label: 'Tổng quan',
+    items: [
+      { path: '/', label: 'Dashboard', icon: '📊' },
+      { path: '/users', label: 'Users', icon: '👥' },
+      { path: '/payments', label: 'Payments', icon: '💳' },
+      { path: '/payment-link', label: 'Tạo link thanh toán', icon: '🔗' },
+    ],
+  },
+  {
+    id: 'game-data',
+    label: 'Game data',
+    items: [
+      { path: '/characters', label: 'Characters', icon: '⚔️' },
+      { path: '/equipment', label: 'Equipment', icon: '🛡️' },
+      { path: '/adventure-cards', label: 'Adventure Cards', icon: '🎴' },
+      { path: '/maps', label: 'Maps', icon: '🗺️' },
+    ],
+  },
+  {
+    id: 'content-assets',
+    label: 'Nội dung & Assets',
+    items: [
+      { path: '/localization', label: 'Localization', icon: '🌐' },
+      { path: '/themes', label: 'Themes', icon: '🎨' },
+      { path: '/manager-assets', label: 'Manager Assets', icon: '📁' },
+    ],
+  },
+  {
+    id: 'system',
+    label: 'Hệ thống',
+    items: [
+      { path: '/server-configuration-versions', label: 'Server config', icon: '⚙️' },
+      { path: '/logs', label: 'Logs', icon: '📝' },
+      { path: '/about', label: 'About', icon: 'ℹ️' },
+    ],
+  },
 ];
+
+const RECENT_LINKS_STORAGE_KEY = 'teyvat_admin_recent_links';
+const RECENT_LINKS_LIMIT = 4;
+
+type RecentLinkEntry = {
+  path: string;
+  label: string;
+  icon: string;
+};
+
+const FLAT_NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((section) => section.items);
+
+function updateRecentLinks(pathname: string) {
+  if (typeof window === 'undefined') return;
+
+  const item = FLAT_NAV_ITEMS.find((navItem) => navItem.path === pathname);
+  if (!item) return;
+
+  try {
+    const raw = window.localStorage.getItem(RECENT_LINKS_STORAGE_KEY);
+    const current: RecentLinkEntry[] = raw ? JSON.parse(raw) : [];
+    const filtered = Array.isArray(current) ? current.filter((entry) => entry.path !== item.path) : [];
+
+    const next: RecentLinkEntry[] = [
+      { path: item.path, label: item.label, icon: item.icon },
+      ...filtered,
+    ].slice(0, RECENT_LINKS_LIMIT);
+
+    window.localStorage.setItem(RECENT_LINKS_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 export default function Layout() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
@@ -36,6 +93,7 @@ export default function Layout() {
   const notificationRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const hasMoreNotifications = notificationPage < notificationPagesTotal;
   const userEmail = authService.getUserEmail() || 'Admin';
@@ -126,6 +184,10 @@ export default function Layout() {
       setLoadingMoreNotifications(false);
     }
   };
+
+  useEffect(() => {
+    updateRecentLinks(location.pathname);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -229,11 +291,7 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen overflow-hidden text-slate-700">
-      <Sidebar
-        isOpen={isSidebarOpen}
-        navItems={NAV_ITEMS}
-        onLogout={handleLogout}
-      />
+      <Sidebar isOpen={isSidebarOpen} navSections={NAV_SECTIONS} onLogout={handleLogout} />
 
       <main className="relative flex-1 flex flex-col min-w-0 overflow-hidden">
         <AppHeader
@@ -254,7 +312,7 @@ export default function Layout() {
           hasUnreadNotifications={hasUnreadNotifications}
         />
 
-        <div className="relative z-0 flex-1 overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-background via-primary-50/20 to-red-50/20">
+        <div className="relative z-30 flex-1 overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-background via-primary-50/20 to-blue-50/20">
           <DbAuthGuard>
             <Outlet />
           </DbAuthGuard>

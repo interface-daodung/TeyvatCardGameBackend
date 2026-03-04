@@ -9,13 +9,19 @@ export interface NavItem {
   icon: string;
 }
 
+export interface NavSection {
+  id: string;
+  label: string;
+  items: NavItem[];
+}
+
 interface SidebarProps {
   isOpen: boolean;
-  navItems: NavItem[];
+  navSections: NavSection[];
   onLogout: () => void;
 }
 
-export function Sidebar({ isOpen, navItems, onLogout }: SidebarProps) {
+export function Sidebar({ isOpen, navSections, onLogout }: SidebarProps) {
   const location = useLocation();
 
   return (
@@ -47,32 +53,46 @@ export function Sidebar({ isOpen, navItems, onLogout }: SidebarProps) {
         </NavLink>
       </div>
 
-      <nav className="flex-1 mt-4 px-3 space-y-1 overflow-y-auto">
-        {navItems.map((item, index) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <motion.div
-              key={item.path}
-              variants={slideUpItem}
-              initial="hidden"
-              animate="visible"
-              custom={index}
-            >
-              <NavLink
-                to={item.path}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-3 rounded-xl transition-all',
-                  isActive ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
-                  !isOpen && 'justify-center'
-                )}
-              >
-                <span className="shrink-0 text-lg">{item.icon}</span>
-                {isOpen && <span className="font-medium text-sm">{item.label}</span>}
-                {isOpen && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
-              </NavLink>
-            </motion.div>
-          );
-        })}
+      <nav className="flex-1 mt-4 px-3 space-y-3 overflow-y-auto">
+        {navSections.map((section, sectionIndex) => (
+          <div key={section.id} className="space-y-1">
+            {isOpen && (
+              <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                {section.label}
+              </div>
+            )}
+            {section.items.map((item, itemIndex) => {
+              const isActive = location.pathname === item.path;
+              const animationIndex = sectionIndex * 10 + itemIndex;
+              return (
+                <motion.div
+                  key={item.path}
+                  variants={slideUpItem}
+                  initial="hidden"
+                  animate="visible"
+                  custom={animationIndex}
+                >
+                  <NavLink
+                    to={item.path}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-3 rounded-xl transition-all',
+                      isActive
+                        ? 'bg-indigo-50 text-indigo-600'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                      !isOpen && 'justify-center'
+                    )}
+                  >
+                    <span className="shrink-0 text-lg">{item.icon}</span>
+                    {isOpen && <span className="font-medium text-sm">{item.label}</span>}
+                    {isOpen && isActive && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                    )}
+                  </NavLink>
+                </motion.div>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       <motion.div

@@ -1,12 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt.js';
 import { AuthRequest } from '../types/index.js';
+import { User } from '../models/User.js';
 
-export const authenticate = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let token: string | undefined;
     const authHeader = req.headers.authorization;
@@ -20,6 +17,11 @@ export const authenticate = (
     }
 
     const decoded = verifyAccessToken(token);
+
+    const user = await User.findById(decoded.userId).select('isBanned role email');
+    if (!user || user.isBanned) {
+      return res.status(403).json({ error: 'Account is banned' });
+    }
 
     (req as AuthRequest).user = {
       userId: decoded.userId,

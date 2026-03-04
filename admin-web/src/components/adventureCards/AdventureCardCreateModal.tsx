@@ -122,7 +122,7 @@ export function AdventureCardCreateModal({
         animate="visible"
       >
         <div className="w-full max-w-3xl rounded-xl bg-card shadow-2xl border border-border overflow-hidden">
-          <div className="px-6 py-4 bg-gradient-to-r from-primary-600 to-red-600 flex items-center justify-between">
+          <div className="px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-700 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-white">Thêm Adventure Card</h2>
             <button
               type="button"

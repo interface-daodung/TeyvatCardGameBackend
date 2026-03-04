@@ -68,7 +68,7 @@ export default function Maps() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="relative z-0 p-6 space-y-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
         <Skeleton className="h-8 w-32" />
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -88,7 +88,7 @@ export default function Maps() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="relative z-0 p-6 space-y-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
       <div className="flex items-center justify-between">
         <PageHeader title="Maps" description="Quản lý map dungeon và deck thẻ" />
         <Button onClick={openCreateModal} className="bg-primary-600 hover:bg-primary-700">

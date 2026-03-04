@@ -14,7 +14,7 @@ interface MapCardProps {
 export function MapCard({ map, onEdit }: MapCardProps) {
     return (
         <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-            <div className="bg-gradient-to-r from-primary-50 to-red-50 p-1">
+            <div className="bg-gradient-to-r from-slate-50 to-blue-50/60 p-1">
                 <CardContent className="bg-card p-6">
                     <CardHeader className="p-0 mb-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -74,7 +74,7 @@ export function MapCard({ map, onEdit }: MapCardProps) {
                                 📚 Deck ({map.deck?.length ?? 0} thẻ):
                             </span>
                         </div>
-                        <div className="flex flex-wrap gap-2 p-4 bg-gradient-to-br from-primary-50 to-red-50 rounded-lg border border-primary-100">
+                        <div className="flex flex-wrap gap-2 p-4 bg-gradient-to-br from-slate-50 to-blue-50/60 rounded-lg border border-slate-200">
                             {(map.deck ?? []).map((card: AdventureCard) => (
                                 <Badge
                                     key={card._id}

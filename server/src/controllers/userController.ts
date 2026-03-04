@@ -46,6 +46,9 @@ export const banUser = async (req: AuthRequest, res: Response) => {
     const { isBanned } = banUserSchema.parse(req.body);
     const user = await userService.banUser(req.params.id, isBanned);
     if (!user) return res.status(404).json({ error: 'User not found' });
+    if (isBanned) {
+      await userService.revokeRefreshToken(req.params.id);
+    }
     await createAuditLog(req, 'ban_user', 'user', req.params.id, { isBanned });
     res.json({ message: `User ${isBanned ? 'banned' : 'unbanned'} successfully` });
   } catch (error: unknown) {

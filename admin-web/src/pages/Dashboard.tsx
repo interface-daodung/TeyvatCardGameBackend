@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { dashboardService, DashboardStats } from '../services/dashboardService';
 import { fadeSlideCard } from '../components/animations/motionPresets';
@@ -9,6 +10,9 @@ import { RevenueChart } from '../components/dashboard/RevenueChart';
 import { DashboardSkeleton } from '../components/dashboard/DashboardSkeleton';
 import { Button } from '../components/ui/button';
 import api from '../lib/api';
+import { NAV_SECTIONS } from '../components/layout';
+import type { NavItem } from '../components/layout/Sidebar';
+import { QuickLinksEditorModal } from '../components/dashboard/QuickLinksEditorModal';
 
 interface ServerConfigLatest {
   _id: string;
@@ -23,6 +27,18 @@ interface ServerConfigLatest {
   };
   createdAt: string;
 }
+
+interface RecentLinkEntry {
+  path: string;
+  label: string;
+  icon: string;
+}
+
+const RECENT_LINKS_STORAGE_KEY = 'teyvat_admin_recent_links';
+const RECENT_LINKS_LIMIT = 4;
+const QUICK_LINKS_STORAGE_KEY = 'teyvat_admin_quick_links';
+
+const ALL_NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((section) => section.items);
 
 function formatTimeAgo(dateStr: string): string {
   const now = new Date();
@@ -54,6 +70,12 @@ export default function Dashboard() {
   const [checkCooldown, setCheckCooldown] = useState(0);
   const [checkError, setCheckError] = useState<string | null>(null);
   const [checkChanges, setCheckChanges] = useState<Record<string, { added: string[]; updated: string[]; removed: string[] }> | null>(null);
+  const [recentLinks, setRecentLinks] = useState<RecentLinkEntry[]>([]);
+  const [quickLinkPaths, setQuickLinkPaths] = useState<string[]>([]);
+  const [isQuickLinksEditorOpen, setIsQuickLinksEditorOpen] = useState(false);
+  const [editorSelectedPaths, setEditorSelectedPaths] = useState<string[]>([]);
+
+  const navigate = useNavigate();
 
   const fetchLatestConfig = useCallback(async () => {
     try {
@@ -61,6 +83,48 @@ export default function Dashboard() {
       setLatestConfig(data);
     } catch {
       setLatestConfig(null);
+    }
+  }, []);
+
+  const loadRecentLinks = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(RECENT_LINKS_STORAGE_KEY);
+      if (!raw) {
+        setRecentLinks([]);
+        return;
+      }
+      const parsed = JSON.parse(raw) as RecentLinkEntry[];
+      if (!Array.isArray(parsed)) {
+        setRecentLinks([]);
+        return;
+      }
+      setRecentLinks(parsed.slice(0, RECENT_LINKS_LIMIT));
+    } catch {
+      setRecentLinks([]);
+    }
+  }, []);
+
+  const loadQuickLinks = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(QUICK_LINKS_STORAGE_KEY);
+      if (!raw) {
+        // fallback: lấy 6 item đầu tiên trong nav
+        setQuickLinkPaths(ALL_NAV_ITEMS.slice(0, 6).map((item) => item.path));
+        return;
+      }
+      const parsed = JSON.parse(raw) as string[];
+      if (!Array.isArray(parsed)) {
+        setQuickLinkPaths(ALL_NAV_ITEMS.slice(0, 6).map((item) => item.path));
+        return;
+      }
+      const cleaned = parsed.filter((p) => typeof p === 'string');
+      setQuickLinkPaths(
+        (cleaned.length > 0 ? cleaned : ALL_NAV_ITEMS.slice(0, 6).map((item) => item.path)).slice(0, 6)
+      );
+    } catch {
+      setQuickLinkPaths(ALL_NAV_ITEMS.slice(0, 6).map((item) => item.path));
     }
   }, []);
 
@@ -77,6 +141,14 @@ export default function Dashboard() {
     };
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    loadRecentLinks();
+  }, [loadRecentLinks]);
+
+  useEffect(() => {
+    loadQuickLinks();
+  }, [loadQuickLinks]);
 
   useEffect(() => {
     fetchLatestConfig();
@@ -189,6 +261,33 @@ export default function Dashboard() {
     { title: 'Maps', value: stats.totalMaps.toLocaleString(), icon: '🗺️', gradient: 'from-slate-100 to-blue-100', textColor: 'text-slate-700' },
   ];
 
+  const quickActions = [
+    {
+      label: 'Tạo link thanh toán',
+      description: 'Tạo nhanh link thanh toán mới',
+      icon: '⚡',
+      onClick: () => navigate('/payment-link'),
+    },
+    {
+      label: 'Quản lý Users',
+      description: 'Xem và quản lý người dùng',
+      icon: '👥',
+      onClick: () => navigate('/users'),
+    },
+    {
+      label: 'Xem Logs',
+      description: 'Theo dõi hoạt động hệ thống',
+      icon: '📝',
+      onClick: () => navigate('/logs'),
+    },
+  ];
+
+  const resolvedQuickLinks: NavItem[] = (
+    quickLinkPaths.length > 0 ? quickLinkPaths : ALL_NAV_ITEMS.slice(0, 6).map((item) => item.path)
+  )
+    .map((path) => ALL_NAV_ITEMS.find((item) => item.path === path))
+    .filter((item): item is NavItem => Boolean(item));
+
   return (
     <div className="relative z-0 p-6 space-y-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
       <PageHeader
@@ -209,6 +308,162 @@ export default function Dashboard() {
           </motion.div>
         ))}
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <motion.div
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+          custom={0}
+        >
+          <Card className="border-0 shadow-lg h-full">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <span>⚡</span>
+                <span>Quick Actions</span>
+              </h2>
+            </div>
+            <div className="p-4 space-y-2">
+              {quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={action.onClick}
+                  className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm bg-slate-50 hover:bg-slate-100 text-slate-700 transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="text-lg">{action.icon}</span>
+                    <span>{action.label}</span>
+                  </span>
+                  {action.description && (
+                    <span className="hidden xl:inline text-xs text-slate-500">
+                      {action.description}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+          custom={1}
+        >
+          <Card className="border-0 shadow-lg h-full group">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <span>🔗</span>
+                <span>Quick Links</span>
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditorSelectedPaths(quickLinkPaths.length ? quickLinkPaths : ALL_NAV_ITEMS.slice(0, 6).map((item) => item.path));
+                  setIsQuickLinksEditorOpen(true);
+                }}
+                className="inline-flex items-center justify-center rounded-md p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-opacity opacity-0 group-hover:opacity-100"
+                aria-label="Edit quick links"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4"
+                >
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {resolvedQuickLinks.map((link) => (
+                <button
+                  key={link.path}
+                  type="button"
+                  onClick={() => navigate(link.path)}
+                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm bg-slate-50 hover:bg-slate-100 text-slate-700 transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="text-lg">{link.icon}</span>
+                    <span>{link.label}</span>
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    {link.path}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          variants={fadeSlideCard}
+          initial="hidden"
+          animate="visible"
+          custom={2}
+        >
+          <Card className="border-0 shadow-lg h-full">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <span>📌</span>
+                <span>Recently Used</span>
+              </h2>
+            </div>
+            <div className="p-4 space-y-2">
+              {recentLinks.length === 0 ? (
+                <p className="text-sm text-slate-500">
+                  Chưa có lịch sử gần đây. Hãy mở vài trang để hiển thị tại đây.
+                </p>
+              ) : (
+                recentLinks.map((link) => (
+                  <button
+                    key={link.path}
+                    type="button"
+                    onClick={() => navigate(link.path)}
+                    className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm bg-slate-50 hover:bg-slate-100 text-slate-700 transition"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-lg">{link.icon}</span>
+                      <span>{link.label}</span>
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {link.path}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+
+      <QuickLinksEditorModal
+        open={isQuickLinksEditorOpen}
+        onClose={() => setIsQuickLinksEditorOpen(false)}
+        allNavItems={ALL_NAV_ITEMS}
+        selectedPaths={editorSelectedPaths}
+        maxSelection={6}
+        onChangeSelectedPaths={setEditorSelectedPaths}
+        onSave={(next) => {
+          setQuickLinkPaths(next);
+          if (typeof window !== 'undefined') {
+            try {
+              window.localStorage.setItem(QUICK_LINKS_STORAGE_KEY, JSON.stringify(next));
+            } catch {
+              // ignore storage errors
+            }
+          }
+          setIsQuickLinksEditorOpen(false);
+        }}
+      />
+
       <motion.div
         variants={fadeSlideCard}
         initial="hidden"

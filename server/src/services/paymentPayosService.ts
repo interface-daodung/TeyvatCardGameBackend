@@ -1,11 +1,10 @@
 import { getPayos } from '../utils/payos.js';
 
 export const PACKAGE_DEMO: Record<string, { amount: number; xuReceived: number }> = {
-  'Gói 100': { amount: 10000, xuReceived: 100 },
-  'Gói 500': { amount: 50000, xuReceived: 500 },
-  'Gói 1000': { amount: 100000, xuReceived: 1000 },
-  'Gói 5000': { amount: 500000, xuReceived: 5000 },
-  'Gói 10000': { amount: 1000000, xuReceived: 10000 },
+  'Gói tân thủ': { amount: 2000, xuReceived: 20000 },
+  'Gói 10k': { amount: 10000, xuReceived: 10000 },
+  'Gói 20k': { amount: 20000, xuReceived: 25000 },
+  'Gói 50k': { amount: 50000, xuReceived: 75000 },
 };
 
 export interface CreatePaymentLinkParams {
