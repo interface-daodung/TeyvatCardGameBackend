@@ -21,6 +21,7 @@ import { payosRoutes } from './routes/payos.js';
 import { filesRoutes } from './routes/files.js';
 import { serverConfigurationVersionRoutes } from './routes/serverConfigurationVersions.js';
 import { themeRoutes } from './routes/themes.js';
+import { aiRoutes } from './routes/ai.js';
 // TEST ROUTES - Có thể xóa an toàn mà không ảnh hưởng chương trình chính
 import { testRoutes } from './test/testRoutes.js';
 import path from 'path';
@@ -112,6 +113,7 @@ app.use('/api/payos', payosRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/server-configuration-versions', serverConfigurationVersionRoutes);
 app.use('/api/themes', themeRoutes);
+app.use('/api/ai', aiRoutes);
 // TEST ROUTES - Có thể xóa an toàn mà không ảnh hưởng chương trình chính
 app.use('/api/test', testRoutes);
 

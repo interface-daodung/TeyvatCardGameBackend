@@ -19,6 +19,7 @@ import Themes from './pages/Themes';
 import About from './pages/About';
 import ManagerAssets from './pages/ManagerAssets';
 import ServerConfigurationVersions from './pages/ServerConfigurationVersions';
+import AIManage from './pages/AIManage';
 import Layout from './components/layout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -56,6 +57,7 @@ function App() {
         <Route path="manager-assets" element={<ManagerAssets />} />
         <Route path="server-configuration-versions" element={<ServerConfigurationVersions />} />
         <Route path="logs" element={<Logs />} />
+        <Route path="ai-manage" element={<AIManage />} />
         <Route path="about" element={<About />} />
       </Route>
     </Routes>

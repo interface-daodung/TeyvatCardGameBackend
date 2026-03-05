@@ -43,6 +43,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { path: '/server-configuration-versions', label: 'Server config', icon: '⚙️' },
       { path: '/logs', label: 'Logs', icon: '📝' },
+      { path: '/ai-manage', label: 'AI Manage', icon: '🤖' },
       { path: '/about', label: 'About', icon: 'ℹ️' },
     ],
   },
