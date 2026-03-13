@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import * as logService from '../services/logService.js';
 import { AuthRequest } from '../types/index.js';
+import { AuditLog } from '../models/AuditLog.js';
 
 export const getLogs = async (req: AuthRequest, res: Response) => {
   try {
@@ -34,3 +35,32 @@ export const getLogById = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch log' });
   }
 };
+
+export async function logAiInfo(details: Record<string, unknown>) {
+  try {
+    await AuditLog.create({
+      action: 'ai_info',
+      resource: 'ai_controller',
+      content: 'info',
+      details,
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to write AI info log', err);
+  }
+}
+
+export async function logAiError(details: Record<string, unknown>) {
+  try {
+    await AuditLog.create({
+      action: 'ai_error',
+      resource: 'ai_controller',
+      content: 'error',
+      details,
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to write AI error log', err);
+  }
+}
+

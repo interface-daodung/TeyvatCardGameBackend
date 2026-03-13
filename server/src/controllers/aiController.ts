@@ -1,11 +1,15 @@
 import type { Request, Response } from 'express';
-import * as adventureCardService from '../services/adventureCardService.js';
-import * as characterService from '../services/characterService.js';
-import * as mapService from '../services/mapService.js';
-import * as itemService from '../services/itemService.js';
-import * as dashboardService from '../services/dashboardService.js';
-import * as userService from '../services/userService.js';
-import * as paymentService from '../services/paymentService.js';
+import { AdventureCard } from '../models/AdventureCard.js';
+import { AuditLog } from '../models/AuditLog.js';
+import { Character } from '../models/Character.js';
+import { Item } from '../models/Item.js';
+import { Localization } from '../models/Localization.js';
+import { Map } from '../models/Map.js';
+import { Payment } from '../models/Payment.js';
+import { User } from '../models/User.js';
+import { MONGO_ANALYZER_SYSTEM_PROMPT } from '../prompts/tools/mongoAnalyzerPrompt.js';
+import { SECRETARY_SYSTEM_PROMPT } from '../prompts/agents/secretaryPrompt.js';
+import { logAiError, logAiInfo } from './logController.js';
 
 type ChatRole = 'user' | 'assistant' | 'system';
 
@@ -19,194 +23,62 @@ interface ChatRequestBody {
   model?: string;
 }
 
-type ToolName =
-  | 'count_adventure_cards'
-  | 'count_adventure_cards_by_type'
-  | 'count_characters'
-  | 'count_characters_by_status'
-  | 'count_maps'
-  | 'count_maps_by_status'
-  | 'count_items'
-  | 'get_dashboard_stats'
-  | 'get_payment_stats'
-  | 'get_user_xu_by_email';
-
-interface ToolCall {
-  id: string;
-  tool: ToolName;
-  params?: Record<string, unknown>;
+interface AggregationAnalysisResult {
+  collection: string;
+  aggregate: unknown[];
 }
 
-interface AnalysisResult {
-  calls: ToolCall[];
+/** Đọc tại runtime để tránh đọc env trước khi dotenv.config() chạy. Thiếu env thì throw, không fallback. */
+function getLocalOllamaModel(): string {
+  const v = process.env.OLLAMA_LOCAL_MODEL || process.env.OLLAMA_MODEL;
+  if (!v?.trim()) {
+    throw new Error('OLLAMA_LOCAL_MODEL or OLLAMA_MODEL is required for local Ollama');
+  }
+  return v.trim();
 }
 
-interface ToolResult {
-  id: string;
-  tool: ToolName;
-  params?: unknown;
-  success: boolean;
-  data?: unknown;
-  error?: string;
+function getCloudOllamaModel(): string {
+  const v = process.env.OLLAMA_CLOUD_MODEL || process.env.OLLAMA_MODEL;
+  if (!v?.trim()) {
+    throw new Error('OLLAMA_CLOUD_MODEL or OLLAMA_MODEL is required for cloud Ollama');
+  }
+  return v.trim();
 }
 
-const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
-const DEFAULT_OLLAMA_MODEL = 'deepseek-coder:6.7b-instruct-q4_K_M';
-
-const ANALYZER_SYSTEM_PROMPT = `
-Bạn là "AI phân tích yêu cầu" cho trang quản trị game Teyvat Card.
-
-NHIỆM VỤ:
-- KHÔNG trả lời câu hỏi của người dùng.
-- Chỉ phân tích câu hỏi cuối cùng của người dùng và quyết định cần gọi những "tool" (CALL_API nội bộ) nào để lấy dữ liệu.
-- Trả về DUY NHẤT MỘT OBJECT JSON theo format bên dưới, không thêm text, không thêm giải thích, không dùng markdown, không dùng \`\`\`.
-
-FORMAT JSON BẮT BUỘC:
-{
-  "calls": [
-    {
-      "id": "một_id_ngắn_de_dang_nho",
-      "tool": "tên_tool",
-      "params": { ...tuỳ_chọn... }
-    }
-  ]
+function isDev(): boolean {
+  return process.env.NODE_ENV === 'development';
 }
 
-DANH SÁCH TOOL HỖ TRỢ (CALL_API NỘI BỘ):
+function useOllamaCloud(): boolean {
+  return String(process.env.OLLAMA_CLOUD || '').trim().toLowerCase() === 'true';
+}
 
-1) Adventure Cards (model AdventureCard, tương đương các API /api/adventure-cards)
-- "count_adventure_cards":
-  - Mô tả: Đếm tổng số adventure cards trong hệ thống (bất kể type/status).
-  - params: {} hoặc không truyền.
+function getOllamaApiKey(): string | undefined {
+  return process.env.OLLAMA_API_KEY;
+}
 
-- "count_adventure_cards_by_type":
-  - Mô tả: Đếm số adventure cards theo type và/hoặc status.
-  - Liên quan: dữ liệu tương tự như gọi GET /api/adventure-cards?type=...&status=...
-  - params:
-    {
-      "type"?: string,     // ví dụ: "enemy", "weapon", "food", "trap", "treasure", "bomb", "coin", "empty"
-      "status"?: string    // ví dụ: "enabled", "disabled", "hidden"
-    }
+function getOllamaCloudUrl(): string {
+  const v = process.env.OLLAMA_CLOUD_URL?.trim();
+  if (!v) {
+    throw new Error('OLLAMA_CLOUD_URL is required when using Ollama cloud');
+  }
+  return v.replace(/\/+$/, '');
+}
 
-2) Characters (model Character, tương đương /api/characters)
-- "count_characters":
-  - Mô tả: Đếm tổng số characters.
-  - params: {} hoặc không truyền.
-
-- "count_characters_by_status":
-  - Mô tả: Đếm số characters theo status.
-  - Status hợp lệ: "enabled", "disabled", "hidden", "unreleased".
-  - params:
-    {
-      "status"?: string
-    }
-
-3) Maps (model Map, tương đương /api/maps)
-- "count_maps":
-  - Mô tả: Đếm tổng số maps.
-  - params: {} hoặc không truyền.
-
-- "count_maps_by_status":
-  - Mô tả: Đếm số maps theo status (enabled, disabled, hidden).
-  - params:
-    {
-      "status"?: string
-    }
-
-4) Items (model Item, tương đương /api/items)
-- "count_items":
-  - Mô tả: Đếm tổng số items (game consumables).
-  - params: {} hoặc không truyền.
-
-5) Dashboard / Payments (tương đương /api/logs/dashboard và thống kê payments)
-- "get_dashboard_stats":
-  - Mô tả: Lấy thống kê tổng quan Dashboard, tương tự API GET /api/logs/dashboard.
-  - Kết quả (data) có thể chứa:
-    {
-      "totalUsers": number,
-      "totalRevenue": number,      // tổng doanh thu (sum amount các Payment status=success)
-      "totalPayments": number,
-      "totalCharacters": number,
-      "totalEquipment": number,    // thực tế là tổng Item
-      "totalMaps": number,
-      "revenueByDate": Array<...>,
-      "usersByDate": Array<...>
-    }
-  - params: {} hoặc không truyền.
-
-- "get_payment_stats":
-  - Mô tả: Lấy thống kê chi tiết về payments (doanh thu, số giao dịch theo ngày), tương tự logic trong service Payment.
-  - Kết quả (data) có thể chứa:
-    {
-      "totalRevenue": number,
-      "totalPayments": number,
-      "revenueByDate": Array<...>
-    }
-  - params: {} hoặc không truyền.
-
-6) Users / Xu (model User, tương đương /api/users)
-- "get_user_xu_by_email":
-  - Mô tả: Tìm user theo email (gần giống GET /api/users?search=...) và trả về thông tin xu hiện tại của user đó.
-  - Nếu hệ thống có nhiều user trùng email (hiếm khi), tool có thể trả về nhiều kết quả.
-  - params:
-    {
-      "email": string   // email hoặc keyword email để tìm user, ví dụ: "admin@example.com"
-    }
-
-HƯỚNG DẪN ÁNH XẠ CÂU HỎI → TOOL:
-- Nếu câu hỏi KHÔNG cần dữ liệu nội bộ (chỉ là lý thuyết, ví dụ: "REST API là gì?") → trả về:
-  { "calls": [] }
-
-- Nếu người dùng hỏi về adventure cards:
-  - "bao nhiêu card type X" → dùng "count_adventure_cards_by_type" với params.type suy ra từ câu hỏi (vd: "enemy", "weapon"...).
-  - "bao nhiêu card type enemy đang enabled" → dùng "count_adventure_cards_by_type" với params.type = "enemy", params.status = "enabled".
-  - "tổng số adventure card" → dùng "count_adventure_cards".
-
-- Nếu người dùng hỏi về characters:
-  - "bao nhiêu character đang enabled" → dùng "count_characters_by_status" với params.status = "enabled".
-  - "tổng số character" → dùng "count_characters".
-
-- Nếu người dùng hỏi về maps:
-  - "tổng số map" → dùng "count_maps".
-  - "bao nhiêu map đang hidden" → dùng "count_maps_by_status" với params.status = "hidden".
-
-- Nếu người dùng hỏi về items:
-  - "tổng số items" → dùng "count_items".
-
-- Nếu người dùng hỏi về doanh thu / payments:
-  - "tổng doanh thu", "total revenue", "doanh thu hiện tại" → ưu tiên dùng "get_dashboard_stats" (hoặc "get_payment_stats" nếu muốn chi tiết theo ngày).
-  - "tổng số giao dịch thành công" → có thể dùng "get_dashboard_stats" hoặc "get_payment_stats".
-
-- Nếu người dùng hỏi về xu (coin) của một user:
-  - Ví dụ: "User admin@example.com đang có bao nhiêu xu?", "xu của user X" → dùng "get_user_xu_by_email" với params.email là email tương ứng.
-
-- Có thể trả về NHIỀU CALL trong mảng "calls" nếu câu hỏi phức tạp cần nhiều loại dữ liệu.
-
-NHỚ:
-- CHỈ output JSON hợp lệ.
-- KHÔNG dùng markdown, KHÔNG dùng \`\`\`, KHÔNG thêm text ngoài JSON.
-`.trim();
-
-const SECRETARY_SYSTEM_PROMPT = `
-Bạn là "AI thư ký" cho trang quản trị game Teyvat Card.
-
-HỆ THỐNG ĐÃ LÀM GIÚP BẠN:
-- Đã phân tích câu hỏi của người dùng.
-- Đã gọi các API nội bộ và trả về kết quả dưới dạng JSON (toolResults).
-
-NHIỆM VỤ CỦA BẠN:
-- Dựa trên câu hỏi của người dùng và toolResults (JSON) được cung cấp, hãy trả lời lại cho admin bằng ngôn ngữ tự nhiên, dễ hiểu.
-- Không nhắc đến CALL_API, tool, hay các chi tiết kỹ thuật nội bộ.
-- Nếu user hỏi bằng tiếng Việt → trả lời bằng tiếng Việt. Nếu user hỏi bằng tiếng Anh → trả lời bằng tiếng Anh.
-- Nếu không đủ dữ liệu để trả lời chính xác, hãy nói rõ là "không đủ dữ liệu" thay vì đoán bừa.
-`.trim();
+function getOllamaLocalUrl(): string {
+  const v = process.env.OLLAMA_URL?.trim();
+  if (!v) {
+    throw new Error('OLLAMA_URL is required for local Ollama');
+  }
+  return v.replace(/\/+$/, '');
+}
 
 function getFetchImpl() {
   const f = (globalThis as any).fetch as ((input: string, init?: any) => Promise<any>) | undefined;
   return f;
 }
 
-async function callOllamaChat(args: {
+async function callOllamaLocalChat(args: {
   messages: ChatMessage[];
   model: string;
 }) {
@@ -215,7 +87,7 @@ async function callOllamaChat(args: {
     throw new Error('fetch is not available in this Node runtime');
   }
 
-  const ollamaUrl = (process.env.OLLAMA_URL || DEFAULT_OLLAMA_URL).replace(/\/+$/, '');
+  const ollamaUrl = getOllamaLocalUrl();
 
   const response = await fetchImpl(`${ollamaUrl}/v1/chat/completions`, {
     method: 'POST',
@@ -234,6 +106,7 @@ async function callOllamaChat(args: {
     const error = new Error(
       `Failed to contact local AI (Ollama). status=${response.status} body=${text.slice(0, 500)}`
     );
+    (error as any).source = 'local';
     (error as any).status = response.status;
     (error as any).body = text;
     throw error;
@@ -242,6 +115,82 @@ async function callOllamaChat(args: {
   const data = await response.json().catch(() => null);
   const firstChoice = data?.choices?.[0]?.message ?? null;
   return { data, message: firstChoice as ChatMessage | null };
+}
+
+/** Ollama Cloud: https://ollama.com/api/chat — header gửi Bearer với key thật (có thể đặt sk-... trong .env). */
+const OLLAMA_CLOUD_CHAT_PATH = '/api/chat';
+
+async function callOllamaCloudChat(args: { messages: ChatMessage[]; model: string }) {
+  const fetchImpl = getFetchImpl();
+  if (!fetchImpl) {
+    throw new Error('fetch is not available in this Node runtime');
+  }
+
+  const apiKey = getOllamaApiKey();
+  if (!apiKey?.trim()) {
+    throw new Error('OLLAMA_API_KEY is required for Ollama cloud');
+  }
+
+  const baseUrl = getOllamaCloudUrl().replace(/\/+$/, '');
+  const response = await fetchImpl(`${baseUrl}${OLLAMA_CLOUD_CHAT_PATH}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey.trim()}`,
+    },
+    body: JSON.stringify({
+      model: args.model,
+      messages: args.messages,
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    const error = new Error(
+      `Failed to contact cloud AI (Ollama). status=${response.status} body=${text.slice(0, 500)}`
+    );
+    (error as any).source = 'cloud';
+    (error as any).status = response.status;
+    (error as any).body = text;
+    throw error;
+  }
+
+  const data = await response.json().catch(() => null);
+  // Ollama /api/chat trả về { message: { role, content } }; OpenAI format là choices[0].message
+  const firstChoice = data?.message ?? data?.choices?.[0]?.message ?? null;
+  return { data, message: firstChoice as ChatMessage | null };
+}
+
+async function callAiWithRouting(args: { messages: ChatMessage[]; model?: string }) {
+  const preferredModel = args.model;
+
+  // Development: tôn trọng OLLAMA_CLOUD, không fallback khi cloud lỗi
+  if (isDev()) {
+    if (useOllamaCloud() && getOllamaApiKey()) {
+      return callOllamaCloudChat({
+        messages: args.messages,
+        model: preferredModel || getCloudOllamaModel(),
+      });
+    }
+    return callOllamaLocalChat({
+      messages: args.messages,
+      model: preferredModel || getLocalOllamaModel(),
+    });
+  }
+
+  // Production: cloud nếu có API key; không fallback khi cloud lỗi
+  if (getOllamaApiKey()) {
+    return callOllamaCloudChat({
+      messages: args.messages,
+      model: preferredModel || getCloudOllamaModel(),
+    });
+  }
+
+  return callOllamaLocalChat({
+    messages: args.messages,
+    model: preferredModel || getLocalOllamaModel(),
+  });
 }
 
 function extractJsonObject(text: string): string | null {
@@ -253,176 +202,24 @@ function extractJsonObject(text: string): string | null {
   return slice;
 }
 
-async function executeToolCall(call: ToolCall): Promise<ToolResult> {
-  try {
-    switch (call.tool) {
-      case 'count_adventure_cards': {
-        const { cards } = await adventureCardService.getAdventureCards({});
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: { total: cards.length },
-        };
-      }
-      case 'count_adventure_cards_by_type': {
-        const type =
-          typeof call.params?.type === 'string' && call.params.type.trim()
-            ? (call.params.type as string)
-            : undefined;
-        const status =
-          typeof call.params?.status === 'string' && call.params.status.trim()
-            ? (call.params.status as string)
-            : undefined;
-        const { cards } = await adventureCardService.getAdventureCards({
-          ...(type && { type }),
-          ...(status && { status }),
-        });
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: { total: cards.length, type: type ?? null, status: status ?? null },
-        };
-      }
-      case 'count_characters': {
-        const { characters } = await characterService.getCharacters();
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: { total: characters.length },
-        };
-      }
-      case 'count_characters_by_status': {
-        const status =
-          typeof call.params?.status === 'string' && call.params.status.trim()
-            ? (call.params.status as string)
-            : undefined;
-        const { characters } = await characterService.getCharacters(status);
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: { total: characters.length, status: status ?? null },
-        };
-      }
-      case 'count_maps': {
-        const { maps } = await mapService.getMaps();
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: { total: maps.length },
-        };
-      }
-      case 'count_maps_by_status': {
-        const status =
-          typeof call.params?.status === 'string' && call.params.status.trim()
-            ? (call.params.status as string)
-            : undefined;
-        const { maps } = await mapService.getMaps(status);
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: { total: maps.length, status: status ?? null },
-        };
-      }
-      case 'count_items': {
-        const { items } = await itemService.getItems();
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: { total: items.length },
-        };
-      }
-      case 'get_dashboard_stats': {
-        const stats = await dashboardService.getDashboardStats();
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: stats,
-        };
-      }
-      case 'get_payment_stats': {
-        const stats = await paymentService.getPaymentStats();
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: stats,
-        };
-      }
-      case 'get_user_xu_by_email': {
-        const rawEmail = typeof call.params?.email === 'string' ? call.params.email.trim() : '';
-        if (!rawEmail) {
-          return {
-            id: call.id,
-            tool: call.tool,
-            params: call.params,
-            success: false,
-            error: 'email is required for get_user_xu_by_email',
-          };
-        }
-
-        const search = rawEmail;
-        const { users } = await userService.getUsers({ search, limit: 50 });
-        const lower = rawEmail.toLowerCase();
-        const matched = (users as any[]).filter(
-          (u) => typeof u.email === 'string' && u.email.toLowerCase() === lower
-        );
-
-        const simplified = matched.map((u) => ({
-          id: String(u._id),
-          email: u.email,
-          xu: typeof u.xu === 'number' ? u.xu : 0,
-          isBanned: Boolean(u.isBanned),
-        }));
-
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: true,
-          data: {
-            emailQuery: rawEmail,
-            matchedCount: simplified.length,
-            users: simplified,
-          },
-        };
-      }
-      default: {
-        return {
-          id: call.id,
-          tool: call.tool,
-          params: call.params,
-          success: false,
-          error: `Unsupported tool: ${call.tool}`,
-        };
-      }
-    }
-  } catch (err: unknown) {
-    return {
-      id: call.id,
-      tool: call.tool,
-      params: call.params,
-      success: false,
-      error: err instanceof Error ? err.message : 'Unknown error while executing tool',
-    };
-  }
-}
+const AGGREGATION_COLLECTION_MODEL_MAP: Record<string, any> = {
+  auditlogs: AuditLog,
+  auditlog: AuditLog,
+  adventurecards: AdventureCard,
+  adventurecard: AdventureCard,
+  characters: Character,
+  character: Character,
+  items: Item,
+  item: Item,
+  localizations: Localization,
+  localization: Localization,
+  maps: Map,
+  map: Map,
+  payments: Payment,
+  payment: Payment,
+  users: User,
+  user: User,
+};
 
 export const chatWithAi = async (req: Request, res: Response) => {
   try {
@@ -433,7 +230,7 @@ export const chatWithAi = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'messages is required and must be a non-empty array' });
     }
 
-    const model = body?.model || process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL;
+    const requestedModel = body?.model;
 
     // Lấy câu hỏi cuối cùng của user để phân tích
     const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user') ?? null;
@@ -441,55 +238,99 @@ export const chatWithAi = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'At least one user message is required' });
     }
 
-    let analysis: AnalysisResult | null = null;
-    let toolResults: ToolResult[] = [];
+    let analysis: AggregationAnalysisResult | null = null;
+    let aggregationResult: unknown = null;
 
-    try {
-      // Bước 1: gọi AI "phân tích yêu cầu" để quyết định CALL_API (tool calls)
-      const analyzer = await callOllamaChat({
-        model,
-        messages: [
-          { role: 'system', content: ANALYZER_SYSTEM_PROMPT },
-          { role: 'user', content: lastUserMessage.content },
-        ],
-      });
+    // Bước 1: gọi AI "phân tích yêu cầu" để sinh MongoDB aggregation pipeline (không catch fallback)
+    const analyzer = await callAiWithRouting({
+      model: requestedModel,
+      messages: [
+        { role: 'system', content: MONGO_ANALYZER_SYSTEM_PROMPT },
+        { role: 'user', content: lastUserMessage.content },
+      ],
+    });
 
-      const analysisContent = analyzer.message?.content ?? '';
-      const jsonText = extractJsonObject(analysisContent);
-      if (jsonText) {
-        const parsed = JSON.parse(jsonText) as AnalysisResult;
-        if (parsed && Array.isArray(parsed.calls)) {
-          analysis = parsed;
-        }
+    const analysisContent = analyzer.message?.content ?? '';
+    // eslint-disable-next-line no-console
+    console.log('[AI analyzer output]', {
+      userMessage: lastUserMessage.content,
+      raw: analysisContent,
+    });
+
+    const jsonText = extractJsonObject(analysisContent);
+    if (jsonText) {
+      const parsed = JSON.parse(jsonText) as AggregationAnalysisResult;
+      if (parsed && typeof parsed.collection === 'string' && Array.isArray(parsed.aggregate)) {
+        analysis = parsed;
       }
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('AI analysis phase failed, falling back to direct chat', err);
     }
 
-    const hasCalls = analysis && Array.isArray(analysis.calls) && analysis.calls.length > 0;
+    await logAiInfo({
+      phase: 'analyzer',
+      userMessage: lastUserMessage.content,
+      rawOutput: analysisContent,
+      analysis,
+    });
 
-    if (hasCalls && analysis) {
-      // Bước 2: thực thi các tool (CALL_API nội bộ) dựa trên kết quả phân tích
-      const results: ToolResult[] = [];
-      for (const call of analysis.calls) {
-        if (!call || !call.id || !call.tool) continue;
-        // eslint-disable-next-line no-await-in-loop
-        const result = await executeToolCall(call);
-        results.push(result);
+    const hasAggregation =
+      analysis &&
+      typeof analysis.collection === 'string' &&
+      analysis.collection.trim() &&
+      Array.isArray(analysis.aggregate) &&
+      analysis.aggregate.length > 0;
+
+    if (hasAggregation && analysis) {
+      // Bước 2: thực thi aggregation trên MongoDB
+      const collectionKey = analysis.collection.toLowerCase().trim();
+      const Model = AGGREGATION_COLLECTION_MODEL_MAP[collectionKey];
+
+      if (Model) {
+        try {
+          aggregationResult = await Model.aggregate(analysis.aggregate as any[]).exec();
+        } catch (err) {
+          const error = err as Error;
+          // eslint-disable-next-line no-console
+          console.error('[AI aggregation error]', {
+            collection: analysis.collection,
+            aggregate: analysis.aggregate,
+            message: error.message,
+          });
+          await logAiError({
+            phase: 'aggregation',
+            collection: analysis.collection,
+            aggregate: analysis.aggregate,
+            error: error.message,
+          });
+          throw error;
+        }
+      } else {
+        // eslint-disable-next-line no-console
+        console.error('[AI aggregation error] Unknown collection', {
+          collection: analysis.collection,
+          aggregate: analysis.aggregate,
+        });
+        await logAiError({
+          phase: 'aggregation',
+          error: 'Unknown collection for aggregation',
+          collection: analysis.collection,
+          aggregate: analysis.aggregate,
+        });
       }
-      toolResults = results;
 
       // Bước 3: gọi lại AI "thư ký" để tổng hợp dữ liệu thành câu trả lời tự nhiên
-      const secretary = await callOllamaChat({
-        model,
+      const secretary = await callAiWithRouting({
+        model: requestedModel,
         messages: [
           { role: 'system', content: SECRETARY_SYSTEM_PROMPT },
           { role: 'user', content: lastUserMessage.content },
           {
             role: 'assistant',
-            content: `Dữ liệu nội bộ (toolResults) dưới dạng JSON:\n${JSON.stringify(
-              toolResults,
+            content: `Kết quả truy vấn MongoDB dưới dạng JSON (aggregationResult):\n${JSON.stringify(
+              {
+                collection: analysis.collection,
+                aggregate: analysis.aggregate,
+                aggregationResult,
+              },
               null,
               2
             )}`,
@@ -497,19 +338,35 @@ export const chatWithAi = async (req: Request, res: Response) => {
         ],
       });
 
+      // eslint-disable-next-line no-console
+      console.log('[AI secretary output]', {
+        userMessage: lastUserMessage.content,
+        analysis,
+        aggregationResult,
+        reply: secretary.message,
+      });
+
+      await logAiInfo({
+        phase: 'secretary',
+        userMessage: lastUserMessage.content,
+        analysis,
+        aggregationResult,
+        reply: secretary.message,
+      });
+
       return res.json({
         message: secretary.message,
         meta: {
           analysis,
-          toolResults,
+          aggregationResult,
         },
         raw: secretary.data,
       });
     }
 
-    // Nếu không có CALL_API nào (hoặc phase phân tích bị lỗi) → fallback: chat trực tiếp
-    const direct = await callOllamaChat({
-      model,
+    // Không có aggregation hợp lệ → chat trực tiếp với user
+    const direct = await callAiWithRouting({
+      model: requestedModel,
       messages,
     });
 
@@ -517,21 +374,48 @@ export const chatWithAi = async (req: Request, res: Response) => {
       message: direct.message,
       meta: {
         analysis: analysis ?? null,
-        toolResults,
+        aggregationResult,
       },
       raw: direct.data,
     });
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('chatWithAi error', error);
-    if ((error as any)?.status) {
+    const err = error as Error & { status?: number; source?: string; body?: string };
+
+    await logAiError({
+      phase: 'chatWithAi',
+      message: err.message,
+      status: err.status,
+      source: err.source,
+    });
+
+    if (err?.status) {
+      const source = err.source === 'cloud' ? 'cloud' : 'local';
+      const baseMessage =
+        source === 'cloud'
+          ? 'Failed to contact cloud AI (Ollama)'
+          : 'Failed to contact local AI (Ollama)';
+
       return res.status(502).json({
-        error: 'Failed to contact local AI (Ollama)',
-        status: (error as any).status,
-        body: (error as any).body,
+        error: baseMessage,
+        source,
+        status: err.status,
+        body: err.body,
       });
     }
-    return res.status(500).json({ error: 'Internal server error while talking to AI' });
+
+    // Thiếu env (OLLAMA_*) → 503 với message rõ ràng
+    if (err?.message && /OLLAMA_|is required/.test(err.message)) {
+      return res.status(503).json({
+        error: 'AI service misconfigured',
+        detail: err.message,
+      });
+    }
+
+    return res.status(500).json({
+      error: 'Internal server error while talking to AI',
+    });
   }
 };
 
