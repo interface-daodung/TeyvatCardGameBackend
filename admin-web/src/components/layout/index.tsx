@@ -6,6 +6,7 @@ import { Sidebar, type NavItem, type NavSection } from './Sidebar';
 import { AppHeader } from './AppHeader';
 import { DbAuthGuard } from '../DbAuthGuard';
 import type { NotificationItem } from './NotificationDropdown';
+import { AIChatBubble } from './AIChatBubble';
 
 export const NAV_SECTIONS: NavSection[] = [
   {
@@ -318,6 +319,8 @@ export default function Layout() {
             <Outlet />
           </DbAuthGuard>
         </div>
+
+        {location.pathname !== '/ai-manage' && <AIChatBubble />}
       </main>
     </div>
   );

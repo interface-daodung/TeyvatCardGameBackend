@@ -23,25 +23,28 @@ ALLOWED STAGES:
 
 OUTPUT FORMAT (STRICT):
 {
-  "collection": "one_of_the_allowed_collections",
+  "collection": "one_of_the_allowed_collections_or_empty",
   "aggregate": [
     { "$match": { ... } },
     { "$group": { ... } },
     { "$sort": { ... } },
     { "$limit": N }
-  ]
+  ],
+  "error": boolean
 }
 
 RULES:
 1. Always return valid JSON.
 2. Do NOT generate update, delete, insert, or $lookup queries.
-3. If the request cannot be converted, return:
+3. If the request is NOT related to database / admin data, or cannot be safely converted to a read-only aggregation, return:
    {
      "collection": "",
-     "aggregate": []
+     "aggregate": [],
+     "error": true
    }
-4. Do NOT include explanations.
-5. Do NOT include comments in the JSON.
+4. If you can build a valid aggregation for an allowed collection, set "error": false.
+5. Do NOT include explanations.
+6. Do NOT include comments in the JSON.
 
 REFERENCE SCHEMAS / EXAMPLE DOCUMENTS:
 

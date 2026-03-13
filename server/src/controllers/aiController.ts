@@ -9,6 +9,7 @@ import { Payment } from '../models/Payment.js';
 import { User } from '../models/User.js';
 import { MONGO_ANALYZER_SYSTEM_PROMPT } from '../prompts/tools/mongoAnalyzerPrompt.js';
 import { SECRETARY_SYSTEM_PROMPT } from '../prompts/agents/secretaryPrompt.js';
+import { IDENTITY_SYSTEM_PROMPT } from '../prompts/agents/identityPrompt.js';
 import { logAiError, logAiInfo } from './logController.js';
 
 type ChatRole = 'user' | 'assistant' | 'system';
@@ -26,6 +27,7 @@ interface ChatRequestBody {
 interface AggregationAnalysisResult {
   collection: string;
   aggregate: unknown[];
+  error?: boolean;
 }
 
 /** Đọc tại runtime để tránh đọc env trước khi dotenv.config() chạy. Thiếu env thì throw, không fallback. */
@@ -279,6 +281,36 @@ export const chatWithAi = async (req: Request, res: Response) => {
       Array.isArray(analysis.aggregate) &&
       analysis.aggregate.length > 0;
 
+    const hasErrorFlag = analysis?.error === true;
+
+    if (analysis && hasErrorFlag) {
+      // Câu hỏi không liên quan tới database hoặc không thể tạo aggregation an toàn:
+      // trả lời bằng prompt danh tính, không gọi thư ký / aggregation.
+      const identityReply = await callAiWithRouting({
+        model: requestedModel,
+        messages: [
+          { role: 'system', content: IDENTITY_SYSTEM_PROMPT },
+          ...messages,
+        ],
+      });
+
+      await logAiInfo({
+        phase: 'identity-fallback',
+        userMessage: lastUserMessage.content,
+        analysis,
+        reply: identityReply.message,
+      });
+
+      return res.json({
+        message: identityReply.message,
+        meta: {
+          analysis,
+          aggregationResult,
+        },
+        raw: identityReply.data,
+      });
+    }
+
     if (hasAggregation && analysis) {
       // Bước 2: thực thi aggregation trên MongoDB
       const collectionKey = analysis.collection.toLowerCase().trim();
@@ -322,18 +354,17 @@ export const chatWithAi = async (req: Request, res: Response) => {
         model: requestedModel,
         messages: [
           { role: 'system', content: SECRETARY_SYSTEM_PROMPT },
-          { role: 'user', content: lastUserMessage.content },
           {
-            role: 'assistant',
-            content: `Kết quả truy vấn MongoDB dưới dạng JSON (aggregationResult):\n${JSON.stringify(
-              {
-                collection: analysis.collection,
-                aggregate: analysis.aggregate,
-                aggregationResult,
-              },
-              null,
-              2
-            )}`,
+            role: 'user',
+            content: `Câu hỏi của admin:\n${lastUserMessage.content}`,
+          },
+          {
+            role: 'user',
+            content: `Dữ liệu truy vấn MongoDB (JSON, không bị cắt bớt):\n${JSON.stringify({
+              collection: analysis.collection,
+              aggregate: analysis.aggregate,
+              aggregationResult,
+            })}`,
           },
         ],
       });
