@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as authService from '../services/authService.js';
+import { User } from '../models/User.js';
 import { loginSchema, googleLoginSchema, registerSchema, saveGameSchema } from '../validators/auth.js';
 import { createAuditLog } from '../utils/auditLog.js';
 import { AuthRequest } from '../types/index.js';
@@ -64,6 +65,7 @@ export const userLogin = async (req: Request, res: Response) => {
       await createAuditLog(req as AuthRequest, 'login_failed', 'auth', undefined, { email, reason: result.code }, undefined, 'error');
       if (result.code === 'access_denied_not_user') return res.status(403).json({ error: 'Access denied. Admin login at /api/auth/login' });
       if (result.code === 'account_banned') return res.status(403).json({ error: 'Account is banned' });
+      if (result.code === 'email_not_verified') return res.status(403).json({ error: 'Email chưa được xác nhận. Vui lòng kiểm tra hộp thư.' });
       if (result.code === 'google_only_account') return res.status(401).json({ error: 'Account uses Google login. Please sign in with Google.' });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -113,14 +115,43 @@ export const register = async (req: Request, res: Response) => {
       'info'
     );
 
-    res.cookie('jwt', result.accessToken, jwtCookieOptions);
-    res.cookie('refreshToken', result.refreshToken, refreshCookieOptions);
-    res.status(201).json({ user: result.user });
+    // Không login ngay sau khi đăng ký nữa – yêu cầu user verify email
+    res.status(201).json({
+      user: result.user,
+      message: 'Đăng ký thành công, vui lòng kiểm tra email để xác nhận tài khoản.',
+    });
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'name' in error && (error as { name: string }).name === 'ZodError') {
       return res.status(400).json({ error: (error as { errors?: unknown }).errors });
     }
     res.status(500).json({ error: 'Đăng ký thất bại' });
+  }
+};
+
+export const verifyEmail = async (req: Request, res: Response) => {
+  try {
+    const token = (req.query.token as string | undefined)?.trim();
+    if (!token) {
+      return res.status(400).json({ error: 'Thiếu token xác nhận' });
+    }
+
+    const user = await User.findOne({ verifyToken: token });
+    if (!user) {
+      return res.status(400).json({ error: 'Token không hợp lệ hoặc đã được sử dụng' });
+    }
+
+    if (!user.verifyTokenExpiry || user.verifyTokenExpiry.getTime() < Date.now()) {
+      return res.status(400).json({ error: 'Token đã hết hạn' });
+    }
+
+    user.isVerified = true;
+    user.verifyToken = null;
+    user.verifyTokenExpiry = null;
+    await user.save();
+
+    return res.json({ ok: true, message: 'Xác nhận email thành công' });
+  } catch {
+    return res.status(500).json({ error: 'Xác nhận email thất bại' });
   }
 };
 

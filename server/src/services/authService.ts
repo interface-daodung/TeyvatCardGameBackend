@@ -1,7 +1,9 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/User.js';
 import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } from '../utils/jwt.js';
+import { sendVerificationEmail } from './emailService.js';
 
 function getGoogleClientId(): string {
   return process.env.GOOGLE_CLIENT_ID?.trim() || '';
@@ -15,7 +17,20 @@ export interface LoginResult {
 }
 export interface LoginFailed {
   success: false;
-  code: 'user_not_found' | 'access_denied_role' | 'access_denied_not_user' | 'account_banned' | 'no_password' | 'google_only_account' | 'invalid_password' | 'validation_error' | 'server_error' | 'google_client_id_not_set' | 'google_token_no_email' | 'google_validation_error';
+  code:
+    | 'user_not_found'
+    | 'access_denied_role'
+    | 'access_denied_not_user'
+    | 'account_banned'
+    | 'no_password'
+    | 'google_only_account'
+    | 'invalid_password'
+    | 'email_not_verified'
+    | 'validation_error'
+    | 'server_error'
+    | 'google_client_id_not_set'
+    | 'google_token_no_email'
+    | 'google_validation_error';
   message?: string;
 }
 export type LoginResponse = LoginResult | LoginFailed;
@@ -46,6 +61,7 @@ export async function loginUser(email: string, password: string): Promise<LoginR
   if (!user) return { success: false, code: 'user_not_found' };
   if (user.role !== 'user') return { success: false, code: 'access_denied_not_user' };
   if (user.isBanned) return { success: false, code: 'account_banned' };
+  if (!user.isVerified) return { success: false, code: 'email_not_verified' };
   if (!user.password) return { success: false, code: 'google_only_account' };
   const isValidPassword = await bcrypt.compare(password, user.password);
   if (!isValidPassword) return { success: false, code: 'invalid_password' };
@@ -75,28 +91,55 @@ export interface RegisterFailed {
 }
 export type RegisterResponse = RegisterResult | RegisterFailed;
 
+function generateVerifyToken(email: string): string {
+  const salt = process.env.EMAIL_VERIFY_SALT || crypto.randomBytes(16).toString('hex');
+  const now = Date.now().toString();
+  const random = crypto.randomBytes(32).toString('hex');
+  return crypto.createHash('sha256').update(email + now + salt + random).digest('hex');
+}
+
 export async function register(emailNorm: string, password: string): Promise<RegisterResponse> {
   const existing = await User.findOne({ email: emailNorm });
-  if (existing) return { success: false, code: 'email_exists' };
+
+  if (existing && existing.isVerified) {
+    return { success: false, code: 'email_exists' };
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await User.create({
-    email: emailNorm,
-    password: hashedPassword,
-    role: 'user',
-    xu: 0,
-  });
+  const token = generateVerifyToken(emailNorm);
+  const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  const tokenPayload = { userId: user._id.toString(), role: user.role, email: user.email };
-  const accessToken = generateAccessToken(tokenPayload);
-  const refreshToken = generateRefreshToken(tokenPayload);
-  await user.updateOne({ $set: { refreshToken } });
+  let user = existing;
+  if (user) {
+    // Ghi đè nếu email đã tồn tại nhưng chưa verify
+    await user.updateOne({
+      $set: {
+        password: hashedPassword,
+        isVerified: false,
+        verifyToken: token,
+        verifyTokenExpiry: expiry,
+      },
+    });
+    user = await User.findById(user._id);
+  } else {
+    user = await User.create({
+      email: emailNorm,
+      password: hashedPassword,
+      role: 'user',
+      xu: 0,
+      isVerified: false,
+      verifyToken: token,
+      verifyTokenExpiry: expiry,
+    });
+  }
+
+  await sendVerificationEmail(emailNorm, token);
 
   return {
     success: true,
-    accessToken,
-    refreshToken,
-    user: { id: user._id.toString(), email: user.email, role: user.role },
+    accessToken: '',
+    refreshToken: '',
+    user: { id: user!._id.toString(), email: user!.email, role: user!.role },
   };
 }
 

@@ -5,6 +5,9 @@ export interface IUser extends mongoose.Document {
   password?: string | null;
   role: 'admin' | 'moderator' | 'user';
   isBanned: boolean;
+  isVerified: boolean;
+  verifyToken?: string | null;
+  verifyTokenExpiry?: Date | null;
   xu: number;
   /** Refresh token hiện tại (lưu DB để server kiểm tra, thu hồi khi logout) */
   refreshToken?: string | null;
@@ -44,6 +47,23 @@ const userSchema = new Schema<IUser>(
     isBanned: {
       type: Boolean,
       default: false,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verifyToken: {
+      type: String,
+      required: false,
+      default: null,
+      index: true,
+      unique: false,
+    },
+    verifyTokenExpiry: {
+      type: Date,
+      required: false,
+      default: null,
+      index: true,
     },
     xu: {
       type: Number,

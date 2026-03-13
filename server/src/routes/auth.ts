@@ -11,6 +11,7 @@ import {
   getSaveGame,
   putSaveGame,
   logout,
+  verifyEmail,
 } from '../controllers/authController.js';
 
 export const authRoutes = Router();
@@ -18,6 +19,7 @@ export const authRoutes = Router();
 authRoutes.post('/login', login);
 authRoutes.post('/login-user', userLogin);
 authRoutes.post('/register', register);
+authRoutes.get('/verify-email', verifyEmail);
 authRoutes.post('/google', googleLogin);
 authRoutes.get('/me', authenticate, getMe);
 authRoutes.patch('/last-viewed-notifications', authenticate, patchLastViewedNotifications);
