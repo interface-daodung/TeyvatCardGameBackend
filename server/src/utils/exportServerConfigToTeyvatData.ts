@@ -7,11 +7,12 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.join(__dirname, '..', '..');
 
 /** Đường dẫn TeyvatCard/public/data. Có thể ghi đè bằng env TEYVAT_DATA_PATH */
 const TEYVAT_DATA_DIR =
   process.env.TEYVAT_DATA_PATH ||
-  path.resolve(__dirname, '..', '..', '..', 'TeyvatCard', 'public', 'data');
+  path.resolve(rootDir, '..', 'TeyvatCard', 'public', 'data');
 
 export interface ExportResult {
   success: boolean;
@@ -93,9 +94,10 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
           availableCards[key].push(className);
         }
       }
+      const stageId = (m as any).nameId ?? (m as any).name;
       return {
-        stageId: (m as any).nameId ?? (m as any).name,
-        name: (m as any).name,
+        stageId,
+        name: `map.${stageId}.name`,
         typeRatios: (m as any).typeRatios ?? {},
         availableCards,
       };
@@ -117,11 +119,12 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
     if (status && status !== 'enabled') continue;
     const type = ((c as any).type ?? 'empty') as string;
     const arr = typeGroups[type] ?? typeGroups.empty;
+    const id = (c as any).nameId;
     const entry: Record<string, unknown> = {
-      id: (c as any).nameId,
-      name: (c as any).name,
+      id,
+      name: `adventureCard.${id}.name`,
       type: (c as any).type,
-      description: (c as any).description ?? '',
+      description: `adventureCard.${id}.description`,
       className: (c as any).className ?? (c as any).nameId,
     };
     if ((c as any).category != null) entry.category = (c as any).category;
@@ -160,9 +163,10 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
     .filter((ch) => ((ch as any).status ?? 'enabled') === 'enabled')
     .map((ch) => {
       const d = ch as any;
+      const id = d.nameId;
       return {
-        id: d.nameId,
-        name: d.name,
+        id,
+        name: `character.${id}.name`,
         description: d.description ?? '',
         hp: d.HP ?? d.hp ?? 10,
         element: d.element ?? 'none',
@@ -171,11 +175,42 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
       };
     });
 
-  // theme: first theme or default
-  const firstTheme = Array.isArray(themes) && themes.length > 0 ? themes[0] : null;
-  const theme = firstTheme
-    ? { name: (firstTheme as any).name ?? 'default', colors: (firstTheme as any).colors ?? {} }
-    : { name: 'default', colors: { primary: '#95245b', secondary: '#96576a', accent: '#FFD700', neutral: '#e0e0e0', background: '#000000', surface: '#1a1a2e', text: '#ffffff' } };
+  // theme: export full theme list as key-value by name. Game ThemeManager cần đủ 11 màu (primary..text + success, warning, error, info).
+  const defaultColors: Record<string, string> = {
+    primary: '#95245b',
+    secondary: '#96576a',
+    accent: '#FFD700',
+    neutral: '#e0e0e0',
+    background: '#000000',
+    surface: '#1a1a2e',
+    text: '#ffffff',
+    success: '#2ecc71',
+    warning: '#f1c40f',
+    error: '#e74c3c',
+    info: '#3498db',
+  };
+  const themeMap: Record<string, { name: string; colors: Record<string, unknown> }> = {};
+  if (Array.isArray(themes)) {
+    for (const t of themes) {
+      const name = ((t as any).name as string) || 'default';
+      const raw = (t as any).colors ?? {};
+      const colors: Record<string, unknown> = { ...defaultColors };
+      for (const k of Object.keys(defaultColors)) {
+        if (raw[k] != null && typeof raw[k] === 'string') colors[k] = raw[k];
+      }
+      themeMap[name] = { name, colors };
+    }
+  }
+
+  const theme: Record<string, unknown> =
+    Object.keys(themeMap).length > 0
+      ? themeMap
+      : {
+          default: {
+            name: 'default',
+            colors: { ...defaultColors },
+          },
+        };
 
   // items: Item[] -> game format (nameId, basePower, baseCooldown, maxLevel, levelStats)
   const items = rawItems.map((doc) => {

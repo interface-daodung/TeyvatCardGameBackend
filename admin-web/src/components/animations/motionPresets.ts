@@ -106,3 +106,14 @@ export const zoomInPopup: Variants = {
   },
 };
 
+export const flipVerticalCard: Variants = {
+  initial: { rotateX: 0 },
+  hovered: {
+    rotateX: 180,
+    transition: {
+      duration: 0.6,
+      ease: defaultEase,
+    },
+  },
+};
+

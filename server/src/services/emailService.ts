@@ -21,7 +21,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   const baseUrl = getVerifyBaseUrl();
   const verifyUrl = `${baseUrl}/verify?token=${encodeURIComponent(token)}`;
 
-  const mailBgUrl = `https://cdn.oneesports.gg/cdn-data/2022/12/GenshinImpact_MaguuKenki_GeniusInvokationTCG-1536x864.webp`;
+  const mailBgUrl = `https://raw.githubusercontent.com/interface-daodung/TeyvatCardGameBackend/refs/heads/main/server/public/mailBg.webp`;
   const iconUrl = `https://raw.githubusercontent.com/interface-daodung/TeyvatCardGameBackend/refs/heads/main/admin-web/public/icon-192.webp`;
 
   const resend = getResendClient();
