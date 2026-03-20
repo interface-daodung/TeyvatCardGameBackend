@@ -172,6 +172,12 @@ export async function checkServerConfigurationUpdate(): Promise<CheckServerConfi
     Item.find().lean(),
   ]);
 
+  // Ensure `map_background` exists in snapshot for older documents.
+  const mapsWithBackground = (maps as Record<string, unknown>[]).map((m) => ({
+    ...m,
+    map_background: (m as Record<string, unknown>).map_background ?? '',
+  }));
+
   const localizationSnapshot = (() => {
     const en: Record<string, string> = {};
     const vi: Record<string, string> = {};
@@ -188,7 +194,7 @@ export async function checkServerConfigurationUpdate(): Promise<CheckServerConfi
   })();
 
   const configuration: Record<string, unknown> = {
-    MapsData: { maps },
+    MapsData: { maps: mapsWithBackground },
     CardsData: buildCardsDataForConfig(cards as Record<string, unknown>[]),
     CharacterData: {
       characters: (characters as Record<string, unknown>[]).map((ch) => ({
@@ -249,7 +255,7 @@ export async function checkServerConfigurationUpdate(): Promise<CheckServerConfi
     const prevChars = (latestCfg?.CharacterData as { characters?: Record<string, unknown>[] })?.characters ?? [];
     const prevThemes = (latestCfg?.themeData as { themes?: Record<string, unknown>[] })?.themes ?? [];
     const prevItems = (latestCfg?.itemData as { items?: Record<string, unknown>[] })?.items ?? [];
-    diff('maps', maps as Record<string, unknown>[], prevMaps);
+    diff('maps', mapsWithBackground as Record<string, unknown>[], prevMaps);
     diff('cards', (configuration.CardsData as { cards?: Record<string, unknown>[] }).cards ?? [], prevCards);
     diff('characters', characters as Record<string, unknown>[], prevChars);
     diff('themes', themes as Record<string, unknown>[], prevThemes);
@@ -306,6 +312,12 @@ export async function syncServerConfigurationVersion(): Promise<
     Item.find().lean(),
   ]);
 
+  // Ensure `map_background` exists in snapshot for older documents.
+  const mapsWithBackground = (maps as Record<string, unknown>[]).map((m) => ({
+    ...m,
+    map_background: (m as Record<string, unknown>).map_background ?? '',
+  }));
+
   const localizationSnapshot = (() => {
     const en: Record<string, string> = {};
     const vi: Record<string, string> = {};
@@ -345,7 +357,7 @@ export async function syncServerConfigurationVersion(): Promise<
   const prevItems = (prevCfg?.itemData as { items?: unknown[] })?.items ?? [];
   const prevLocaleKeys = Object.keys((prevCfg?.localizations as { en?: Record<string, string> })?.en ?? {}).length;
   const currentCounts = {
-    maps: maps.length,
+    maps: mapsWithBackground.length,
     cards: cards.length,
     characters: characters.length,
     themes: themes.length,
@@ -369,7 +381,7 @@ export async function syncServerConfigurationVersion(): Promise<
     : { major: packageMajor, minor: 0, patch: 0 };
 
   const configuration = {
-    MapsData: { maps },
+    MapsData: { maps: mapsWithBackground },
     CardsData: buildCardsDataForConfig(cards as Record<string, unknown>[]),
     CharacterData: {
       characters: (characters as Record<string, unknown>[]).map((ch) => ({

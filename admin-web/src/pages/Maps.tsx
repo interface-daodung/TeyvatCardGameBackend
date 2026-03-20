@@ -5,6 +5,7 @@ import {
   type Map as MapType,
   type AdventureCard,
 } from '../services/gameDataService';
+import { filesService, type FileTreeItem } from '../services/filesService';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
@@ -16,6 +17,8 @@ import { fadeSlideCard, slideUpItem } from '../components/animations/motionPrese
 export default function Maps() {
   const [maps, setMaps] = useState<MapType[]>([]);
   const [adventureCards, setAdventureCards] = useState<AdventureCard[]>([]);
+  const [mapBackgroundTree, setMapBackgroundTree] = useState<FileTreeItem[] | null>(null);
+  const [mapBackgroundTreeLoading, setMapBackgroundTreeLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -49,6 +52,22 @@ export default function Maps() {
       }
     };
     fetchCards();
+  }, []);
+
+  useEffect(() => {
+    const fetchMapBackgroundTree = async () => {
+      try {
+        setMapBackgroundTreeLoading(true);
+        const tree = await filesService.getImageTree('map-background');
+        setMapBackgroundTree(tree);
+      } catch (err) {
+        console.error('Failed to fetch map background tree:', err);
+      } finally {
+        setMapBackgroundTreeLoading(false);
+      }
+    };
+
+    fetchMapBackgroundTree();
   }, []);
 
   const openCreateModal = () => {
@@ -124,6 +143,8 @@ export default function Maps() {
         open={modalOpen}
         editingMap={editingMap}
         adventureCards={adventureCards}
+        mapBackgroundTree={mapBackgroundTree}
+        mapBackgroundTreeLoading={mapBackgroundTreeLoading}
         onClose={closeModal}
         onSaved={fetchMaps}
       />

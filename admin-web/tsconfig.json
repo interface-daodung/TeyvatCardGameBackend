@@ -15,7 +15,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",// cái này ko sai 
+    // "baseUrl": ".",// cái này ko sai 
     "paths": {
       "@/*": ["./src/*"]
     }

@@ -76,6 +76,8 @@ export interface Map {
   nameId: string;
   name: string;
   description: string;
+  /** Web path to background image, e.g. `/assets/images/ui/background/Fankang.webp` */
+  map_background?: string;
   typeRatios: MapTypeRatios;
   deck: AdventureCard[];
   status: 'enabled' | 'disabled' | 'hidden';
@@ -85,6 +87,7 @@ export type MapCreatePayload = {
   nameId: string;
   name: string;
   description?: string;
+  map_background?: string;
   typeRatios?: MapTypeRatios;
   deck: string[];
   status?: 'enabled' | 'disabled' | 'hidden';

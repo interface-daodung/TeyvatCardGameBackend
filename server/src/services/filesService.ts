@@ -22,6 +22,14 @@ export function getImagesRootPath(): string {
   return path.dirname(base);
 }
 
+export function getMapBackgroundImagesBasePath(): string {
+  return path.resolve(rootDir, '../admin-web/public/assets/images/ui/background');
+}
+
+export function getMapBackgroundImageTree(): FileTreeItem[] {
+  return getImageTree(getMapBackgroundImagesBasePath(), '/assets/images/ui/background', true);
+}
+
 export function getUploadsDir(): string {
   return path.join(rootDir, 'uploads');
 }

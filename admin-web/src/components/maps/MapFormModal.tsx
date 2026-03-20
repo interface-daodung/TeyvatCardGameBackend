@@ -9,10 +9,12 @@ import {
 } from '../../services/gameDataService';
 import { localizationService } from '../../services/localizationService';
 import { Button } from '../ui/button';
+import { FileTreeNode } from '../FileTreeNode';
 import { I18nEditorPanel, type EditLang } from '../i18n/I18nEditorPanel';
 import { TypeRatioEditor } from './TypeRatioEditor';
 import { CardDeckBuilder } from './CardDeckBuilder';
 import { DEFAULT_TYPE_RATIOS, MAP_STATUSES, getFormTypeRatios, getFreeRatio } from './mapUtils';
+import type { FileTreeItem } from '../../services/filesService';
 
 const LANG_OPTIONS: EditLang[] = ['en', 'vi', 'ja'];
 
@@ -20,6 +22,8 @@ interface MapFormModalProps {
     open: boolean;
     editingMap: MapType | null;
     adventureCards: AdventureCard[];
+    mapBackgroundTree: FileTreeItem[] | null;
+    mapBackgroundTreeLoading: boolean;
     onClose: () => void;
     /** Called after a successful create/update/delete to reload data */
     onSaved: () => void;
@@ -33,6 +37,8 @@ export function MapFormModal({
     open,
     editingMap,
     adventureCards,
+    mapBackgroundTree,
+    mapBackgroundTreeLoading,
     onClose,
     onSaved,
 }: MapFormModalProps) {
@@ -41,6 +47,7 @@ export function MapFormModal({
         nameId: string;
         name: string;
         description: string;
+        mapBackground: string;
         typeRatios: MapTypeRatios;
         status: 'enabled' | 'disabled' | 'hidden';
         deckIds: string[];
@@ -48,6 +55,7 @@ export function MapFormModal({
         nameId: '',
         name: '',
         description: '',
+        mapBackground: '',
         typeRatios: { ...DEFAULT_TYPE_RATIOS },
         status: 'enabled',
         deckIds: [],
@@ -68,6 +76,10 @@ export function MapFormModal({
     const [i18nError, setI18nError] = useState<string | null>(null);
     const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
+    // ── Map background picker state ──
+    const [mapBackgroundTreeOpen, setMapBackgroundTreeOpen] = useState(false);
+    const [mapBackgroundTreeExpanded, setMapBackgroundTreeExpanded] = useState<Set<string>>(new Set());
+
     // ── Sync form when editingMap changes ──
     useEffect(() => {
         if (editingMap) {
@@ -75,6 +87,7 @@ export function MapFormModal({
                 nameId: editingMap.nameId,
                 name: editingMap.name,
                 description: editingMap.description ?? '',
+                mapBackground: editingMap.map_background ?? '',
                 typeRatios: getFormTypeRatios(editingMap.typeRatios),
                 status: editingMap.status,
                 deckIds: (editingMap.deck ?? []).map((c: AdventureCard) => c._id),
@@ -84,6 +97,7 @@ export function MapFormModal({
                 nameId: '',
                 name: '',
                 description: '',
+                mapBackground: '',
                 typeRatios: { ...DEFAULT_TYPE_RATIOS },
                 status: 'enabled',
                 deckIds: [],
@@ -201,6 +215,7 @@ export function MapFormModal({
                 nameId: form.nameId.trim(),
                 name: form.name.trim(),
                 description: form.description.trim() || undefined,
+                map_background: form.mapBackground.trim() || undefined,
                 typeRatios: form.typeRatios,
                 deck: form.deckIds,
                 status: form.status,
@@ -244,6 +259,8 @@ export function MapFormModal({
         setI18nError(null);
         setNameTranslations(null);
         setError(null);
+        setMapBackgroundTreeOpen(false);
+        setMapBackgroundTreeExpanded(new Set());
         onClose();
     };
 
@@ -374,6 +391,101 @@ export function MapFormModal({
                                 className="w-full rounded border border-slate-200 px-3 py-2 text-sm min-h-[60px]"
                                 placeholder="Mô tả map"
                             />
+                        </div>
+
+                        {/* map_background */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1">map_background</label>
+                            <div
+                                className="relative w-full max-w-[360px] rounded-xl overflow-hidden border border-border bg-muted cursor-pointer aspect-[16/9]"
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => !mapBackgroundTreeOpen && setMapBackgroundTreeOpen(true)}
+                                onKeyDown={(e) => {
+                                    if ((e.key === 'Enter' || e.key === ' ') && !mapBackgroundTreeOpen) {
+                                        e.preventDefault();
+                                        setMapBackgroundTreeOpen(true);
+                                    }
+                                }}
+                                aria-label="Chọn ảnh map background"
+                            >
+                                {mapBackgroundTreeOpen ? (
+                                    <div className="absolute inset-0 flex flex-col overflow-hidden">
+                                        <div className="flex items-center justify-between px-2 py-1 bg-muted border-b border-border text-xs font-medium shrink-0">
+                                            <span>Chọn ảnh nền</span>
+                                            <button
+                                                type="button"
+                                                className="px-1.5 py-0.5 rounded hover:bg-muted-foreground/20"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setMapBackgroundTreeOpen(false);
+                                                }}
+                                            >
+                                                Đóng
+                                            </button>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto p-2 text-xs">
+                                            {mapBackgroundTreeLoading ? (
+                                                <p className="text-muted-foreground">Đang tải...</p>
+                                            ) : mapBackgroundTree && mapBackgroundTree.length > 0 ? (
+                                                mapBackgroundTree.map((item) => (
+                                                    <FileTreeNode
+                                                        key={item.path}
+                                                        item={item}
+                                                        expanded={mapBackgroundTreeExpanded}
+                                                        onToggle={(path) => {
+                                                            setMapBackgroundTreeExpanded((prev) => {
+                                                                const next = new Set(prev);
+                                                                if (next.has(path)) next.delete(path);
+                                                                else next.add(path);
+                                                                return next;
+                                                            });
+                                                        }}
+                                                        onSelect={(path) => {
+                                                            setForm((p) => ({ ...p, mapBackground: path }));
+                                                            setMapBackgroundTreeOpen(false);
+                                                        }}
+                                                    />
+                                                ))
+                                            ) : (
+                                                <p className="text-muted-foreground">Không có ảnh</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : form.mapBackground ? (
+                                    <>
+                                        <img
+                                            src={form.mapBackground}
+                                            alt="map_background"
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                            onError={(e) => {
+                                                // Nếu path sai, bỏ render ảnh để khỏi làm vỡ layout.
+                                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 bg-black/30" />
+                                        <div className="absolute left-2 right-2 bottom-2 text-[11px] text-white/90 line-clamp-2">
+                                            {form.mapBackground}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center px-2 text-xs text-muted-foreground">
+                                        Chưa chọn map_background
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-2 mt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={!form.mapBackground}
+                                    onClick={() => setForm((p) => ({ ...p, mapBackground: '' }))}
+                                >
+                                    Xóa ảnh
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Type ratios */}

@@ -100,6 +100,7 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
         name: `map.${stageId}.name`,
         typeRatios: (m as any).typeRatios ?? {},
         availableCards,
+        map_background: (m as any).map_background ?? '',
       };
     });
 

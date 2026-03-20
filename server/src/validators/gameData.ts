@@ -79,6 +79,7 @@ export const createMapSchema = z.object({
   nameId: z.string().min(1),
   name: z.string().min(1),
   description: z.string().optional(),
+  map_background: z.string().optional(),
   typeRatios: mapTypeRatiosSchema.optional(),
   deck: z.array(z.string()),
   status: z.enum(['enabled', 'disabled', 'hidden']).optional(),

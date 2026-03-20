@@ -14,6 +14,7 @@ export interface IMap extends mongoose.Document {
   nameId: string;
   name: string;
   description: string;
+  map_background?: string;
   typeRatios: IMapTypeRatios;
   deck: mongoose.Types.ObjectId[]; // Adventure cards that can appear
   status: 'enabled' | 'disabled' | 'hidden';
@@ -33,6 +34,10 @@ const mapSchema = new Schema<IMap>(
       required: true,
     },
     description: {
+      type: String,
+      default: '',
+    },
+    map_background: {
       type: String,
       default: '',
     },

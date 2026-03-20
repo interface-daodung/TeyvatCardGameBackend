@@ -30,11 +30,35 @@ export type { FileTreeItem } from '../services/filesService.js';
 
 export async function getImageTreeHandler(req: Request, res: Response) {
   try {
-    const scope = typeof req.query.scope === 'string' ? req.query.scope : undefined;
-    const isManagerAssets = scope === 'manager-assets';
-    const basePath = isManagerAssets ? filesService.getImagesRootPath() : filesService.getImagesBasePath();
-    const webRoot = isManagerAssets ? '/assets/images' : '/assets/images/cards';
-    const tree = filesService.getImageTree(basePath, webRoot);
+    // `scope` là tên query param FE hiện dùng, nhưng hỗ trợ thêm alias để coi đây là "theme key".
+    // Ví dụ: /api/files/image-tree?theme=map-background
+    const scopeFromQuery =
+      typeof req.query.scope === 'string'
+        ? req.query.scope
+        : typeof req.query.theme === 'string'
+          ? req.query.theme
+          : typeof req.query.themeKey === 'string'
+            ? req.query.themeKey
+            : undefined;
+
+    // Map scope -> basePath + webRoot so `FileTreeItem.path` is always correct.
+    // - `map-background`: assets/images/ui/background
+    // - `manager-assets`: assets/images
+    // - `cards-assets` (default): assets/images/cards
+    const normalizedScope =
+      scopeFromQuery === 'map-background'
+        ? 'map-background'
+        : scopeFromQuery === 'manager-assets'
+          ? 'manager-assets'
+          : 'cards-assets';
+
+    const tree =
+      normalizedScope === 'map-background'
+        ? filesService.getMapBackgroundImageTree()
+        : filesService.getImageTree(
+            normalizedScope === 'manager-assets' ? filesService.getImagesRootPath() : filesService.getImagesBasePath(),
+            normalizedScope === 'manager-assets' ? '/assets/images' : '/assets/images/cards',
+          );
     res.json({ tree });
   } catch (err) {
     console.error('Failed to read image tree:', err);
