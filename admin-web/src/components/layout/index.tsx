@@ -27,7 +27,6 @@ export const NAV_SECTIONS: NavSection[] = [
       { path: '/equipment', label: 'Equipment', icon: '🛡️' },
       { path: '/adventure-cards', label: 'Adventure Cards', icon: '🎴' },
       { path: '/maps', label: 'Maps', icon: '🗺️' },
-      { path: '/map-logic', label: 'Map logic', icon: '🧩' },
     ],
   },
   {
@@ -45,6 +44,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { path: '/server-configuration-versions', label: 'Server config', icon: '⚙️' },
       { path: '/logs', label: 'Logs', icon: '📝' },
+      { path: '/ExtendedGridSupport.html', label: 'Calculate Movement', icon: '🧩' },
       { path: '/ai-manage', label: 'AI Manage', icon: '🤖' },
       { path: '/database-management', label: 'Database Management', icon: '🗄️' },
       { path: '/about', label: 'About', icon: 'ℹ️' },

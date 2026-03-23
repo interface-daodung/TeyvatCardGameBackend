@@ -219,6 +219,55 @@
       color: #000;
     }
 
+    .grid-dim-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .dim-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 7px;
+      border: 1px solid var(--b2);
+      border-radius: 8px;
+      background: var(--s2);
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--t2);
+    }
+
+    .dim-btn {
+      width: 22px;
+      height: 22px;
+      border: 1px solid var(--b2);
+      border-radius: 6px;
+      background: var(--s3);
+      color: var(--t2);
+      font-family: var(--mono);
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dim-btn:hover {
+      border-color: var(--b3);
+      color: var(--text);
+    }
+
+    .dim-value {
+      min-width: 14px;
+      text-align: center;
+      color: var(--text);
+      font-weight: 700;
+    }
+
     /* ── GRID VIS ── */
     #grid-vis {
       display: grid;
@@ -727,6 +776,39 @@
       color: var(--text);
     }
 
+    .tbl-hdr-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .autoplay-btn {
+      height: 28px;
+      border: 1px solid var(--b2);
+      background: var(--s2);
+      color: var(--t2);
+      border-radius: 8px;
+      padding: 0 10px;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .12s;
+    }
+
+    .autoplay-btn:hover {
+      border-color: var(--b3);
+      color: var(--text);
+    }
+
+    .autoplay-btn.is-running {
+      background: #16a34a22;
+      border-color: #22c55e66;
+      color: var(--green2);
+    }
+
     /* notice box */
     .notice {
       padding: 10px 14px;
@@ -787,13 +869,22 @@
 
             <div style="margin-bottom:10px;">
               <div class="ctrl-lbl" style="margin-bottom:5px;">Chọn lưới</div>
+              <div class="grid-dim-controls">
+                <div class="dim-group">
+                  <span>Rộng</span>
+                  <button class="dim-btn" type="button" id="cols-dec">−</button>
+                  <span class="dim-value" id="cols-val">3</span>
+                  <button class="dim-btn" type="button" id="cols-inc">+</button>
+                </div>
+                <div class="dim-group">
+                  <span>Cao</span>
+                  <button class="dim-btn" type="button" id="rows-dec">−</button>
+                  <span class="dim-value" id="rows-val">3</span>
+                  <button class="dim-btn" type="button" id="rows-inc">+</button>
+                </div>
+                <button class="size-btn" type="button" id="size-apply-btn">mở</button>
+              </div>
               <div class="grid-size-row" id="size-btns">
-                <button class="size-btn" data-cols="2" data-rows="2">2×2</button>
-                <button class="size-btn" data-cols="3" data-rows="2">3×2</button>
-                <button class="size-btn active" data-cols="3" data-rows="3">3×3</button>
-                <button class="size-btn" data-cols="4" data-rows="3">4×3</button>
-                <button class="size-btn" data-cols="4" data-rows="4">4×4</button>
-                <button class="size-btn" data-cols="3" data-rows="4">3×4</button>
               </div>
             </div>
 
@@ -870,8 +961,14 @@
             <div class="panel-title">
               <div class="dot" style="background:var(--green2)"></div>Bảng kiểm tra
             </div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--t3)" id="grid-mode-lbl">mode: 3×3 + ground
-              truth</div>
+            <div class="tbl-hdr-actions">
+              <button class="autoplay-btn" id="autoplay-btn" type="button" title="Chạy lần lượt các case (0.5s)">
+                <span id="autoplay-icon">▶</span>
+                <span id="autoplay-label">Play</span>
+              </button>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--t3)" id="grid-mode-lbl">mode: 3×3 + ground
+                truth</div>
+            </div>
           </div>
           <div class="panel-body" style="padding:12px 0 0;">
 
@@ -1075,14 +1172,14 @@
     // =============================================================
     //  BUILD ALL CASES cho mọi lưới
     // =============================================================
-    const GRID_CONFIGS = [
-      { cols: 2, rows: 2, label: '2×2' },
-      { cols: 3, rows: 2, label: '3×2' },
-      { cols: 3, rows: 3, label: '3×3' },
-      { cols: 4, rows: 3, label: '4×3' },
-      { cols: 4, rows: 4, label: '4×4' },
-      { cols: 3, rows: 4, label: '3×4' },
-    ];
+    const GRID_MIN = 2;
+    const GRID_MAX = 5;
+    const GRID_CONFIGS = [];
+    for (let cols = GRID_MIN; cols <= GRID_MAX; cols++) {
+      for (let rows = GRID_MIN; rows <= GRID_MAX; rows++) {
+        GRID_CONFIGS.push({ cols, rows, label: `${cols}×${rows}` });
+      }
+    }
 
     function buildCasesForGrid(cols, rows) {
       const cases = [];
@@ -1130,11 +1227,14 @@
     // =============================================================
     //  STATE
     // =============================================================
-    let currentGrid = GRID_CONFIGS[2]; // default 3×3
+    let currentGrid = GRID_CONFIGS.find(g => g.cols === 2 && g.rows === 2) || GRID_CONFIGS[0]; // default 2×2
+    let isSizeExpanded = false;
     let selectedFrom = null;
     let activeRowIdx = null;
     let currentTab = 'all';
     let currentCases = [];
+    let isAutoPlaying = false;
+    let autoPlayToken = 0;
 
     // =============================================================
     //  RENDER TABLE
@@ -1167,6 +1267,7 @@
     }
 
     function renderTable() {
+      stopAutoPlay();
       const cases = getFilteredCases();
       currentCases = cases;
 
@@ -1420,26 +1521,153 @@
       cr.innerHTML = h;
     }
 
+    function updateAutoPlayButton() {
+      const btn = document.getElementById('autoplay-btn');
+      if (!btn) return;
+      btn.classList.toggle('is-running', isAutoPlaying);
+      document.getElementById('autoplay-icon').textContent = isAutoPlaying ? '■' : '▶';
+      document.getElementById('autoplay-label').textContent = isAutoPlaying ? 'Stop' : 'Play';
+    }
+
+    function stopAutoPlay() {
+      if (!isAutoPlaying) return;
+      isAutoPlaying = false;
+      autoPlayToken += 1;
+      updateAutoPlayButton();
+    }
+
+    async function playCasesSequentially() {
+      if (isAutoPlaying || !currentCases.length) return;
+      isAutoPlaying = true;
+      const token = ++autoPlayToken;
+      updateAutoPlayButton();
+
+      for (let i = 0; i < currentCases.length; i++) {
+        if (!isAutoPlaying || token !== autoPlayToken) break;
+        selectCase(i);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      if (token === autoPlayToken) {
+        isAutoPlaying = false;
+        updateAutoPlayButton();
+      }
+    }
+
+    function resetGridSelectionUI(cols, rows) {
+      selectedFrom = null;
+      activeRowIdx = null;
+      document.getElementById('dsp-from').textContent = '—';
+      document.getElementById('dsp-to').textContent = '—';
+      document.getElementById('formula-box').innerHTML = `<span class="fc">// Lưới ${cols}×${rows} — Click ô để bắt đầu</span>`;
+      document.getElementById('chain-row').innerHTML = '<span style="font-size:10px;font-family:var(--mono);color:var(--t4)">chuỗi di chuyển sẽ hiện ở đây</span>';
+    }
+
+    function setActiveSizeButton(cols, rows) {
+      document.querySelectorAll('#size-btns .size-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.cols) === cols && parseInt(b.dataset.rows) === rows);
+      });
+    }
+
+    function renderSizeButtons() {
+      const wrap = document.getElementById('size-btns');
+      wrap.innerHTML = '';
+      const collapsedCount = 4;
+      const visibleConfigs = isSizeExpanded ? GRID_CONFIGS : GRID_CONFIGS.slice(0, collapsedCount);
+
+      visibleConfigs.forEach(g => {
+        const btn = document.createElement('button');
+        btn.className = 'size-btn';
+        btn.type = 'button';
+        btn.dataset.cols = String(g.cols);
+        btn.dataset.rows = String(g.rows);
+        btn.textContent = g.label;
+        if (g.cols === currentGrid.cols && g.rows === currentGrid.rows) btn.classList.add('active');
+        wrap.appendChild(btn);
+      });
+
+      if (!isSizeExpanded && GRID_CONFIGS.length > collapsedCount) {
+        const moreBtn = document.createElement('button');
+        moreBtn.className = 'size-btn';
+        moreBtn.type = 'button';
+        moreBtn.dataset.action = 'expand-size-btns';
+        moreBtn.textContent = '...';
+        wrap.appendChild(moreBtn);
+      }
+
+      if (isSizeExpanded && GRID_CONFIGS.length > collapsedCount) {
+        const lessBtn = document.createElement('button');
+        lessBtn.className = 'size-btn';
+        lessBtn.type = 'button';
+        lessBtn.dataset.action = 'collapse-size-btns';
+        lessBtn.textContent = 'ẩn bớt';
+        wrap.appendChild(lessBtn);
+      }
+    }
+
+    function syncDimControls() {
+      document.getElementById('cols-val').textContent = currentGrid.cols;
+      document.getElementById('rows-val').textContent = currentGrid.rows;
+    }
+
+    function setGridBySize(cols, rows) {
+      const next = GRID_CONFIGS.find(g => g.cols === cols && g.rows === rows);
+      if (!next) return;
+      currentGrid = next;
+      setActiveSizeButton(cols, rows);
+      syncDimControls();
+      resetGridSelectionUI(cols, rows);
+      selectedFrom = null;
+      renderGridVis();
+      updateCellStyles(null);
+      renderTable();
+    }
+
     // =============================================================
     //  GRID SIZE BUTTONS
     // =============================================================
     document.getElementById('size-btns').addEventListener('click', e => {
       const btn = e.target.closest('.size-btn');
       if (!btn) return;
+      const action = btn.dataset.action;
+      if (action === 'expand-size-btns') {
+        isSizeExpanded = true;
+        renderSizeButtons();
+        return;
+      }
+      if (action === 'collapse-size-btns') {
+        isSizeExpanded = false;
+        renderSizeButtons();
+        return;
+      }
       const cols = parseInt(btn.dataset.cols);
       const rows = parseInt(btn.dataset.rows);
-      currentGrid = GRID_CONFIGS.find(g => g.cols === cols && g.rows === rows);
-      document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedFrom = null;
-      activeRowIdx = null;
-      renderGridVis();
-      updateCellStyles(null);
-      document.getElementById('dsp-from').textContent = '—';
-      document.getElementById('dsp-to').textContent = '—';
-      document.getElementById('formula-box').innerHTML = `<span class="fc">// Lưới ${cols}×${rows} — Click ô để bắt đầu</span>`;
-      document.getElementById('chain-row').innerHTML = '<span style="font-size:10px;font-family:var(--mono);color:var(--t4)">chuỗi di chuyển sẽ hiện ở đây</span>';
-      renderTable();
+      setGridBySize(cols, rows);
+    });
+
+    function adjustDim(id, delta) {
+      const el = document.getElementById(id);
+      const next = Math.max(GRID_MIN, Math.min(GRID_MAX, parseInt(el.textContent) + delta));
+      el.textContent = next;
+    }
+
+    document.getElementById('cols-dec').addEventListener('click', () => adjustDim('cols-val', -1));
+    document.getElementById('cols-inc').addEventListener('click', () => adjustDim('cols-val', 1));
+    document.getElementById('rows-dec').addEventListener('click', () => adjustDim('rows-val', -1));
+    document.getElementById('rows-inc').addEventListener('click', () => adjustDim('rows-val', 1));
+
+    document.getElementById('size-apply-btn').addEventListener('click', () => {
+      const cols = parseInt(document.getElementById('cols-val').textContent);
+      const rows = parseInt(document.getElementById('rows-val').textContent);
+      setGridBySize(cols, rows);
+    });
+
+    document.getElementById('autoplay-btn').addEventListener('click', () => {
+      if (isAutoPlaying) {
+        stopAutoPlay();
+        return;
+      }
+      playCasesSequentially();
     });
 
     // =============================================================
@@ -1456,6 +1684,9 @@
     // =============================================================
     //  INIT
     // =============================================================
+    renderSizeButtons();
+    syncDimControls();
+    updateAutoPlayButton();
     renderGridVis();
     renderTable();
   </script>

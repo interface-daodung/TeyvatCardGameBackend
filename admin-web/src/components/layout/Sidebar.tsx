@@ -23,6 +23,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, navSections, onLogout }: SidebarProps) {
   const location = useLocation();
+  const isExternalHtmlPath = (path: string) => path.toLowerCase().endsWith('.html');
 
   return (
     <motion.aside
@@ -63,6 +64,7 @@ export function Sidebar({ isOpen, navSections, onLogout }: SidebarProps) {
             )}
             {section.items.map((item, itemIndex) => {
               const isActive = location.pathname === item.path;
+              const isHtmlLink = isExternalHtmlPath(item.path);
               const animationIndex = sectionIndex * 10 + itemIndex;
               return (
                 <motion.div
@@ -72,22 +74,37 @@ export function Sidebar({ isOpen, navSections, onLogout }: SidebarProps) {
                   animate="visible"
                   custom={animationIndex}
                 >
-                  <NavLink
-                    to={item.path}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-3 rounded-xl transition-all',
-                      isActive
-                        ? 'bg-indigo-50 text-indigo-600'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
-                      !isOpen && 'justify-center'
-                    )}
-                  >
-                    <span className="shrink-0 text-lg">{item.icon}</span>
-                    {isOpen && <span className="font-medium text-sm">{item.label}</span>}
-                    {isOpen && isActive && (
-                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />
-                    )}
-                  </NavLink>
+                  {isHtmlLink ? (
+                    <a
+                      href={item.path}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                        !isOpen && 'justify-center'
+                      )}
+                    >
+                      <span className="shrink-0 text-lg">{item.icon}</span>
+                      {isOpen && <span className="font-medium text-sm">{item.label}</span>}
+                    </a>
+                  ) : (
+                    <NavLink
+                      to={item.path}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-3 rounded-xl transition-all',
+                        isActive
+                          ? 'bg-indigo-50 text-indigo-600'
+                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+                        !isOpen && 'justify-center'
+                      )}
+                    >
+                      <span className="shrink-0 text-lg">{item.icon}</span>
+                      {isOpen && <span className="font-medium text-sm">{item.label}</span>}
+                      {isOpen && isActive && (
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                      )}
+                    </NavLink>
+                  )}
                 </motion.div>
               );
             })}

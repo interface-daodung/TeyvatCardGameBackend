@@ -39,6 +39,7 @@ const RECENT_LINKS_LIMIT = 4;
 const QUICK_LINKS_STORAGE_KEY = 'teyvat_admin_quick_links';
 
 const ALL_NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((section) => section.items);
+const isExternalHtmlPath = (path: string) => path.toLowerCase().endsWith('.html');
 
 function formatTimeAgo(dateStr: string): string {
   const now = new Date();
@@ -76,6 +77,16 @@ export default function Dashboard() {
   const [editorSelectedPaths, setEditorSelectedPaths] = useState<string[]>([]);
 
   const navigate = useNavigate();
+  const handleOpenPath = useCallback(
+    (path: string) => {
+      if (isExternalHtmlPath(path)) {
+        window.open(path, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      navigate(path);
+    },
+    [navigate]
+  );
 
   const fetchLatestConfig = useCallback(async () => {
     try {
@@ -387,7 +398,7 @@ export default function Dashboard() {
                 <button
                   key={link.path}
                   type="button"
-                  onClick={() => navigate(link.path)}
+                  onClick={() => handleOpenPath(link.path)}
                   className="flex items-center justify-between rounded-lg px-3 py-2 text-sm bg-slate-50 hover:bg-slate-100 text-slate-700 transition"
                 >
                   <span className="flex items-center gap-2">
@@ -426,7 +437,7 @@ export default function Dashboard() {
                   <button
                     key={link.path}
                     type="button"
-                    onClick={() => navigate(link.path)}
+                    onClick={() => handleOpenPath(link.path)}
                     className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm bg-slate-50 hover:bg-slate-100 text-slate-700 transition"
                   >
                     <span className="flex items-center gap-2">

@@ -13,7 +13,6 @@ import CharacterDetail from './pages/CharacterDetail';
 import Equipment from './pages/Equipment';
 import AdventureCards from './pages/AdventureCards';
 import Maps from './pages/Maps';
-import MapLogic from './pages/MapLogic';
 import Localization from './pages/Localization';
 import Logs from './pages/Logs';
 import Themes from './pages/Themes';
@@ -54,7 +53,6 @@ function App() {
         <Route path="equipment" element={<Equipment />} />
         <Route path="adventure-cards" element={<AdventureCards />} />
         <Route path="maps" element={<Maps />} />
-        <Route path="map-logic" element={<MapLogic />} />
         <Route path="localization" element={<Localization />} />
         <Route path="themes" element={<Themes />} />
         <Route path="manager-assets" element={<ManagerAssets />} />
