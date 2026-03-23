@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { gameDataService, type AdventureCard } from '../../services/gameDataService';
+import { useUnsavedBaseline } from '../unsavedChanges';
 import { contentsToIds } from './adventureCardUtils';
 import { localizationService } from '../../services/localizationService';
 import { filesService, type FileTreeItem } from '../../services/filesService';
@@ -47,6 +48,19 @@ export function useAdventureCardEdit(
   const [imageTreeExpanded, setImageTreeExpanded] = useState<Set<string>>(new Set());
 
   const [classNamePickerOpen, setClassNamePickerOpen] = useState(false);
+
+  const {
+    setBaseline: setEditBaseline,
+    clearBaseline: clearEditBaseline,
+    isDirty: isEditFormDirty,
+  } = useUnsavedBaseline<Partial<AdventureCard>>();
+  const {
+    setBaseline: setCreateBaseline,
+    clearBaseline: clearCreateBaseline,
+    isDirty: isCreateFormDirty,
+  } = useUnsavedBaseline<Partial<AdventureCard>>();
+  const [showUnsavedConfirmEdit, setShowUnsavedConfirmEdit] = useState(false);
+  const [showUnsavedConfirmCreate, setShowUnsavedConfirmCreate] = useState(false);
 
   useEffect(() => {
     if (!editCard) {
@@ -190,9 +204,30 @@ export function useAdventureCardEdit(
     setImageTreeOpen(false);
   };
 
+  const closeEdit = () => {
+    setShowUnsavedConfirmEdit(false);
+    clearEditBaseline();
+    setEditOpen(false);
+  };
+
+  const requestCloseEdit = () => {
+    if (editOpen && isEditFormDirty(form)) {
+      setShowUnsavedConfirmEdit(true);
+    } else {
+      closeEdit();
+    }
+  };
+
+  const confirmDiscardEdit = () => {
+    closeEdit();
+  };
+
   const handleOpenEdit = (card: AdventureCard) => {
     setEditCard(card);
-    setForm(card);
+    const next = structuredClone(card);
+    setForm(next);
+    setEditBaseline(next);
+    setShowUnsavedConfirmEdit(false);
     setEditOpen(true);
     setError(null);
     setImageTreeOpen(false);
@@ -218,7 +253,7 @@ export function useAdventureCardEdit(
       const updated = await gameDataService.updateAdventureCard(editCard._id, payload);
       setCards((prev) => prev.map((c) => (c._id === updated._id ? { ...c, ...updated } : c)));
       setEditCard(updated);
-      setEditOpen(false);
+      closeEdit();
     } catch (e: unknown) {
       setError(
         e && typeof e === 'object' && 'message' in e ? String((e as Error).message) : 'Failed to save card'
@@ -228,7 +263,10 @@ export function useAdventureCardEdit(
     }
   };
 
-  const closeEdit = () => setEditOpen(false);
+  const confirmSaveEdit = () => {
+    setShowUnsavedConfirmEdit(false);
+    void handleSaveCard();
+  };
 
   const openClassNamePicker = () => setClassNamePickerOpen(true);
   const closeClassNamePicker = () => setClassNamePickerOpen(false);
@@ -237,14 +275,33 @@ export function useAdventureCardEdit(
     setClassNamePickerOpen(false);
   };
 
+  const closeCreate = () => {
+    setShowUnsavedConfirmCreate(false);
+    clearCreateBaseline();
+    setCreateOpen(false);
+  };
+
+  const requestCloseCreate = () => {
+    if (createOpen && isCreateFormDirty(formCreate)) {
+      setShowUnsavedConfirmCreate(true);
+    } else {
+      closeCreate();
+    }
+  };
+
+  const confirmDiscardCreate = () => {
+    closeCreate();
+  };
+
   const handleOpenCreate = () => {
-    setFormCreate({ ...CREATE_DEFAULT });
+    const initial = { ...CREATE_DEFAULT };
+    setFormCreate(initial);
+    setCreateBaseline(structuredClone(initial));
+    setShowUnsavedConfirmCreate(false);
     setCreateOpen(true);
     setError(null);
     setImageTreeOpen(false);
   };
-
-  const closeCreate = () => setCreateOpen(false);
 
   const handleCreateCard = async () => {
     const nameId = (formCreate.nameId ?? '').trim();
@@ -271,7 +328,7 @@ export function useAdventureCardEdit(
       }
       const created = await gameDataService.createAdventureCard(payload);
       setCards((prev) => [...prev, created]);
-      setCreateOpen(false);
+      closeCreate();
     } catch (e: unknown) {
       setError(
         e && typeof e === 'object' && 'message' in e ? String((e as Error).message) : 'Failed to create card'
@@ -279,6 +336,11 @@ export function useAdventureCardEdit(
     } finally {
       setSaveLoading(false);
     }
+  };
+
+  const confirmSaveCreate = () => {
+    setShowUnsavedConfirmCreate(false);
+    void handleCreateCard();
   };
 
   const nameDisplay =
@@ -321,12 +383,22 @@ export function useAdventureCardEdit(
     handleOpenEdit,
     handleSaveCard,
     closeEdit,
+    requestCloseEdit,
+    showUnsavedConfirmEdit,
+    dismissUnsavedConfirmEdit: () => setShowUnsavedConfirmEdit(false),
+    confirmDiscardEdit,
+    confirmSaveEdit,
     classNamePickerOpen,
     openClassNamePicker,
     closeClassNamePicker,
     selectClassName,
     handleOpenCreate,
     closeCreate,
+    requestCloseCreate,
+    showUnsavedConfirmCreate,
+    dismissUnsavedConfirmCreate: () => setShowUnsavedConfirmCreate(false),
+    confirmDiscardCreate,
+    confirmSaveCreate,
     handleCreateCard,
     nameDisplay,
     descriptionDisplay,

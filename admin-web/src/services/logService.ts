@@ -30,10 +30,24 @@ export const logService = {
   getLogs: async (
     page = 1,
     limit = 20,
-    opts?: { action?: string; resource?: string; content?: 'info' | 'log' | 'error'; email?: string }
+    opts?: {
+      action?: string;
+      resource?: string;
+      content?: 'info' | 'log' | 'error';
+      email?: string;
+      /** Một phiên chat AI (chi tiết trong log). */
+      sessionId?: string;
+      /** Chỉ log của tài khoản đang đăng nhập. */
+      mineOnly?: boolean;
+    }
   ): Promise<LogsResponse> => {
     const response = await api.get<LogsResponse>('/logs', {
-      params: { page, limit, ...opts },
+      params: {
+        page,
+        limit,
+        ...opts,
+        ...(opts?.mineOnly ? { mineOnly: 1 } : {}),
+      },
     });
     return response.data;
   },

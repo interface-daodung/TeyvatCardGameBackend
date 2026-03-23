@@ -21,8 +21,66 @@ interface CompareResponse {
   changes: Record<string, { added: string[]; updated: string[]; removed: string[] }>;
 }
 
+type DiffLine = {
+  type: 'context' | 'added' | 'removed';
+  text: string;
+};
+
 function versionStr(v: { major: number; minor: number; patch: number }): string {
   return `v${v.major}.${v.minor}.${v.patch}`;
+}
+
+function buildUnifiedDiffLines(previousText: string, latestText: string): DiffLine[] {
+  const previousLines = previousText.split('\n');
+  const latestLines = latestText.split('\n');
+
+  const n = previousLines.length;
+  const m = latestLines.length;
+  const maxCells = 200_000;
+  if (n * m > maxCells) {
+    return latestLines.map((line) => ({ type: 'context', text: line }));
+  }
+
+  const dp: number[][] = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      if (previousLines[i] === latestLines[j]) {
+        dp[i][j] = dp[i + 1][j + 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+  }
+
+  const diff: DiffLine[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (previousLines[i] === latestLines[j]) {
+      diff.push({ type: 'context', text: latestLines[j] });
+      i += 1;
+      j += 1;
+      continue;
+    }
+    if (dp[i + 1][j] >= dp[i][j + 1]) {
+      diff.push({ type: 'removed', text: previousLines[i] });
+      i += 1;
+    } else {
+      diff.push({ type: 'added', text: latestLines[j] });
+      j += 1;
+    }
+  }
+
+  while (i < n) {
+    diff.push({ type: 'removed', text: previousLines[i] });
+    i += 1;
+  }
+  while (j < m) {
+    diff.push({ type: 'added', text: latestLines[j] });
+    j += 1;
+  }
+
+  return diff;
 }
 
 export default function ServerConfigurationVersions() {
@@ -193,6 +251,9 @@ export default function ServerConfigurationVersions() {
                 const isExpanded = expandedSection === key;
                 const value = latest.configuration[key];
                 const json = JSON.stringify(value, null, 2);
+                const previousValue = previous?.configuration?.[key];
+                const previousJson = previousValue === undefined ? '' : JSON.stringify(previousValue, null, 2);
+                const diffLines = previous ? buildUnifiedDiffLines(previousJson, json) : null;
                 const size = json.length;
                 return (
                   <div key={key} className="border rounded-lg overflow-hidden">
@@ -208,7 +269,23 @@ export default function ServerConfigurationVersions() {
                     </button>
                     {isExpanded && (
                       <pre className="text-xs font-mono bg-slate-900 text-slate-100 p-4 overflow-x-auto whitespace-pre-wrap break-words max-h-[70vh] overflow-y-auto border-t">
-                        {json}
+                        {!diffLines
+                          ? json
+                          : diffLines.map((line, index) => {
+                              const styleByType =
+                                line.type === 'added'
+                                  ? 'bg-green-900/40 text-green-100'
+                                  : line.type === 'removed'
+                                    ? 'bg-red-900/40 text-red-100'
+                                    : '';
+                              const prefix = line.type === 'added' ? '+ ' : line.type === 'removed' ? '- ' : '  ';
+                              return (
+                                <div key={`${key}-diff-${index}`} className={styleByType}>
+                                  {prefix}
+                                  {line.text}
+                                </div>
+                              );
+                            })}
                       </pre>
                     )}
                   </div>

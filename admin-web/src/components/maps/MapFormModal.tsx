@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
     gameDataService,
@@ -15,6 +15,7 @@ import { TypeRatioEditor } from './TypeRatioEditor';
 import { CardDeckBuilder } from './CardDeckBuilder';
 import { DEFAULT_TYPE_RATIOS, MAP_STATUSES, getFormTypeRatios, getFreeRatio } from './mapUtils';
 import type { FileTreeItem } from '../../services/filesService';
+import { UnsavedChangesDialog, useUnsavedBaseline } from '../unsavedChanges';
 
 const LANG_OPTIONS: EditLang[] = ['en', 'vi', 'ja'];
 
@@ -43,7 +44,7 @@ export function MapFormModal({
     onSaved,
 }: MapFormModalProps) {
     // ── Form state ──
-    const [form, setForm] = useState<{
+    type FormState = {
         nameId: string;
         name: string;
         description: string;
@@ -51,7 +52,9 @@ export function MapFormModal({
         typeRatios: MapTypeRatios;
         status: 'enabled' | 'disabled' | 'hidden';
         deckIds: string[];
-    }>({
+    };
+
+    const [form, setForm] = useState<FormState>({
         nameId: '',
         name: '',
         description: '',
@@ -60,6 +63,10 @@ export function MapFormModal({
         status: 'enabled',
         deckIds: [],
     });
+
+    const { setBaseline, clearBaseline, isDirty: checkDirty } = useUnsavedBaseline<FormState>();
+    const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
 
     const [submitLoading, setSubmitLoading] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
@@ -80,10 +87,14 @@ export function MapFormModal({
     const [mapBackgroundTreeOpen, setMapBackgroundTreeOpen] = useState(false);
     const [mapBackgroundTreeExpanded, setMapBackgroundTreeExpanded] = useState<Set<string>>(new Set());
 
-    // ── Sync form when editingMap changes ──
+    // ── Sync form when modal opens or editing target changes ──
     useEffect(() => {
+        if (!open) {
+            clearBaseline();
+            return;
+        }
         if (editingMap) {
-            setForm({
+            const next: FormState = {
                 nameId: editingMap.nameId,
                 name: editingMap.name,
                 description: editingMap.description ?? '',
@@ -91,9 +102,11 @@ export function MapFormModal({
                 typeRatios: getFormTypeRatios(editingMap.typeRatios),
                 status: editingMap.status,
                 deckIds: (editingMap.deck ?? []).map((c: AdventureCard) => c._id),
-            });
+            };
+            setForm(next);
+            setBaseline(next);
         } else {
-            setForm({
+            const next: FormState = {
                 nameId: '',
                 name: '',
                 description: '',
@@ -101,9 +114,17 @@ export function MapFormModal({
                 typeRatios: { ...DEFAULT_TYPE_RATIOS },
                 status: 'enabled',
                 deckIds: [],
-            });
+            };
+            setForm(next);
+            setBaseline(next);
         }
-    }, [editingMap]);
+    }, [open, editingMap, clearBaseline, setBaseline]);
+
+    useEffect(() => {
+        if (!open) setShowUnsavedConfirm(false);
+    }, [open]);
+
+    const isDirty = open && checkDirty(form);
 
     // ── Load name translations when editing ──
     useEffect(() => {
@@ -225,7 +246,7 @@ export function MapFormModal({
             } else {
                 await gameDataService.createMap(payload);
             }
-            handleClose();
+            performClose();
             onSaved();
         } catch (err: unknown) {
             const msg =
@@ -244,7 +265,7 @@ export function MapFormModal({
         setDeleteLoading(true);
         try {
             await gameDataService.deleteMap(editingMap._id);
-            handleClose();
+            performClose();
             onSaved();
         } catch (err) {
             console.error('Failed to delete map:', err);
@@ -254,7 +275,8 @@ export function MapFormModal({
         }
     };
 
-    const handleClose = () => {
+    const performClose = () => {
+        setShowUnsavedConfirm(false);
         setI18nField(null);
         setI18nError(null);
         setNameTranslations(null);
@@ -264,13 +286,33 @@ export function MapFormModal({
         onClose();
     };
 
+    const requestClose = () => {
+        if (isDirty) {
+            setShowUnsavedConfirm(true);
+        } else {
+            performClose();
+        }
+    };
+
+    const confirmDiscard = () => {
+        performClose();
+    };
+
+    const confirmSaveFromDialog = () => {
+        setShowUnsavedConfirm(false);
+        formRef.current?.requestSubmit();
+    };
+
     if (!open) return null;
 
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center min-h-screen w-full">
             <div
                 className="absolute inset-0 min-h-full w-full bg-black/50"
-                onClick={handleClose}
+                onClick={() => {
+                    if (showUnsavedConfirm) setShowUnsavedConfirm(false);
+                    else requestClose();
+                }}
                 aria-hidden
             />
             <div className="relative z-10 w-full max-w-5xl max-h-[90vh] flex flex-col rounded-lg bg-card shadow-xl border border-border overflow-hidden">
@@ -281,7 +323,7 @@ export function MapFormModal({
                     </h2>
                     <button
                         type="button"
-                        onClick={handleClose}
+                        onClick={requestClose}
                         className="p-1 hover:bg-primary-500 rounded transition-colors text-xl leading-none"
                         aria-label="Đóng"
                     >
@@ -291,7 +333,11 @@ export function MapFormModal({
 
                 <div className="flex flex-1 min-h-0 overflow-hidden">
                     {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-4 p-6 flex-1 overflow-y-auto min-w-0">
+                    <form
+                        ref={formRef}
+                        onSubmit={handleSubmit}
+                        className="space-y-4 p-6 flex-1 overflow-y-auto min-w-0"
+                    >
                         {error && (
                             <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-2 text-destructive text-sm">
                                 {error}
@@ -546,7 +592,7 @@ export function MapFormModal({
                                 )}
                             </div>
                             <div className="flex gap-2">
-                                <Button type="button" variant="outline" onClick={handleClose}>
+                                <Button type="button" variant="outline" onClick={requestClose}>
                                     Hủy
                                 </Button>
                                 <Button type="submit" disabled={submitLoading || !canSaveRatios}>
@@ -576,6 +622,17 @@ export function MapFormModal({
                     )}
                 </div>
             </div>
+
+            <UnsavedChangesDialog
+                open={showUnsavedConfirm}
+                onStay={() => setShowUnsavedConfirm(false)}
+                onDiscard={confirmDiscard}
+                onSave={confirmSaveFromDialog}
+                saveLoading={submitLoading}
+                saveDisabled={!canSaveRatios}
+                title="Lưu thay đổi?"
+                description="Bạn đã chỉnh sửa map. Bạn có muốn lưu trước khi đóng không?"
+            />
         </div>,
         document.body
     );

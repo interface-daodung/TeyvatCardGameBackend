@@ -5,6 +5,7 @@ import { faSquarePen } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '../ui/button';
 import { getItemImageUrl, onlyPositiveInt, renderColoredDescription } from './equipmentUtils';
 import { EquipmentI18nPanel } from './EquipmentI18nPanel';
+import { UnsavedChangesDialog } from '../unsavedChanges';
 import { scaleInModal, fadeInOverlay, zoomInPopup } from '../animations/motionPresets';
 import type { GameItem } from './equipmentUtils';
 import type { EditLang } from '../LangDropdown';
@@ -29,7 +30,12 @@ interface EquipmentEditModalProps {
   translateLoading: boolean;
   i18nError: string | null;
   error: string | null;
-  onClose: () => void;
+  /** Đóng có kiểm tra chưa lưu (nền, nút X) */
+  onRequestClose: () => void;
+  showUnsavedConfirm: boolean;
+  onUnsavedStay: () => void;
+  onUnsavedDiscard: () => void;
+  onUnsavedSave: () => void;
   onSave: () => void;
   onOpenI18nPopup: (field: 'name' | 'description' | 'level') => void;
   onCloseI18nPopup: () => void;
@@ -65,7 +71,11 @@ export function EquipmentEditModal({
   translateLoading,
   i18nError,
   error,
-  onClose,
+  onRequestClose,
+  showUnsavedConfirm,
+  onUnsavedStay,
+  onUnsavedDiscard,
+  onUnsavedSave,
   onSave,
   onOpenI18nPopup,
   onCloseI18nPopup,
@@ -91,7 +101,14 @@ export function EquipmentEditModal({
       initial="hidden"
       animate="visible"
     >
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={() => {
+          if (showUnsavedConfirm) onUnsavedStay();
+          else onRequestClose();
+        }}
+        aria-hidden
+      />
       <motion.div
         className="relative z-10 flex items-stretch gap-4"
         variants={scaleInModal}
@@ -122,7 +139,7 @@ export function EquipmentEditModal({
             </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={onRequestClose}
               className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors text-3xl font-light leading-none"
               aria-label="Đóng"
             >
@@ -364,6 +381,16 @@ export function EquipmentEditModal({
           </motion.div>
         )}
       </motion.div>
+
+      <UnsavedChangesDialog
+        open={showUnsavedConfirm}
+        onStay={onUnsavedStay}
+        onDiscard={onUnsavedDiscard}
+        onSave={onUnsavedSave}
+        saveLoading={saveLoading}
+        title="Lưu thay đổi?"
+        description="Bạn đã chỉnh sửa equipment. Bạn có muốn lưu trước khi đóng không?"
+      />
     </motion.div>
   );
 

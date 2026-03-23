@@ -12,8 +12,14 @@ export interface ChatResponse {
 }
 
 export const aiService = {
-  chat: async (messages: ChatMessage[]): Promise<ChatMessage> => {
-    const { data } = await api.post<ChatResponse>('/ai/chat', { messages });
+  chat: async (
+    messages: ChatMessage[],
+    opts?: { sessionId?: string }
+  ): Promise<ChatMessage> => {
+    const { data } = await api.post<ChatResponse>('/ai/chat', {
+      messages,
+      ...(opts?.sessionId ? { sessionId: opts.sessionId } : {}),
+    });
     if (!data.message) {
       throw new Error('AI did not return a message');
     }

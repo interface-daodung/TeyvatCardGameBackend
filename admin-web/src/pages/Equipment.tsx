@@ -82,7 +82,11 @@ export default function Equipment() {
           translateLoading={eq.translateLoading}
           i18nError={eq.i18nError}
           error={eq.error}
-          onClose={eq.closeEditModal}
+          onRequestClose={eq.requestCloseEditModal}
+          showUnsavedConfirm={eq.showUnsavedConfirm}
+          onUnsavedStay={eq.dismissUnsavedConfirm}
+          onUnsavedDiscard={eq.confirmDiscardEditModal}
+          onUnsavedSave={eq.confirmSaveEditModal}
           onSave={eq.handleSave}
           onOpenI18nPopup={eq.openI18nPopup}
           onCloseI18nPopup={eq.closeI18nPopup}

@@ -117,3 +117,25 @@ export const flipVerticalCard: Variants = {
   },
 };
 
+const drawerSpring: Transition = {
+  type: 'spring',
+  stiffness: 300,
+  damping: 32,
+  mass: 0.88,
+};
+
+/** Panel phụ trượt từ phải (sidebar lịch sử, drawer). */
+export const slideInDrawerRight: Variants = {
+  hidden: { opacity: 0, x: 28 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: drawerSpring,
+  },
+  exit: {
+    opacity: 0,
+    x: 20,
+    transition: { duration: 0.24, ease: 'easeIn' },
+  },
+};
+

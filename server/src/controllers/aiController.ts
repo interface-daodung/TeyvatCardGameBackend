@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AdventureCard } from '../models/AdventureCard.js';
 import { AuditLog } from '../models/AuditLog.js';
 import { Character } from '../models/Character.js';
@@ -10,7 +10,14 @@ import { User } from '../models/User.js';
 import { MONGO_ANALYZER_SYSTEM_PROMPT } from '../prompts/tools/mongoAnalyzerPrompt.js';
 import { SECRETARY_SYSTEM_PROMPT } from '../prompts/agents/secretaryPrompt.js';
 import { IDENTITY_SYSTEM_PROMPT } from '../prompts/agents/identityPrompt.js';
-import { logAiError, logAiInfo } from './logController.js';
+import { logAiChatTurn, logAiError, logAiInfo, type AiLogActor } from './logController.js';
+import type { AuthRequest } from '../types/index.js';
+
+function aiActorFromReq(req: AuthRequest): AiLogActor | undefined {
+  const u = req.user;
+  if (!u?.userId || !u?.email) return undefined;
+  return { adminId: u.userId, email: u.email };
+}
 
 type ChatRole = 'user' | 'assistant' | 'system';
 
@@ -22,6 +29,8 @@ interface ChatMessage {
 interface ChatRequestBody {
   messages: ChatMessage[];
   model?: string;
+  /** Phiên chat (AI Manage): có thì ghi log ai_chat kèm email/admin. */
+  sessionId?: string;
 }
 
 interface AggregationAnalysisResult {
@@ -204,6 +213,25 @@ function extractJsonObject(text: string): string | null {
   return slice;
 }
 
+async function maybeLogAiManageSession(
+  req: AuthRequest,
+  sessionId: string | undefined,
+  lastUserContent: string,
+  assistant: ChatMessage | null | undefined
+) {
+  const sid = sessionId?.trim();
+  const u = req.user;
+  const content = assistant?.content?.trim();
+  if (!sid || !u?.userId || !u?.email || !content) return;
+  await logAiChatTurn({
+    adminId: u.userId,
+    email: u.email,
+    sessionId: sid,
+    userMessage: lastUserContent,
+    assistantMessage: content,
+  });
+}
+
 const AGGREGATION_COLLECTION_MODEL_MAP: Record<string, any> = {
   auditlogs: AuditLog,
   auditlog: AuditLog,
@@ -223,10 +251,11 @@ const AGGREGATION_COLLECTION_MODEL_MAP: Record<string, any> = {
   user: User,
 };
 
-export const chatWithAi = async (req: Request, res: Response) => {
+export const chatWithAi = async (req: AuthRequest, res: Response) => {
   try {
     const body = req.body as ChatRequestBody | undefined;
     const messages = body?.messages;
+    const sessionId = body?.sessionId;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages is required and must be a non-empty array' });
@@ -267,12 +296,15 @@ export const chatWithAi = async (req: Request, res: Response) => {
       }
     }
 
-    await logAiInfo({
-      phase: 'analyzer',
-      userMessage: lastUserMessage.content,
-      rawOutput: analysisContent,
-      analysis,
-    });
+    await logAiInfo(
+      {
+        phase: 'analyzer',
+        userMessage: lastUserMessage.content,
+        rawOutput: analysisContent,
+        analysis,
+      },
+      aiActorFromReq(req)
+    );
 
     const hasAggregation =
       analysis &&
@@ -294,12 +326,22 @@ export const chatWithAi = async (req: Request, res: Response) => {
         ],
       });
 
-      await logAiInfo({
-        phase: 'identity-fallback',
-        userMessage: lastUserMessage.content,
-        analysis,
-        reply: identityReply.message,
-      });
+      await logAiInfo(
+        {
+          phase: 'identity-fallback',
+          userMessage: lastUserMessage.content,
+          analysis,
+          reply: identityReply.message,
+        },
+        aiActorFromReq(req)
+      );
+
+      await maybeLogAiManageSession(
+        req,
+        sessionId,
+        lastUserMessage.content,
+        identityReply.message
+      );
 
       return res.json({
         message: identityReply.message,
@@ -327,12 +369,15 @@ export const chatWithAi = async (req: Request, res: Response) => {
             aggregate: analysis.aggregate,
             message: error.message,
           });
-          await logAiError({
-            phase: 'aggregation',
-            collection: analysis.collection,
-            aggregate: analysis.aggregate,
-            error: error.message,
-          });
+          await logAiError(
+            {
+              phase: 'aggregation',
+              collection: analysis.collection,
+              aggregate: analysis.aggregate,
+              error: error.message,
+            },
+            aiActorFromReq(req)
+          );
           throw error;
         }
       } else {
@@ -341,12 +386,15 @@ export const chatWithAi = async (req: Request, res: Response) => {
           collection: analysis.collection,
           aggregate: analysis.aggregate,
         });
-        await logAiError({
-          phase: 'aggregation',
-          error: 'Unknown collection for aggregation',
-          collection: analysis.collection,
-          aggregate: analysis.aggregate,
-        });
+        await logAiError(
+          {
+            phase: 'aggregation',
+            error: 'Unknown collection for aggregation',
+            collection: analysis.collection,
+            aggregate: analysis.aggregate,
+          },
+          aiActorFromReq(req)
+        );
       }
 
       // Bước 3: gọi lại AI "thư ký" để tổng hợp dữ liệu thành câu trả lời tự nhiên
@@ -377,13 +425,23 @@ export const chatWithAi = async (req: Request, res: Response) => {
         reply: secretary.message,
       });
 
-      await logAiInfo({
-        phase: 'secretary',
-        userMessage: lastUserMessage.content,
-        analysis,
-        aggregationResult,
-        reply: secretary.message,
-      });
+      await logAiInfo(
+        {
+          phase: 'secretary',
+          userMessage: lastUserMessage.content,
+          analysis,
+          aggregationResult,
+          reply: secretary.message,
+        },
+        aiActorFromReq(req)
+      );
+
+      await maybeLogAiManageSession(
+        req,
+        sessionId,
+        lastUserMessage.content,
+        secretary.message
+      );
 
       return res.json({
         message: secretary.message,
@@ -401,6 +459,8 @@ export const chatWithAi = async (req: Request, res: Response) => {
       messages,
     });
 
+    await maybeLogAiManageSession(req, sessionId, lastUserMessage.content, direct.message);
+
     return res.json({
       message: direct.message,
       meta: {
@@ -414,12 +474,15 @@ export const chatWithAi = async (req: Request, res: Response) => {
     console.error('chatWithAi error', error);
     const err = error as Error & { status?: number; source?: string; body?: string };
 
-    await logAiError({
-      phase: 'chatWithAi',
-      message: err.message,
-      status: err.status,
-      source: err.source,
-    });
+    await logAiError(
+      {
+        phase: 'chatWithAi',
+        message: err.message,
+        status: err.status,
+        source: err.source,
+      },
+      aiActorFromReq(req)
+    );
 
     if (err?.status) {
       const source = err.source === 'cloud' ? 'cloud' : 'local';

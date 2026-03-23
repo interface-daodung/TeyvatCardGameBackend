@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback, FormEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleNotch, faArrowUp, faRobot } from '@fortawesome/free-solid-svg-icons';
+import { AssistantMessageMarkdown } from '../ai/AssistantMessageMarkdown';
 import { scaleInModal, fadeInOverlay } from '../animations/motionPresets';
 import { aiService, type ChatMessage } from '../../services/aiService';
 
@@ -13,6 +14,25 @@ function createId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+const BUBBLE_SESSION_KEY = 'aiChatBubble_sessionId';
+
+function getOrCreateBubbleSessionId(): string {
+  try {
+    const existing = sessionStorage.getItem(BUBBLE_SESSION_KEY);
+    if (existing?.trim()) return existing.trim();
+  } catch {
+    // ignore
+  }
+  const sid =
+    typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : createId();
+  try {
+    sessionStorage.setItem(BUBBLE_SESSION_KEY, sid);
+  } catch {
+    // ignore
+  }
+  return sid;
+}
+
 export function AIChatBubble() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<UiMessage[]>([]);
@@ -21,6 +41,8 @@ export function AIChatBubble() {
   const [error, setError] = useState<string | null>(null);
   const [lastReadCount, setLastReadCount] = useState(0);
   const listRef = useRef<HTMLDivElement | null>(null);
+
+  const bubbleSessionId = useMemo(() => getOrCreateBubbleSessionId(), []);
 
   const scrollToBottom = useCallback(() => {
     const el = listRef.current;
@@ -65,7 +87,7 @@ export function AIChatBubble() {
     setLoading(true);
 
     try {
-      const assistant = await aiService.chat(historyForApi);
+      const assistant = await aiService.chat(historyForApi, { sessionId: bubbleSessionId });
       const assistantMessage: UiMessage = {
         id: createId(),
         role: assistant.role ?? 'assistant',
@@ -152,7 +174,11 @@ export function AIChatBubble() {
                                 AI
                               </div>
                             )}
-                            <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                            {m.role === 'assistant' ? (
+                              <AssistantMessageMarkdown content={m.content} variant="compact" />
+                            ) : (
+                              <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                            )}
                           </div>
                         </div>
                       ))

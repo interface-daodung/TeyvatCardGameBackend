@@ -1,0 +1,2 @@
+sửa các bảng thành dạng node nến bâm vào trường thù mở ra các node con cho đến node lá node này sẽ hiện thông tin demo từ Sample docs và hiện chi tiết hơn bằng các bấm vào nút hình khính lúp nút này sẽ duyện toàn bộ các doc có lá này và hiện giá trị để admin kiểm tra xem cấu trúc này thì nên dc đánh giá như nào ví dụ toàn các giá trị từ 0-10 thì có thể thêm giới hạn và đánh giá cho thuộc tính này nó sẽ lưu vào file .md ko lưu vào db mới gọi là Databasemetadata lưu vào 1 đánh giá cho 1 đường dẫn đến lá và đánh giá meta data 
+

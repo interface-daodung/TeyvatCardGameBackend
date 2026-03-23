@@ -8,6 +8,11 @@ export interface GetLogsParams {
   resource?: string;
   content?: 'info' | 'log' | 'error';
   email?: string;
+  /** Lọc theo `details.sessionId` (lịch sử một phiên chat AI). */
+  sessionId?: string;
+  /** Chỉ log của user đang đăng nhập (cần kèm viewerUserId). */
+  mineOnly?: boolean;
+  viewerUserId?: string;
 }
 
 export async function getLogs(params: GetLogsParams) {
@@ -18,9 +23,15 @@ export async function getLogs(params: GetLogsParams) {
   if (params.action) query.action = params.action;
   if (params.resource) query.resource = params.resource;
   if (params.content === 'info' || params.content === 'log' || params.content === 'error') query.content = params.content;
-  if (params.email?.trim()) {
+  if (params.mineOnly && params.viewerUserId) {
+    query.adminId = params.viewerUserId;
+  } else if (params.email?.trim()) {
     const users = await User.find({ email: new RegExp(params.email!.trim(), 'i') }).select('_id').lean();
     query.adminId = { $in: users.map((u) => u._id) };
+  }
+
+  if (params.sessionId?.trim()) {
+    query['details.sessionId'] = params.sessionId.trim();
   }
 
   const total = await AuditLog.countDocuments(query);
@@ -28,11 +39,13 @@ export async function getLogs(params: GetLogsParams) {
   const page = Math.min(pages, Math.max(1, rawPage));
   const skip = (page - 1) * limit;
 
+  const sortCreatedAt = params.sessionId?.trim() ? 1 : -1;
+
   const logs = await AuditLog.find(query)
     .populate('adminId', 'email')
     .skip(skip)
     .limit(limit)
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: sortCreatedAt });
 
   return { logs, pagination: { page, limit, total, pages } };
 }

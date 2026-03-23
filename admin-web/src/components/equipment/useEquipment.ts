@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { gameDataService } from '../../services/gameDataService';
 import { localizationService } from '../../services/localizationService';
 import type { EditLang } from '../LangDropdown';
+import { useUnsavedBaseline } from '../unsavedChanges';
 import {
   type GameItem,
   type LevelStat,
@@ -31,6 +32,9 @@ export function useEquipment() {
   const [formLevelMax, setFormLevelMax] = useState(10);
   const [formLevelStats, setFormLevelStats] = useState<LevelStat[]>([]);
   const [expandedLevels, setExpandedLevels] = useState<Set<number>>(new Set());
+  const { setBaseline, clearBaseline, isDirty: checkDirty } =
+    useUnsavedBaseline<Partial<GameItem>>();
+  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,25 +76,38 @@ export function useEquipment() {
     };
   }, []);
 
-  useEffect(() => {
-    if (selectedItem) setFormValues({ ...selectedItem });
-  }, [selectedItem]);
-
   const openEditModal = (item: GameItem) => {
+    const next = structuredClone(item);
     setSelectedItem(item);
-    setFormValues({ ...item });
+    setFormValues(next);
+    setBaseline(next);
     setEditingField(null);
     setI18nPopupField(null);
     setError(null);
+    setShowUnsavedConfirm(false);
     setEditModalOpen(true);
   };
 
   const closeEditModal = () => {
+    setShowUnsavedConfirm(false);
+    clearBaseline();
     setEditModalOpen(false);
     setSelectedItem(null);
     setEditingField(null);
     setI18nPopupField(null);
     setError(null);
+  };
+
+  const requestCloseEditModal = () => {
+    if (editModalOpen && checkDirty(formValues)) {
+      setShowUnsavedConfirm(true);
+    } else {
+      closeEditModal();
+    }
+  };
+
+  const confirmDiscardEditModal = () => {
+    closeEditModal();
   };
 
   const getFormI18n = (lang: EditLang) =>
@@ -345,6 +362,11 @@ export function useEquipment() {
     }
   };
 
+  const confirmSaveEditModal = () => {
+    setShowUnsavedConfirm(false);
+    void handleSave();
+  };
+
   const getItemDisplayName = (item: GameItem, lang: EditLang) =>
     item.nameTranslations?.[lang] ?? item.name ?? item.nameId;
   const getItemDisplayDescription = (item: GameItem, lang: EditLang) =>
@@ -372,6 +394,11 @@ export function useEquipment() {
     expandedLevels,
     openEditModal,
     closeEditModal,
+    requestCloseEditModal,
+    showUnsavedConfirm,
+    dismissUnsavedConfirm: () => setShowUnsavedConfirm(false),
+    confirmDiscardEditModal,
+    confirmSaveEditModal,
     getFormI18n,
     setFormI18n,
     openI18nPopup,

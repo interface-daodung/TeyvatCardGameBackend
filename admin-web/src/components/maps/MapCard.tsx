@@ -1,4 +1,5 @@
 import type { Map as MapType, AdventureCard } from '../../services/gameDataService';
+import { cn } from '../../lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -12,38 +13,88 @@ interface MapCardProps {
  * Displays a single map in the list view with type ratios and deck preview.
  */
 export function MapCard({ map, onEdit }: MapCardProps) {
+    const bgUrl = map.map_background?.trim();
+    const hasBg = Boolean(bgUrl);
+
     return (
-        <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-            <div className="bg-gradient-to-r from-slate-50 to-blue-50/60 p-1">
-                <CardContent className="bg-card p-6">
+        <Card
+            className={cn(
+                'border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden',
+                hasBg && 'relative bg-transparent bg-cover bg-center bg-no-repeat'
+            )}
+            style={hasBg ? { backgroundImage: `url(${bgUrl})` } : undefined}
+        >
+            {hasBg && (
+                <div
+                    className="pointer-events-none absolute inset-0 z-0 bg-black/50"
+                    aria-hidden
+                />
+            )}
+            <div
+                className={cn(
+                    'p-1',
+                    hasBg && 'relative z-10',
+                    !hasBg && 'bg-gradient-to-r from-slate-50 to-blue-50/60'
+                )}
+            >
+                <CardContent
+                    className={cn('p-6', hasBg ? 'bg-transparent text-slate-100' : 'bg-card')}
+                >
                     <CardHeader className="p-0 mb-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <div>
-                                <CardTitle className="text-2xl text-primary-700 flex items-center">
+                                <CardTitle
+                                    className={cn(
+                                        'text-2xl flex items-center',
+                                        hasBg ? 'text-white' : 'text-primary-700'
+                                    )}
+                                >
                                     <span className="mr-2 text-3xl">🗺️</span>
                                     {map.name}
                                 </CardTitle>
                                 <div className="mt-1 flex items-center gap-2 flex-wrap">
-                                    <CardDescription className="font-mono text-sm">{map.nameId}</CardDescription>
+                                    <CardDescription
+                                        className={cn('font-mono text-sm', hasBg && 'text-slate-300')}
+                                    >
+                                        {map.nameId}
+                                    </CardDescription>
                                     <Badge
                                         variant="outline"
-                                        className={
+                                        className={cn(
                                             map.status === 'enabled'
-                                                ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                                                ? hasBg
+                                                    ? 'border-emerald-300/50 bg-emerald-500/20 text-emerald-100'
+                                                    : 'border-emerald-200 bg-emerald-100 text-emerald-800'
                                                 : map.status === 'hidden'
-                                                    ? 'bg-slate-100 text-slate-700 border-slate-200'
-                                                    : 'bg-red-100 text-red-800 border-red-200'
-                                        }
+                                                  ? hasBg
+                                                      ? 'border-slate-400/50 bg-slate-500/25 text-slate-100'
+                                                      : 'border-slate-200 bg-slate-100 text-slate-700'
+                                                  : hasBg
+                                                    ? 'border-red-300/50 bg-red-500/20 text-red-100'
+                                                    : 'border-red-200 bg-red-100 text-red-800'
+                                        )}
                                     >
                                         {map.status}
                                     </Badge>
                                 </div>
                                 {map.description && (
-                                    <CardDescription className="mt-2 text-base">{map.description}</CardDescription>
+                                    <CardDescription
+                                        className={cn('mt-2 text-base', hasBg && 'text-slate-200')}
+                                    >
+                                        {map.description}
+                                    </CardDescription>
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => onEdit(map)}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={cn(
+                                        hasBg &&
+                                            'border-white/40 bg-white/10 text-white backdrop-blur-md hover:bg-[#2463eb80] hover:text-white'
+                                    )}
+                                    onClick={() => onEdit(map)}
+                                >
                                     Sửa
                                 </Button>
                             </div>
@@ -53,12 +104,27 @@ export function MapCard({ map, onEdit }: MapCardProps) {
                     {/* Type ratios */}
                     {map.typeRatios && Object.keys(map.typeRatios).length > 0 && (
                         <div className="mb-4">
-                            <span className="text-sm font-semibold text-foreground">Type ratios: </span>
+                            <span
+                                className={cn(
+                                    'text-sm font-semibold',
+                                    hasBg ? 'text-white' : 'text-foreground'
+                                )}
+                            >
+                                Type ratios:{' '}
+                            </span>
                             <div className="flex flex-wrap gap-2 mt-1">
                                 {Object.entries(map.typeRatios).map(
                                     ([k, v]) =>
                                         v != null && (
-                                            <Badge key={k} variant="outline" className="bg-white border-primary-200">
+                                            <Badge
+                                                key={k}
+                                                variant="outline"
+                                                className={cn(
+                                                    hasBg
+                                                        ? 'border-white/30 bg-white/10 text-slate-100'
+                                                        : 'border-primary-200 bg-white'
+                                                )}
+                                            >
                                                 {k}: {v}
                                             </Badge>
                                         )
@@ -70,16 +136,32 @@ export function MapCard({ map, onEdit }: MapCardProps) {
                     {/* Deck preview */}
                     <div>
                         <div className="flex items-center mb-3">
-                            <span className="text-sm font-semibold text-foreground mr-2">
+                            <span
+                                className={cn(
+                                    'text-sm font-semibold mr-2',
+                                    hasBg ? 'text-white' : 'text-foreground'
+                                )}
+                            >
                                 📚 Deck ({map.deck?.length ?? 0} thẻ):
                             </span>
                         </div>
-                        <div className="flex flex-wrap gap-2 p-4 bg-gradient-to-br from-slate-50 to-blue-50/60 rounded-lg border border-slate-200">
+                        <div
+                            className={cn(
+                                'flex flex-wrap gap-2 rounded-lg border p-4 backdrop-blur-md',
+                                hasBg
+                                    ? 'border-white/25 bg-white/10'
+                                    : 'border-slate-200 bg-gradient-to-br from-slate-50/90 to-blue-50/50'
+                            )}
+                        >
                             {(map.deck ?? []).map((card: AdventureCard) => (
                                 <Badge
                                     key={card._id}
                                     variant="outline"
-                                    className="bg-white border-primary-200 text-primary-700 hover:bg-primary-50"
+                                    className={cn(
+                                        hasBg
+                                            ? 'border-white/30 bg-white/10 text-slate-100 hover:bg-white/15'
+                                            : 'border-primary-200 bg-white text-primary-700 hover:bg-primary-50'
+                                    )}
                                 >
                                     {card.name}
                                 </Badge>

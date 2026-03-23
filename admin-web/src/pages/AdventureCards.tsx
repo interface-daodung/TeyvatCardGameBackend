@@ -155,7 +155,11 @@ export default function AdventureCards() {
           imageTree={edit.imageTree}
           imageTreeLoading={edit.imageTreeLoading}
           imageTreeExpanded={edit.imageTreeExpanded}
-          onClose={edit.closeEdit}
+          onRequestClose={edit.requestCloseEdit}
+          showUnsavedConfirm={edit.showUnsavedConfirmEdit}
+          onUnsavedStay={edit.dismissUnsavedConfirmEdit}
+          onUnsavedDiscard={edit.confirmDiscardEdit}
+          onUnsavedSave={edit.confirmSaveEdit}
           onSave={edit.handleSaveCard}
           onOpenI18n={edit.openI18nEditor}
           onI18nTranslate={edit.handleI18nTranslate}
@@ -186,7 +190,11 @@ export default function AdventureCards() {
           imageTree={edit.imageTree}
           imageTreeLoading={edit.imageTreeLoading}
           imageTreeExpanded={edit.imageTreeExpanded}
-          onClose={edit.closeCreate}
+          onRequestClose={edit.requestCloseCreate}
+          showUnsavedConfirm={edit.showUnsavedConfirmCreate}
+          onUnsavedStay={edit.dismissUnsavedConfirmCreate}
+          onUnsavedDiscard={edit.confirmDiscardCreate}
+          onUnsavedSave={edit.confirmSaveCreate}
           onCreate={edit.handleCreateCard}
           onToggleTree={edit.openImageTree}
           onToggleTreeExpanded={edit.toggleTreeExpanded}

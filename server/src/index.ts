@@ -13,6 +13,7 @@ import { characterRoutes } from './routes/characters.js';
 import { equipmentRoutes } from './routes/equipment.js';
 import { adventureCardRoutes } from './routes/adventureCards.js';
 import { mapRoutes } from './routes/maps.js';
+import { mapLogicRoutes } from './routes/mapLogic.js';
 import { localizationRoutes } from './routes/localization.js';
 import { itemRoutes } from './routes/items.js';
 import { logRoutes } from './routes/logs.js';
@@ -22,6 +23,7 @@ import { filesRoutes } from './routes/files.js';
 import { serverConfigurationVersionRoutes } from './routes/serverConfigurationVersions.js';
 import { themeRoutes } from './routes/themes.js';
 import { aiRoutes } from './routes/ai.js';
+import { databaseManagementRoutes } from './routes/databaseManagement.js';
 // TEST ROUTES - Có thể xóa an toàn mà không ảnh hưởng chương trình chính
 import { testRoutes } from './test/testRoutes.js';
 import path from 'path';
@@ -105,6 +107,7 @@ app.use('/api/characters', characterRoutes);
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/adventure-cards', adventureCardRoutes);
 app.use('/api/maps', mapRoutes);
+app.use('/api/map-logic', mapLogicRoutes);
 app.use('/api/localization', localizationRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/logs', logRoutes);
@@ -114,6 +117,7 @@ app.use('/api/files', filesRoutes);
 app.use('/api/server-configuration-versions', serverConfigurationVersionRoutes);
 app.use('/api/themes', themeRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/database-management', databaseManagementRoutes);
 // TEST ROUTES - Có thể xóa an toàn mà không ảnh hưởng chương trình chính
 app.use('/api/test', testRoutes);
 

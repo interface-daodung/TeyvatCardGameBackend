@@ -10,6 +10,7 @@ import type { AdventureCard } from '../../services/gameDataService';
 import type { FileTreeItem } from '../../services/filesService';
 import type { EditLang } from '../LangDropdown';
 import { ClassNamePickerPanel } from './ClassNamePickerPanel';
+import { UnsavedChangesDialog } from '../unsavedChanges';
 import { scaleInModal, fadeInOverlay } from '../animations/motionPresets';
 
 interface AdventureCardEditModalProps {
@@ -30,7 +31,11 @@ interface AdventureCardEditModalProps {
   imageTree: FileTreeItem[] | null;
   imageTreeLoading: boolean;
   imageTreeExpanded: Set<string>;
-  onClose: () => void;
+  onRequestClose: () => void;
+  showUnsavedConfirm: boolean;
+  onUnsavedStay: () => void;
+  onUnsavedDiscard: () => void;
+  onUnsavedSave: () => void;
   onSave: () => void;
   onOpenI18n: (field: 'name' | 'description') => void;
   onI18nTranslate: () => Promise<void>;
@@ -65,7 +70,11 @@ export function AdventureCardEditModal({
   imageTree,
   imageTreeLoading,
   imageTreeExpanded,
-  onClose,
+  onRequestClose,
+  showUnsavedConfirm,
+  onUnsavedStay,
+  onUnsavedDiscard,
+  onUnsavedSave,
   onSave,
   onOpenI18n,
   onI18nTranslate,
@@ -85,7 +94,10 @@ export function AdventureCardEditModal({
     <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 min-h-screen min-w-screen w-full h-full z-[9999] flex items-center justify-center p-4">
       <motion.div
         className="absolute inset-0 bg-black/50"
-        onClick={onClose}
+        onClick={() => {
+          if (showUnsavedConfirm) onUnsavedStay();
+          else onRequestClose();
+        }}
         aria-hidden
         variants={fadeInOverlay}
         initial="hidden"
@@ -107,7 +119,7 @@ export function AdventureCardEditModal({
             </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={onRequestClose}
               className="flex h-10 w-10 items-center justify-center text-white text-3xl leading-none hover:bg-white/10 rounded-full border border-white/30"
               aria-label="Close"
             >
@@ -162,7 +174,7 @@ export function AdventureCardEditModal({
             )}
           </div>
           <div className="px-6 py-4 border-t border-border flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={onClose}>
+            <Button variant="outline" type="button" onClick={onRequestClose}>
               Hủy
             </Button>
             <Button type="button" disabled={saveLoading} onClick={onSave}>
@@ -193,6 +205,16 @@ export function AdventureCardEditModal({
           />
         )}
       </motion.div>
+
+      <UnsavedChangesDialog
+        open={showUnsavedConfirm}
+        onStay={onUnsavedStay}
+        onDiscard={onUnsavedDiscard}
+        onSave={onUnsavedSave}
+        saveLoading={saveLoading}
+        title="Lưu thay đổi?"
+        description="Bạn đã chỉnh sửa thẻ. Bạn có muốn lưu trước khi đóng không?"
+      />
     </div>
   );
   return createPortal(modal, document.body);

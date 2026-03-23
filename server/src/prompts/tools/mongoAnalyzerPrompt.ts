@@ -86,6 +86,13 @@ Example:
   "durabilityMin": 4
 }
 
+ADVENTURECARDS TYPE VALUES (STRICT):
+- When filtering "adventurecards", the only valid values for "type" are:
+  ["weapon", "enemy", "food", "trap", "treasure", "bomb", "coin", "empty"]
+- Do NOT use user-provided Vietnamese/English words as the value of "type".
+- If the user asks for “rương báu”, “hòm báu”, “kho báu”, “treasure chest” or “thẻ bài rương báu”,
+  interpret it as adventurecards.type = "treasure".
+
 Collection: "characters"
 Example:
 {

@@ -13,6 +13,7 @@ import CharacterDetail from './pages/CharacterDetail';
 import Equipment from './pages/Equipment';
 import AdventureCards from './pages/AdventureCards';
 import Maps from './pages/Maps';
+import MapLogic from './pages/MapLogic';
 import Localization from './pages/Localization';
 import Logs from './pages/Logs';
 import Themes from './pages/Themes';
@@ -20,6 +21,7 @@ import About from './pages/About';
 import ManagerAssets from './pages/ManagerAssets';
 import ServerConfigurationVersions from './pages/ServerConfigurationVersions';
 import AIManage from './pages/AIManage';
+import DatabaseManagement from './pages/DatabaseManagement';
 import Layout from './components/layout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -52,12 +54,14 @@ function App() {
         <Route path="equipment" element={<Equipment />} />
         <Route path="adventure-cards" element={<AdventureCards />} />
         <Route path="maps" element={<Maps />} />
+        <Route path="map-logic" element={<MapLogic />} />
         <Route path="localization" element={<Localization />} />
         <Route path="themes" element={<Themes />} />
         <Route path="manager-assets" element={<ManagerAssets />} />
         <Route path="server-configuration-versions" element={<ServerConfigurationVersions />} />
         <Route path="logs" element={<Logs />} />
         <Route path="ai-manage" element={<AIManage />} />
+        <Route path="database-management" element={<DatabaseManagement />} />
         <Route path="about" element={<About />} />
       </Route>
     </Routes>

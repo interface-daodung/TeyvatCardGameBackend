@@ -90,6 +90,19 @@ const EXTERNAL_SERVICES = [
     logoUrl: '/assets/images/about/PayOS.svg',
   },
   {
+    name: 'mymemory',
+    description:
+      'Dịch vụ dịch máy bên ngoài, dùng để dịch văn bản đa ngôn ngữ thông qua API của MyMemory.',
+    link: 'https://mymemory.translated.net',
+    icon: faPlug,
+    gradient: 'from-white to-white',
+    bgLight: 'bg-white',
+    borderColor: 'border-[#006caa]',
+    logoLabel: 'MyMemory',
+    logoUrl:
+      'https://forumcdn.freemdict.com/uploads/default/original/3X/4/0/400328b058aec4c2068ecdf2fc2beafbdc13bd02.png',
+  },
+  {
     name: 'Google Authentication',
     description:
       'Xác thực đăng nhập bằng tài khoản Google (google-auth-library). Hỗ trợ đăng nhập admin và người chơi bằng OAuth.',

@@ -27,6 +27,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { path: '/equipment', label: 'Equipment', icon: '🛡️' },
       { path: '/adventure-cards', label: 'Adventure Cards', icon: '🎴' },
       { path: '/maps', label: 'Maps', icon: '🗺️' },
+      { path: '/map-logic', label: 'Map logic', icon: '🧩' },
     ],
   },
   {
@@ -45,6 +46,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { path: '/server-configuration-versions', label: 'Server config', icon: '⚙️' },
       { path: '/logs', label: 'Logs', icon: '📝' },
       { path: '/ai-manage', label: 'AI Manage', icon: '🤖' },
+      { path: '/database-management', label: 'Database Management', icon: '🗄️' },
       { path: '/about', label: 'About', icon: 'ℹ️' },
     ],
   },
@@ -314,7 +316,13 @@ export default function Layout() {
           hasUnreadNotifications={hasUnreadNotifications}
         />
 
-        <div className="relative z-30 flex-1 overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-background via-primary-50/20 to-blue-50/20">
+        <div
+          className={`relative z-30 flex-1 min-h-0 bg-gradient-to-br from-background via-primary-50/20 to-blue-50/20 ${
+            location.pathname === '/ai-manage'
+              ? 'flex flex-col overflow-hidden p-0'
+              : 'overflow-y-auto p-4 md:p-8'
+          }`}
+        >
           <DbAuthGuard>
             <Outlet />
           </DbAuthGuard>
