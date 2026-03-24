@@ -28,6 +28,28 @@ export interface CardClassTreeNode {
   classes?: string[];
 }
 
+export interface CardClassSource {
+  className: string;
+  filePath: string;
+  sourceText: string;
+}
+
+export interface ClassMethodAstNode {
+  name: string;
+  kind: 'method' | 'constructor' | 'get' | 'set';
+  isStatic: boolean;
+  parameters: string[];
+  returnType?: string;
+}
+
+export interface CharacterClassAstMapResult {
+  className: string;
+  classRelativePath: string;
+  parentClassName: string;
+  parentRelativePath: string;
+  methodMap: Record<string, ClassMethodAstNode[]>;
+}
+
 export const filesService = {
   getImageTree: async (scope?: string): Promise<FileTreeItem[]> => {
     const response = await api.get<{ tree: FileTreeItem[] }>('/files/image-tree', {
@@ -39,6 +61,44 @@ export const filesService = {
   getCardClassTree: async (): Promise<CardClassTreeNode[]> => {
     const response = await api.get<{ tree: CardClassTreeNode[] }>('/files/card-class-tree');
     return response.data.tree;
+  },
+
+  getCardClassSource: async (path: string, className?: string): Promise<CardClassSource> => {
+    const response = await api.get<CardClassSource>('/files/card-class-source', {
+      params: className ? { path, className } : { path },
+    });
+    return response.data;
+  },
+
+  buildCardClassTsDoc: async (path: string, className?: string): Promise<CardClassSource> => {
+    const response = await api.post<CardClassSource>('/files/card-class-tsdoc', {
+      path,
+      className,
+    });
+    return response.data;
+  },
+
+  saveCardClassSource: async (
+    path: string,
+    sourceText: string,
+    className?: string
+  ): Promise<CardClassSource> => {
+    const response = await api.post<CardClassSource>('/files/card-class-source/save', {
+      path,
+      sourceText,
+      className,
+    });
+    return response.data;
+  },
+
+  getCharacterClassAstMap: async (
+    path: string,
+    className?: string
+  ): Promise<CharacterClassAstMapResult> => {
+    const response = await api.get<CharacterClassAstMapResult>('/files/character-class-ast-map', {
+      params: className ? { path, className } : { path },
+    });
+    return response.data;
   },
 
   getUploadedTree: async (): Promise<FileTreeItem[]> => {

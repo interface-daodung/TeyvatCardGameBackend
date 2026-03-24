@@ -78,7 +78,7 @@ export const updateUserXu = async (req: AuthRequest, res: Response) => {
 export const banCard = async (req: AuthRequest, res: Response) => {
   try {
     const { cardId, cardType } = banCardSchema.parse(req.body);
-    const result = await userService.banCard(req.params.id, cardId, cardType);
+    const result = await userService.banCard(req.params.id, cardId);
     if (!result) return res.status(404).json({ error: 'User not found' });
     if (result === 'already_banned') return res.status(400).json({ error: 'Card already banned' });
     await createAuditLog(req, 'ban_card', 'user', req.params.id, { cardId, cardType });
@@ -93,7 +93,7 @@ export const banCard = async (req: AuthRequest, res: Response) => {
 export const unbanCard = async (req: AuthRequest, res: Response) => {
   try {
     const { cardId, cardType } = banCardSchema.parse(req.body);
-    const result = await userService.unbanCard(req.params.id, cardId, cardType);
+    const result = await userService.unbanCard(req.params.id, cardId);
     if (!result) return res.status(404).json({ error: 'User not found' });
     if (result === 'not_banned') return res.status(400).json({ error: 'Card not banned' });
     await createAuditLog(req, 'unban_card', 'user', req.params.id, { cardId, cardType });

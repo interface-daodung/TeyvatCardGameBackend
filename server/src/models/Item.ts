@@ -8,6 +8,7 @@ export interface ILevelStat {
 
 export interface IItem extends mongoose.Document {
   nameId: string;
+  image: string;
   basePower: number;
   baseCooldown: number;
   maxLevel: number;
@@ -31,6 +32,10 @@ const itemSchema = new Schema<IItem>(
       type: String,
       required: true,
       unique: true,
+    },
+    image: {
+      type: String,
+      default: '',
     },
     basePower: {
       type: Number,

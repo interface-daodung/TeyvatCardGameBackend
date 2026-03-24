@@ -39,6 +39,45 @@ interface AggregationAnalysisResult {
   error?: boolean;
 }
 
+function normalizeMarkdownContent(content: string): string {
+  if (!content) return content;
+  let normalized = content;
+
+  // Convert common HTML image tags into Markdown image syntax.
+  normalized = normalized.replace(
+    /<img\b[^>]*src=["']([^"']+)["'][^>]*alt=["']([^"']*)["'][^>]*>/gi,
+    (_m, src: string, alt: string) => `![${alt || 'image'}](${src})`
+  );
+  normalized = normalized.replace(
+    /<img\b[^>]*alt=["']([^"']*)["'][^>]*src=["']([^"']+)["'][^>]*>/gi,
+    (_m, alt: string, src: string) => `![${alt || 'image'}](${src})`
+  );
+
+  // Convert unordered lists into Markdown bullet list.
+  normalized = normalized.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (_m, inner: string) => {
+    const items = Array.from(inner.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi))
+      .map((x) => x[1].replace(/<[^>]+>/g, '').trim())
+      .filter(Boolean);
+    return items.length ? `\n${items.map((item) => `- ${item}`).join('\n')}\n` : '';
+  });
+
+  // Convert explicit line breaks and strip any remaining HTML tags.
+  normalized = normalized.replace(/<br\s*\/?>/gi, '\n');
+  normalized = normalized.replace(/<[^>]+>/g, '');
+
+  // Cleanup common HTML entities and excessive blank lines.
+  normalized = normalized.replace(/&nbsp;/gi, ' ').replace(/\n{3,}/g, '\n\n');
+  return normalized.trim();
+}
+
+function normalizeAiMessage(message: ChatMessage | null | undefined): ChatMessage | null {
+  if (!message) return null;
+  return {
+    ...message,
+    content: normalizeMarkdownContent(message.content ?? ''),
+  };
+}
+
 /** Đọc tại runtime để tránh đọc env trước khi dotenv.config() chạy. Thiếu env thì throw, không fallback. */
 function getLocalOllamaModel(): string {
   const v = process.env.OLLAMA_LOCAL_MODEL || process.env.OLLAMA_MODEL;
@@ -416,13 +455,14 @@ export const chatWithAi = async (req: AuthRequest, res: Response) => {
           },
         ],
       });
+      const normalizedSecretaryMessage = normalizeAiMessage(secretary.message);
 
       // eslint-disable-next-line no-console
       console.log('[AI secretary output]', {
         userMessage: lastUserMessage.content,
         analysis,
         aggregationResult,
-        reply: secretary.message,
+        reply: normalizedSecretaryMessage,
       });
 
       await logAiInfo(
@@ -431,7 +471,7 @@ export const chatWithAi = async (req: AuthRequest, res: Response) => {
           userMessage: lastUserMessage.content,
           analysis,
           aggregationResult,
-          reply: secretary.message,
+          reply: normalizedSecretaryMessage,
         },
         aiActorFromReq(req)
       );
@@ -440,11 +480,11 @@ export const chatWithAi = async (req: AuthRequest, res: Response) => {
         req,
         sessionId,
         lastUserMessage.content,
-        secretary.message
+        normalizedSecretaryMessage
       );
 
       return res.json({
-        message: secretary.message,
+        message: normalizedSecretaryMessage,
         meta: {
           analysis,
           aggregationResult,

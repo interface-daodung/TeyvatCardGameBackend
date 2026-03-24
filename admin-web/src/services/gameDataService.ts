@@ -17,19 +17,6 @@ export interface Character {
   levelStats: CharacterLevelStat[];
 }
 
-export interface Equipment {
-  _id: string;
-  name: string;
-  description: string;
-  slot: string;
-  stats: {
-    attack?: number;
-    defense?: number;
-    health?: number;
-  };
-  status: 'enabled' | 'disabled' | 'hidden';
-}
-
 export interface AdventureCard {
   _id: string;
   nameId: string;
@@ -136,33 +123,6 @@ export const gameDataService = {
 
   deleteCharacter: async (id: string): Promise<void> => {
     await api.delete(`/characters/${id}`);
-  },
-
-  // Equipment
-  getEquipment: async (status?: string) => {
-    const response = await api.get<{ equipment: Equipment[] }>('/equipment', {
-      params: status ? { status } : {},
-    });
-    return response.data.equipment;
-  },
-
-  getEquipmentById: async (id: string): Promise<Equipment> => {
-    const response = await api.get<Equipment>(`/equipment/${id}`);
-    return response.data;
-  },
-
-  createEquipment: async (data: Partial<Equipment>): Promise<Equipment> => {
-    const response = await api.post<Equipment>('/equipment', data);
-    return response.data;
-  },
-
-  updateEquipment: async (id: string, data: Partial<Equipment>): Promise<Equipment> => {
-    const response = await api.patch<Equipment>(`/equipment/${id}`, data);
-    return response.data;
-  },
-
-  deleteEquipment: async (id: string): Promise<void> => {
-    await api.delete(`/equipment/${id}`);
   },
 
   // Adventure Cards

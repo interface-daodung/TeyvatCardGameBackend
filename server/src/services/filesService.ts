@@ -44,6 +44,16 @@ export function getTeyvatCardsPublicPath(): string {
     : path.resolve(rootDir, '../TeyvatCard/public/assets/images/cards');
 }
 
+export function getAdminPublicPath(): string {
+  return path.resolve(rootDir, '../admin-web/public');
+}
+
+export function getTeyvatPublicPath(): string {
+  return process.env.TEYVAT_PUBLIC_PATH
+    ? path.resolve(process.env.TEYVAT_PUBLIC_PATH)
+    : path.resolve(rootDir, '../TeyvatCard/public');
+}
+
 export interface FileMetadata {
   size: number;
   mtimeMs: number;
@@ -122,6 +132,44 @@ export function resolveUploadedFilePath(webPath: string): string | null {
   const normalized = path.normalize(fullPath);
   if (!normalized.startsWith(path.normalize(uploadsDir))) return null;
   return normalized;
+}
+
+export function resolveAssetsImageFilePath(webPath: string): string | null {
+  const prefix = '/assets/images/';
+  if (!webPath.startsWith(prefix)) return null;
+  const imagesRoot = getImagesRootPath();
+  const relative = webPath.slice(prefix.length).replace(/\\/g, '/');
+  if (!relative || relative.includes('..') || path.isAbsolute(relative)) return null;
+  const fullPath = path.join(imagesRoot, relative);
+  const normalized = path.normalize(fullPath);
+  if (!normalized.startsWith(path.normalize(imagesRoot))) return null;
+  return normalized;
+}
+
+function resolveFromWebPrefix(
+  webPath: string,
+  webPrefix: string,
+  baseDir: string
+): string | null {
+  if (!webPath.startsWith(webPrefix)) return null;
+  const relative = webPath.slice(webPrefix.length).replace(/\\/g, '/');
+  if (!relative || relative.includes('..') || path.isAbsolute(relative)) return null;
+  const fullPath = path.join(baseDir, relative);
+  const normalized = path.normalize(fullPath);
+  if (!normalized.startsWith(path.normalize(baseDir))) return null;
+  return normalized;
+}
+
+export function resolvePublicWebFilePath(webPath: string): string | null {
+  const roots: Array<{ prefix: string; baseDir: string }> = [
+    { prefix: '/assets/', baseDir: getAdminPublicPath() },
+    { prefix: '/demo/', baseDir: getTeyvatPublicPath() },
+  ];
+  for (const root of roots) {
+    const resolved = resolveFromWebPrefix(webPath, root.prefix, root.baseDir);
+    if (resolved) return resolved;
+  }
+  return null;
 }
 
 export function resolveCardFolderPath(webPath: string, imagesBasePath: string): string | null {
@@ -260,11 +308,14 @@ export async function convertToWebp(
   const base = safeBasename(filename);
   if (!base) return { error: 'Tên file không hợp lệ' };
   if (!isConvertibleImage(base)) return { error: 'Định dạng không hỗ trợ chuyển webp. Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff' };
-  const q = typeof quality === 'number' ? Math.max(70, Math.min(100, Math.round(quality))) : 85;
+  const q = typeof quality === 'number' ? Math.max(30, Math.min(100, Math.round(quality))) : 85;
   const sourcePath = path.join(getUploadsDir(), base);
   if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) return { error: 'File không tồn tại' };
   const baseNameNoExt = path.basename(base, path.extname(base));
-  const outName = `${baseNameNoExt}.webp`;
+  const sourceExt = path.extname(base).toLowerCase();
+  const outName = sourceExt === '.webp'
+    ? `${baseNameNoExt}-q${q}-${Date.now()}.webp`
+    : `${baseNameNoExt}.webp`;
   const outPath = path.join(getUploadsDir(), outName);
   await sharp(sourcePath).webp({ quality: q }).toFile(outPath);
   return { imageUrl: `/uploads/${outName}` };
@@ -314,13 +365,15 @@ export async function getFullImageMetadata(
 > {
   let fullPath: string | null = null;
 
-  if (webPath.startsWith(CARDS_WEB_PREFIX)) {
-    fullPath = resolveCardFilePath(webPath, getImagesBasePath());
+  if (webPath.startsWith('/assets/images/')) {
+    fullPath = resolveAssetsImageFilePath(webPath);
+  } else if (webPath.startsWith('/assets/') || webPath.startsWith('/demo/')) {
+    fullPath = resolvePublicWebFilePath(webPath);
   } else if (webPath.startsWith('/uploads/')) {
     fullPath = resolveUploadedFilePath(webPath);
   }
 
-  if (!fullPath) return { error: 'Đường dẫn không hợp lệ (chỉ hỗ trợ /assets/images/cards và /uploads)' };
+  if (!fullPath) return { error: 'Đường dẫn không hợp lệ' };
   if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) return { error: 'File không tồn tại' };
 
   const stat = fs.statSync(fullPath);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -7,14 +7,6 @@ import { filesService } from '../../services/filesService';
 import { scaleInModal, fadeInOverlay } from '../animations/motionPresets';
 
 const SUPPORTED_EXT = /\.(png|jpg|jpeg|gif|webp|bmp|tiff|tif)$/i;
-// Tỉ lệ mặc định 420×720
-const RESIZE_PRESETS = [
-  { w: 105, h: 180 },
-  { w: 210, h: 360 },
-  { w: 420, h: 720 },
-  { w: 840, h: 1440 },
-];
-
 function basename(filePath: string): string {
   return filePath.replace(/^.*[/\\]/, '');
 }
@@ -36,9 +28,28 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
   const [webpLoading, setWebpLoading] = useState(false);
 
   const [resizeLoading, setResizeLoading] = useState<string | null>(null);
+  const [sourceSize, setSourceSize] = useState<{ w: number; h: number } | null>(null);
+  const [customWidth, setCustomWidth] = useState<number>(420);
+  const [customHeight, setCustomHeight] = useState<number>(720);
 
   const canConvertWebp = SUPPORTED_EXT.test(fileName);
   const isWebp = /\.webp$/i.test(fileName);
+  const resizePresets = useMemo(() => {
+    if (!sourceSize || sourceSize.w <= 0 || sourceSize.h <= 0) {
+      return [
+        { w: 420, h: 720, label: 'Mặc định' },
+        { w: 210, h: 360, label: '50%' },
+        { w: 105, h: 180, label: '25%' },
+        { w: 840, h: 1440, label: '200%' },
+      ];
+    }
+    const factors = [0.5, 0.25, 0.125, 0.0625];
+    return factors.map((f, idx) => ({
+      w: Math.max(1, Math.round(sourceSize.w * f)),
+      h: Math.max(1, Math.round(sourceSize.h * f)),
+      label: `${idx === 0 ? '50%' : `/${Math.pow(2, idx + 1)}`}`,
+    }));
+  }, [sourceSize]);
 
   const handleRename = async () => {
     const current = fileName;
@@ -121,6 +132,12 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
     } finally {
       setResizeLoading(null);
     }
+  };
+
+  const handleResizeCustom = async () => {
+    const w = Math.max(1, Math.round(customWidth || 0));
+    const h = Math.max(1, Math.round(customHeight || 0));
+    await handleResize(w, h);
   };
 
   const modal = (
@@ -210,9 +227,22 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
                     <img
                       src={filePath}
                       alt={fileName}
+                      onLoad={(e) => {
+                        const img = e.currentTarget;
+                        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+                          setSourceSize({ w: img.naturalWidth, h: img.naturalHeight });
+                          setCustomWidth(img.naturalWidth);
+                          setCustomHeight(img.naturalHeight);
+                        }
+                      }}
                       className="max-w-full rounded-lg border object-contain max-h-48 bg-muted"
                     />
                     <p className="mt-2 text-xs text-muted-foreground break-all">{fileName}</p>
+                    {sourceSize && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Kích thước gốc: {sourceSize.w}×{sourceSize.h}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -229,13 +259,13 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
                     <div className="space-y-3 border-t pt-4">
                       <h4 className="text-sm font-medium">Chuyển đổi WebP (Lossy)</h4>
                       <p className="text-xs text-muted-foreground">
-                        Chất lượng {webpQuality} (70–100). Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff
+                        Chất lượng {webpQuality} (30–100). Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff
                       </p>
                       <div className="flex items-center gap-3">
                         <div className="flex-1 rounded-lg bg-muted px-2 py-2">
                           <input
                             type="range"
-                            min={70}
+                            min={30}
                             max={100}
                             value={webpQuality}
                             onChange={(e) => setWebpQuality(Number(e.target.value))}
@@ -255,12 +285,12 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
 
                   {canConvertWebp && (
                     <div className="space-y-3 border-t pt-4">
-                      <h4 className="text-sm font-medium">Resize (tỉ lệ 420×720)</h4>
+                      <h4 className="text-sm font-medium">Resize (mỗi bước giảm 50%)</h4>
                       <p className="text-xs text-muted-foreground">
                         Tạo ảnh mới: <code>tên_ảnh-WxH</code> (fit cover, crop nếu cần)
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {RESIZE_PRESETS.map(({ w, h }) => {
+                        {resizePresets.map(({ w, h, label }) => {
                           const key = `${w}x${h}`;
                           return (
                             <Button
@@ -270,11 +300,43 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
                               onClick={() => handleResize(w, h)}
                               disabled={resizeLoading !== null}
                             >
-                              {resizeLoading === key ? '...' : `${w}×${h}`}
+                              {resizeLoading === key ? '...' : `${w}×${h} (${label})`}
                             </Button>
                           );
                         })}
                       </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="text-xs text-muted-foreground">
+                          W (px)
+                          <input
+                            type="number"
+                            min={1}
+                            value={customWidth}
+                            onChange={(e) => setCustomWidth(Number(e.target.value))}
+                            className="mt-1 block w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                          />
+                        </label>
+                        <label className="text-xs text-muted-foreground">
+                          H (px)
+                          <input
+                            type="number"
+                            min={1}
+                            value={customHeight}
+                            onChange={(e) => setCustomHeight(Number(e.target.value))}
+                            className="mt-1 block w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                          />
+                        </label>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResizeCustom}
+                        disabled={resizeLoading !== null}
+                      >
+                        {resizeLoading === `${Math.max(1, Math.round(customWidth || 0))}x${Math.max(1, Math.round(customHeight || 0))}`
+                          ? '...'
+                          : `Cắt theo nhập tay: ${Math.max(1, Math.round(customWidth || 0))}×${Math.max(1, Math.round(customHeight || 0))}`}
+                      </Button>
                     </div>
                   )}
 

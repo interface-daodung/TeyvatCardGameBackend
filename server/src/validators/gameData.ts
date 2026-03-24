@@ -20,20 +20,6 @@ export const createCharacterSchema = z.object({
 
 export const updateCharacterSchema = createCharacterSchema.partial();
 
-export const createEquipmentSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  slot: z.string().min(1),
-  stats: z.object({
-    attack: z.number().min(0).optional(),
-    defense: z.number().min(0).optional(),
-    health: z.number().min(0).optional(),
-  }).optional(),
-  status: z.enum(['enabled', 'disabled', 'hidden']).optional(),
-});
-
-export const updateEquipmentSchema = createEquipmentSchema.partial();
-
 export const createAdventureCardSchema = z.object({
   nameId: z.string().min(1),
   name: z.string().min(1),

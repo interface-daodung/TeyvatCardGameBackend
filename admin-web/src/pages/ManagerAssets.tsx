@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
@@ -32,6 +32,8 @@ function dirname(filePath: string): string {
 }
 
 export default function ManagerAssets() {
+  const ANIMATION_FRAME_SIZE = 192;
+
   const [combinedTree, setCombinedTree] = useState<FileTreeItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -62,10 +64,20 @@ export default function ManagerAssets() {
 
   const [selectedFileMeta, setSelectedFileMeta] = useState<FileMetadata | null>(null);
   const [fullMeta, setFullMeta] = useState<FullImageMetadata | null>(null);
+  const [fullMetaPath, setFullMetaPath] = useState<string | null>(null);
   const [fullMetaLoading, setFullMetaLoading] = useState(false);
   const [fullMetaError, setFullMetaError] = useState<string | null>(null);
   const [showFullMeta, setShowFullMeta] = useState(false);
   const [atlasBuilderOpen, setAtlasBuilderOpen] = useState(false);
+  const [previewBgMode, setPreviewBgMode] = useState<'dark' | 'light'>('dark');
+  const [animStartFrame, setAnimStartFrame] = useState(0);
+  const [animEndFrame, setAnimEndFrame] = useState(8);
+  const [animFrameRate, setAnimFrameRate] = useState(10);
+  const [animCurrentFrame, setAnimCurrentFrame] = useState(0);
+  const [animPlaying, setAnimPlaying] = useState(false);
+  const [animTotalFrames, setAnimTotalFrames] = useState(0);
+  const animCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animImageRef = useRef<HTMLImageElement | null>(null);
 
   const fetchTrees = useCallback(async () => {
     try {
@@ -94,6 +106,7 @@ export default function ManagerAssets() {
       setSelectedFileMeta(null);
       setImageMeta(null);
       setFullMeta(null);
+      setFullMetaPath(null);
       setFullMetaError(null);
       setFullMetaLoading(false);
       setShowFullMeta(false);
@@ -116,6 +129,8 @@ export default function ManagerAssets() {
 
     setSelectedFileMeta(found);
     setImageMeta(null);
+    // Always collapse full metadata when user switches to another image.
+    setShowFullMeta(false);
   }, [combinedTree, selectedPath]);
 
   const handleToggle = (path: string) => {
@@ -167,6 +182,8 @@ export default function ManagerAssets() {
 
   const isImagePath = (path: string) =>
     /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(path);
+  const isAnimationSpriteSheet = (path: string) =>
+    path.startsWith('/assets/images/animations/') && isImagePath(path);
 
   const isUploadedFile = (p: string) =>
     p.startsWith('/uploads/') && /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(p);
@@ -332,6 +349,7 @@ export default function ManagerAssets() {
 
   const hasPendingUpload = !!pendingUpload && !!pendingUploadUrl;
   const selectedIsImage = selectedPath ? isImagePath(selectedPath) : false;
+  const selectedIsAnimationSprite = selectedPath ? isAnimationSpriteSheet(selectedPath) : false;
   const selectedFileName = selectedPath ? basename(selectedPath) : '';
   const selectedFolder = selectedPath ? dirname(selectedPath) : '';
   const selectedExtension = selectedFileName.includes('.') ? selectedFileName.slice(selectedFileName.lastIndexOf('.') + 1) : '';
@@ -362,7 +380,7 @@ export default function ManagerAssets() {
 
   const handleLoadFullMetadata = async () => {
     if (!selectedPath || fullMetaLoading) return;
-    if (fullMeta) {
+    if (fullMeta && fullMetaPath === selectedPath) {
       setShowFullMeta((prev) => !prev);
       return;
     }
@@ -371,6 +389,7 @@ export default function ManagerAssets() {
       setFullMetaError(null);
       const data = await filesService.getFileMetadata(selectedPath);
       setFullMeta(data);
+      setFullMetaPath(selectedPath);
       setShowFullMeta(true);
     } catch (err: unknown) {
       const msg =
@@ -416,6 +435,97 @@ export default function ManagerAssets() {
     setAtlasError(null);
   };
 
+  const drawAnimationFrame = useCallback((frame: number) => {
+    const canvas = animCanvasRef.current;
+    const image = animImageRef.current;
+    if (!canvas || !image) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const columns = Math.max(1, Math.floor(image.naturalWidth / ANIMATION_FRAME_SIZE));
+    const row = Math.floor(frame / columns);
+    const col = frame % columns;
+    const sx = col * ANIMATION_FRAME_SIZE;
+    const sy = row * ANIMATION_FRAME_SIZE;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      image,
+      sx,
+      sy,
+      ANIMATION_FRAME_SIZE,
+      ANIMATION_FRAME_SIZE,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+  }, [ANIMATION_FRAME_SIZE]);
+
+  useEffect(() => {
+    if (!selectedIsAnimationSprite || !selectedPath) {
+      setAnimPlaying(false);
+      animImageRef.current = null;
+      setAnimTotalFrames(0);
+      return;
+    }
+    const image = new Image();
+    image.onload = () => {
+      animImageRef.current = image;
+      const cols = Math.max(1, Math.floor(image.naturalWidth / ANIMATION_FRAME_SIZE));
+      const rows = Math.max(1, Math.floor(image.naturalHeight / ANIMATION_FRAME_SIZE));
+      const totalFrames = Math.max(1, cols * rows);
+      const defaultEnd = totalFrames - 1;
+      setAnimTotalFrames(totalFrames);
+      setAnimStartFrame(0);
+      setAnimEndFrame(defaultEnd);
+      setAnimCurrentFrame(0);
+      drawAnimationFrame(0);
+    };
+    image.src = selectedPath;
+    return () => {
+      if (animImageRef.current === image) {
+        animImageRef.current = null;
+      }
+    };
+  }, [selectedIsAnimationSprite, selectedPath, drawAnimationFrame]);
+
+  useEffect(() => {
+    if (!selectedIsAnimationSprite) return;
+    const safeStart = Math.max(0, Math.floor(animStartFrame));
+    const safeEnd = Math.max(safeStart, Math.floor(animEndFrame));
+    setAnimCurrentFrame((prev) => {
+      if (prev < safeStart || prev > safeEnd) return safeStart;
+      return prev;
+    });
+  }, [selectedIsAnimationSprite, animStartFrame, animEndFrame]);
+
+  useEffect(() => {
+    if (!selectedIsAnimationSprite || !animPlaying) return;
+    const safeStart = Math.max(0, Math.floor(animStartFrame));
+    const safeEnd = Math.max(safeStart, Math.floor(animEndFrame));
+    const intervalMs = Math.max(20, Math.floor(1000 / Math.max(1, animFrameRate)));
+    const timer = window.setInterval(() => {
+      setAnimCurrentFrame((prev) => (prev >= safeEnd ? safeStart : prev + 1));
+    }, intervalMs);
+    return () => window.clearInterval(timer);
+  }, [selectedIsAnimationSprite, animPlaying, animStartFrame, animEndFrame, animFrameRate]);
+
+  useEffect(() => {
+    if (!selectedIsAnimationSprite) return;
+    drawAnimationFrame(animCurrentFrame);
+  }, [selectedIsAnimationSprite, animCurrentFrame, drawAnimationFrame]);
+
+  const isPreviewLight = previewBgMode === 'light';
+  const previewFrameClass = isPreviewLight
+    ? 'bg-white'
+    : 'bg-slate-900';
+  const previewImageClass = isPreviewLight
+    ? 'bg-white'
+    : 'bg-slate-950';
+  const previewHintClass = isPreviewLight
+    ? 'text-slate-600'
+    : 'text-slate-300';
+
   return (
     <div className="p-6 space-y-6">
       <PageHeader
@@ -439,46 +549,59 @@ export default function ManagerAssets() {
                 Xem trước, chỉnh sửa metadata cơ bản và upload ảnh mới.
               </p>
             </div>
-            {hasPendingUpload ? (
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={clearPendingUpload}
+                className="px-2"
+                onClick={() => setPreviewBgMode((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                title={isPreviewLight ? 'Đổi nền tối' : 'Đổi nền sáng'}
+                aria-label={isPreviewLight ? 'Đổi nền tối' : 'Đổi nền sáng'}
               >
-                Bỏ chọn ảnh
+                💡
               </Button>
-            ) : selectedIsImage && selectedPath ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => openEditModal(selectedPath)}
-              >
-                Chỉnh sửa chi tiết
-              </Button>
-            ) : null}
+              {hasPendingUpload ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearPendingUpload}
+                >
+                  Bỏ chọn ảnh
+                </Button>
+              ) : selectedIsImage && selectedPath ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEditModal(selectedPath)}
+                >
+                  Chỉnh sửa chi tiết
+                </Button>
+              ) : null}
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)] items-start">
-              <div className="relative flex min-h-[460px] items-center justify-center rounded-xl border border-dashed border-border bg-muted p-3">
+              <div className={`relative flex min-h-[460px] items-center justify-center rounded-xl border border-dashed border-border p-3 ${previewFrameClass}`}>
                 {hasPendingUpload && pendingUploadUrl && pendingUpload ? (
                   <img
                     src={pendingUploadUrl}
                     alt={pendingUpload.name}
                     onLoad={handleImageLoaded}
-                    className="max-h-[470px] h-auto w-auto max-w-full rounded-lg border border-border bg-muted object-contain shadow-md"
+                    className={`max-h-[470px] h-auto w-auto max-w-full rounded-lg border border-border object-contain shadow-md ${previewImageClass}`}
                   />
                 ) : selectedIsImage && selectedPath ? (
                   <img
                     src={selectedPath}
                     alt={selectedFileName || 'Preview'}
                     onLoad={handleImageLoaded}
-                    className="max-h-[470px] h-auto w-auto max-w-full rounded-lg border border-border bg-muted object-contain shadow-md"
+                    className={`max-h-[470px] h-auto w-auto max-w-full rounded-lg border border-border object-contain shadow-md ${previewImageClass}`}
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-center text-sm text-muted-foreground space-y-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted border border-border text-muted-foreground">
+                  <div className={`flex flex-col items-center justify-center text-center text-sm space-y-2 ${previewHintClass}`}>
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-full border border-border ${previewImageClass}`}>
                       <span className="text-2xl leading-none">🖼️</span>
                     </div>
                     <p className="font-medium">
@@ -489,7 +612,89 @@ export default function ManagerAssets() {
                     </p>
                   </div>
                 )}
+                <p className={`pointer-events-none absolute bottom-2 right-3 text-[11px] ${previewHintClass}`}>
+                  Nền {isPreviewLight ? 'sáng' : 'tối'}
+                </p>
               </div>
+
+              {selectedIsAnimationSprite && (
+                <div className="mt-3 space-y-3 rounded-xl border border-border bg-muted p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setAnimCurrentFrame(Math.max(0, Math.floor(animStartFrame)));
+                        setAnimPlaying((prev) => !prev);
+                      }}
+                    >
+                      {animPlaying ? 'Pause' : 'Play'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setAnimPlaying(false);
+                        setAnimCurrentFrame(Math.max(0, Math.floor(animStartFrame)));
+                      }}
+                    >
+                      Reset
+                    </Button>
+                    <p className="text-[11px] text-muted-foreground">
+                      Frame hiện tại: <span className="font-semibold text-foreground">{animCurrentFrame}</span>
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Tổng frame: <span className="font-semibold text-foreground">{animTotalFrames || '—'}</span>
+                    </p>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <label className="space-y-1 text-[11px] text-muted-foreground">
+                      <span>Start</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={animStartFrame}
+                        onChange={(e) => setAnimStartFrame(Number(e.target.value))}
+                        className="block w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
+                      />
+                    </label>
+                    <label className="space-y-1 text-[11px] text-muted-foreground">
+                      <span>End</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={animEndFrame}
+                        onChange={(e) => setAnimEndFrame(Number(e.target.value))}
+                        className="block w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
+                      />
+                    </label>
+                    <label className="space-y-1 text-[11px] text-muted-foreground">
+                      <span>FrameRate</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={animFrameRate}
+                        onChange={(e) => setAnimFrameRate(Number(e.target.value))}
+                        className="block w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="inline-flex rounded-lg border border-border bg-card p-2">
+                    <div className="flex h-[220px] w-[220px] items-center justify-center bg-black/80">
+                      <canvas
+                        ref={animCanvasRef}
+                        width={ANIMATION_FRAME_SIZE}
+                        height={ANIMATION_FRAME_SIZE}
+                        className="h-[192px] w-[192px] image-rendering-pixelated"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-3 rounded-xl border border-border bg-muted p-4">
                 <div className="flex items-center justify-between gap-2">

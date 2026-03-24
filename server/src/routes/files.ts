@@ -20,7 +20,13 @@ import {
   getFileMetadataHandler,
   generateCustomAtlasHandler,
 } from '../controllers/filesController.js';
-import { getCardClassTreeHandler } from '../controllers/cardClassTreeController.js';
+import {
+  buildCardClassTsDocHandler,
+  getCharacterClassAstMapHandler,
+  getCardClassSourceHandler,
+  getCardClassTreeHandler,
+  saveCardClassSourceHandler,
+} from '../controllers/cardClassTreeController.js';
 
 export const filesRoutes = Router();
 
@@ -29,6 +35,10 @@ filesRoutes.use(authorize('admin', 'moderator'));
 
 filesRoutes.get('/image-tree', getImageTreeHandler);
 filesRoutes.get('/card-class-tree', getCardClassTreeHandler);
+filesRoutes.get('/card-class-source', getCardClassSourceHandler);
+filesRoutes.get('/character-class-ast-map', getCharacterClassAstMapHandler);
+filesRoutes.post('/card-class-tsdoc', buildCardClassTsDocHandler);
+filesRoutes.post('/card-class-source/save', saveCardClassSourceHandler);
 filesRoutes.get('/uploaded-tree', getUploadedTreeHandler);
 filesRoutes.get('/metadata', getFileMetadataHandler);
 filesRoutes.post('/generate-atlas', generateCustomAtlasHandler);

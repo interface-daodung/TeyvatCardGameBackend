@@ -9,10 +9,8 @@ export interface User {
   /** Raw JSON save from game client (cloud save). */
   saveGame?: Record<string, unknown> | null;
   ownedCharacters: any[];
-  ownedEquipment: any[];
   bannedCards: {
     characters: any[];
-    equipment: any[];
   };
   createdAt: string;
 }
@@ -54,11 +52,11 @@ export const userService = {
     await api.patch(`/users/${id}/xu`, { xu });
   },
 
-  banCard: async (userId: string, cardId: string, cardType: 'character' | 'equipment'): Promise<void> => {
+  banCard: async (userId: string, cardId: string, cardType: 'character'): Promise<void> => {
     await api.post(`/users/${userId}/ban-card`, { cardId, cardType });
   },
 
-  unbanCard: async (userId: string, cardId: string, cardType: 'character' | 'equipment'): Promise<void> => {
+  unbanCard: async (userId: string, cardId: string, cardType: 'character'): Promise<void> => {
     await api.post(`/users/${userId}/unban-card`, { cardId, cardType });
   },
 

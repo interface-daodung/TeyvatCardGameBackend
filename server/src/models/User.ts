@@ -16,10 +16,8 @@ export interface IUser extends mongoose.Document {
   /** JSON save game từ client (game state, settings, v.v.) */
   saveGame?: Record<string, unknown> | null;
   ownedCharacters: mongoose.Types.ObjectId[];
-  ownedEquipment: mongoose.Types.ObjectId[];
   bannedCards: {
     characters: mongoose.Types.ObjectId[];
-    equipment: mongoose.Types.ObjectId[];
   };
   createdAt: Date;
   updatedAt: Date;
@@ -91,23 +89,11 @@ const userSchema = new Schema<IUser>(
         ref: 'Character',
       },
     ],
-    ownedEquipment: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'Equipment',
-      },
-    ],
     bannedCards: {
       characters: [
         {
           type: Schema.Types.ObjectId,
           ref: 'Character',
-        },
-      ],
-      equipment: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: 'Equipment',
         },
       ],
     },

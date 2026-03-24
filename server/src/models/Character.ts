@@ -8,6 +8,7 @@ export interface ICharacterLevelStat {
 export interface ICharacter extends mongoose.Document {
   nameId: string;
   name: string;
+  image: string;
   description: string; // i18n key: Character.{nameId}.description
   element: string; // anemo | cryo | dendro | electro | geo | hydro | pyro | none
   HP: number;
@@ -36,6 +37,10 @@ const characterSchema = new Schema<ICharacter>(
     name: {
       type: String,
       required: true,
+    },
+    image: {
+      type: String,
+      default: '',
     },
     description: {
       type: String,

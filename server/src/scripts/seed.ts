@@ -8,7 +8,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import bcrypt from 'bcrypt';
 import { User } from '../models/User.js';
 import { Character } from '../models/Character.js';
-import { Equipment } from '../models/Equipment.js';
 import { AdventureCard } from '../models/AdventureCard.js';
 import { Map } from '../models/Map.js';
 import { Payment } from '../models/Payment.js';
@@ -55,7 +54,6 @@ const seed = async () => {
     // Clear existing data
     await User.deleteMany({});
     await Character.deleteMany({});
-    await Equipment.deleteMany({});
     await Item.deleteMany({});
     await AdventureCard.deleteMany({});
     await Map.deleteMany({});
@@ -131,32 +129,6 @@ const seed = async () => {
     }));
     const characters = await Character.insertMany(charactersData);
     console.log(`Created ${characters.length} characters`);
-
-    // Create equipment
-    const equipment = await Equipment.insertMany([
-      {
-        name: 'Iron Sword',
-        description: 'Basic weapon',
-        slot: 'weapon',
-        stats: { attack: 50 },
-        status: 'enabled',
-      },
-      {
-        name: 'Leather Armor',
-        description: 'Basic armor',
-        slot: 'armor',
-        stats: { defense: 30, health: 100 },
-        status: 'enabled',
-      },
-      {
-        name: 'Power Ring',
-        description: 'Increases attack',
-        slot: 'accessory',
-        stats: { attack: 20 },
-        status: 'enabled',
-      },
-    ]);
-    console.log(`Created ${equipment.length} equipment`);
 
     // Create items from admin-web/public/assets/images/item
     const itemImagesPath = path.join(__dirname, '../../../admin-web/public/assets/images/item');

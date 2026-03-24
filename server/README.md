@@ -83,7 +83,6 @@ Log file nằm tại `~/.pm2/logs/teyvat-backend-error.log` và `~/.pm2/logs/tey
 
 ### Game Data
 - Characters: `GET, POST, PATCH, DELETE /api/characters`
-- Equipment: `GET, POST, PATCH, DELETE /api/equipment`
 - Adventure Cards: `GET, POST, PATCH, DELETE /api/adventure-cards`
 - Maps: `GET, POST, PATCH, DELETE /api/maps`
 

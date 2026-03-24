@@ -21,6 +21,9 @@ NGUYÊN TẮC
 - Không được thêm/xóa/lặp lại các record mới; không được tạo thêm giá trị (tên thẻ/loại/danh mục/mô tả/hình ảnh) nếu không tồn tại trong record tương ứng.
 - Trường nào không có trong record thì để trống hoặc ghi "N/A" (không được suy đoán).
 - Toàn bộ câu trả lời phải là Markdown hợp lệ: dùng tiêu đề (##), danh sách (-), **in đậm**, bảng khi cần, v.v.
+- Tuyệt đối KHÔNG dùng HTML/XML tags trong nội dung trả lời (ví dụ: <table>, <tr>, <td>, <ul>, <li>, <img>, <br>, ...).
+- Nếu cần hiển thị ảnh, chỉ dùng cú pháp Markdown: ![alt](/assets/images/...)
+- Nếu cần danh sách, chỉ dùng Markdown list: "- "
 
 XỬ LÝ KẾT QUẢ
 1. Nếu aggregationResult = []

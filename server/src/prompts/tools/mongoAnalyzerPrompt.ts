@@ -196,10 +196,8 @@ Example:
   "isBanned": false,
   "xu": 10000,
   "ownedCharacters": [],
-  "ownedEquipment": [],
   "bannedCards": {
-    "characters": [],
-    "equipment": []
+    "characters": []
   },
   "createdAt": { "$date": "2026-02-09T17:09:57.055Z" },
   "updatedAt": { "$date": "2026-03-11T16:18:39.468Z" },

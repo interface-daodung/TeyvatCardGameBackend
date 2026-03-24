@@ -40,9 +40,7 @@ export async function getUserById(id: string) {
   const user = await User.findById(id)
     .select('-password')
     .populate('ownedCharacters')
-    .populate('ownedEquipment')
-    .populate('bannedCards.characters')
-    .populate('bannedCards.equipment');
+    .populate('bannedCards.characters');
   return user;
 }
 
@@ -63,22 +61,22 @@ export async function updateUserXu(userId: string, xu: number) {
   return { user, oldXu };
 }
 
-export async function banCard(userId: string, cardId: string, cardType: 'character' | 'equipment') {
+export async function banCard(userId: string, cardId: string) {
   const user = await User.findById(userId);
   if (!user) return null;
   const cardObjectId = new mongoose.Types.ObjectId(cardId);
-  const cardArray = cardType === 'character' ? user.bannedCards.characters : user.bannedCards.equipment;
+  const cardArray = user.bannedCards.characters;
   if (cardArray.some((id) => id.toString() === cardObjectId.toString())) return 'already_banned';
   cardArray.push(cardObjectId);
   await user.save();
   return 'ok';
 }
 
-export async function unbanCard(userId: string, cardId: string, cardType: 'character' | 'equipment') {
+export async function unbanCard(userId: string, cardId: string) {
   const user = await User.findById(userId);
   if (!user) return null;
   const cardObjectId = new mongoose.Types.ObjectId(cardId);
-  const cardArray = cardType === 'character' ? user.bannedCards.characters : user.bannedCards.equipment;
+  const cardArray = user.bannedCards.characters;
   const index = cardArray.findIndex((id) => id.toString() === cardObjectId.toString());
   if (index === -1) return 'not_banned';
   cardArray.splice(index, 1);
