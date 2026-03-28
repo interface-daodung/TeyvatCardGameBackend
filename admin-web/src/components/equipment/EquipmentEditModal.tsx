@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquarePen } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '../ui/button';
-import { getItemImageUrl, onlyPositiveInt, renderColoredDescription } from './equipmentUtils';
+import { EquipmentItemImagePicker } from './EquipmentItemImagePicker';
+import { onlyPositiveInt, renderColoredDescription } from './equipmentUtils';
+import type { FileTreeItem } from '../../services/filesService';
 import { EquipmentI18nPanel } from './EquipmentI18nPanel';
 import { UnsavedChangesDialog } from '../unsavedChanges';
 import { scaleInModal, fadeInOverlay, zoomInPopup } from '../animations/motionPresets';
@@ -49,6 +51,19 @@ interface EquipmentEditModalProps {
   onLevelSave: () => void;
   onI18nTranslate: () => Promise<void>;
   onI18nSave: () => void;
+  imageTreeOpen: boolean;
+  imageTree: FileTreeItem[] | null;
+  imageTreeLoading: boolean;
+  imageTreeExpanded: Set<string>;
+  onToggleImageTree: () => void;
+  onToggleImageTreeExpanded: (path: string) => void;
+  onSelectItemImage: (path: string) => void;
+  onCloseImageTree: () => void;
+  showDeleteConfirm: boolean;
+  deleteLoading: boolean;
+  onRequestDelete: () => void;
+  onCancelDelete: () => void;
+  onConfirmDelete: () => void;
 }
 
 export function EquipmentEditModal({
@@ -85,6 +100,19 @@ export function EquipmentEditModal({
   onLevelSave,
   onI18nTranslate,
   onI18nSave,
+  imageTreeOpen,
+  imageTree,
+  imageTreeLoading,
+  imageTreeExpanded,
+  onToggleImageTree,
+  onToggleImageTreeExpanded,
+  onSelectItemImage,
+  onCloseImageTree,
+  showDeleteConfirm,
+  deleteLoading,
+  onRequestDelete,
+  onCancelDelete,
+  onConfirmDelete,
 }: EquipmentEditModalProps) {
   const selectedLevelPreview =
     i18nPopupField === 'level' && expandedLevels.size > 0 ? [...expandedLevels][0] : null;
@@ -152,10 +180,17 @@ export function EquipmentEditModal({
             className="p-6 flex gap-6"
           >
             <div className="flex-shrink-0">
-              <img
-                src={getItemImageUrl(selectedItem.image)}
-                alt={getItemDisplayName(selectedItem, editLang)}
-                className="aspect-square w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-lg"
+              <EquipmentItemImagePicker
+                item={selectedItem}
+                formImage={formValues.image}
+                isTreeOpen={imageTreeOpen}
+                onToggleTree={onToggleImageTree}
+                imageTree={imageTree}
+                imageTreeLoading={imageTreeLoading}
+                imageTreeExpanded={imageTreeExpanded}
+                onToggleExpanded={onToggleImageTreeExpanded}
+                onSelectImage={onSelectItemImage}
+                onCloseTree={onCloseImageTree}
               />
             </div>
             <motion.div
@@ -345,7 +380,34 @@ export function EquipmentEditModal({
                 </motion.div>
               )}
             </AnimatePresence>
-            <div className="flex justify-end items-center gap-2">
+            {showDeleteConfirm && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm">
+                <span className="text-destructive">Xóa item này khỏi DB? Hành động không hoàn tác.</span>
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" size="sm" onClick={onCancelDelete} disabled={deleteLoading}>
+                    Hủy
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={onConfirmDelete}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? 'Đang xóa…' : 'Xóa'}
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="flex justify-between items-center gap-2 flex-wrap">
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={onRequestDelete}
+                disabled={saveLoading || deleteLoading || showDeleteConfirm}
+              >
+                Xóa item
+              </Button>
               <Button
                 onClick={onSave}
                 disabled={saveLoading}

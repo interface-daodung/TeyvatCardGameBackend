@@ -5,6 +5,8 @@ export interface User {
   email: string;
   role: string;
   isBanned: boolean;
+  /** Đăng ký email/password: phải true mới đăng nhập được. */
+  isVerified?: boolean;
   xu: number;
   /** Raw JSON save from game client (cloud save). */
   saveGame?: Record<string, unknown> | null;
@@ -62,5 +64,9 @@ export const userService = {
 
   revokeRefreshToken: async (userId: string): Promise<void> => {
     await api.post(`/users/${userId}/revoke-refresh-token`);
+  },
+
+  verifyEmail: async (userId: string): Promise<void> => {
+    await api.post(`/users/${userId}/verify-email`);
   },
 };

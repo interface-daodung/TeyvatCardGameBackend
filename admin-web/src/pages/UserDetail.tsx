@@ -11,7 +11,7 @@ import { PageHeader } from '../components/PageHeader';
 import { fadeSlideCard, fadeInOverlay, zoomInPopup } from '../components/animations/motionPresets';
 import { CharacterCard, type CharacterCardData } from '../components/characters/CharacterCard';
 import { gameDataService, type Item } from '../services/gameDataService';
-import { getItemImageUrl } from '../components/equipment/equipmentUtils';
+import { getDefaultItemImageUrl } from '../components/equipment/equipmentUtils';
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +24,22 @@ export default function UserDetail() {
   const [xuConfirmOpen, setXuConfirmOpen] = useState(false);
   const [updatingXu, setUpdatingXu] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
+  const [payosIframeOpen, setPayosIframeOpen] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+
+  const embedPaymentLinkSrc =
+    id && typeof window !== 'undefined'
+      ? `${window.location.origin}${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/embed/payment-link/${id}`
+      : '';
+
+  useEffect(() => {
+    if (!payosIframeOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPayosIframeOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [payosIframeOpen]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -73,6 +89,28 @@ export default function UserDetail() {
       console.error('Failed to update Xu:', error);
     } finally {
       setUpdatingXu(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (!id || user?.isVerified) return;
+    if (
+      !confirm(
+        'Xác nhận email cho tài khoản này? User sẽ có thể đăng nhập bằng email và mật khẩu (nếu đã đặt mật khẩu).',
+      )
+    ) {
+      return;
+    }
+    try {
+      setVerifyingEmail(true);
+      await userService.verifyEmail(id);
+      setUser((u) => (u ? { ...u, isVerified: true } : null));
+      alert('Đã xác nhận email.');
+    } catch (error) {
+      console.error('Failed to verify email:', error);
+      alert('Không thể xác nhận email.');
+    } finally {
+      setVerifyingEmail(false);
     }
   };
 
@@ -262,6 +300,31 @@ export default function UserDetail() {
             </div>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
+            <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-slate-100">
+              <p className="text-xs font-medium tracking-wide text-slate-500 uppercase shrink-0">
+                Xác nhận email
+              </p>
+              {user.isVerified ? (
+                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                  Đã xác nhận
+                </Badge>
+              ) : (
+                <>
+                  <Badge variant="outline" className="border-amber-400 text-amber-800 bg-amber-50/80">
+                    Chưa xác nhận
+                  </Badge>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleVerifyEmail}
+                    disabled={verifyingEmail}
+                    className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white shadow-sm"
+                  >
+                    {verifyingEmail ? 'Đang xử lý…' : 'Xác nhận email (admin)'}
+                  </Button>
+                </>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
@@ -287,17 +350,27 @@ export default function UserDetail() {
                 <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
                   Account Status
                 </p>
-                <Button
-                  onClick={handleBanToggle}
-                  variant={isBanned ? 'default' : 'destructive'}
-                  className={`w-full sm:w-auto ${
-                    isBanned
-                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md'
-                      : ''
-                  }`}
-                >
-                  {isBanned ? 'Unban User' : 'Ban User'}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    type="button"
+                    onClick={() => setPayosIframeOpen(true)}
+                    variant="outline"
+                    className="w-full sm:w-auto border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                  >
+                    Tạo link nạp (PayOS)
+                  </Button>
+                  <Button
+                    onClick={handleBanToggle}
+                    variant={isBanned ? 'default' : 'destructive'}
+                    className={`w-full sm:w-auto ${
+                      isBanned
+                        ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md'
+                        : ''
+                    }`}
+                  >
+                    {isBanned ? 'Unban User' : 'Ban User'}
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -408,7 +481,7 @@ export default function UserDetail() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {unlockedItems.map(({ nameId, level, base }) => {
                   const displayLevel = Math.max(1, level);
-                  const imageSrc = getItemImageUrl(nameId);
+                  const imageSrc = getDefaultItemImageUrl(nameId);
                   const displayName = base?.nameId ? `item.${base.nameId}` : nameId;
                   return (
                     <div
@@ -497,6 +570,56 @@ export default function UserDetail() {
                       {updatingXu ? 'Đang cập nhật...' : 'Xác nhận'}
                     </Button>
                   </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {payosIframeOpen && id && (
+              <motion.div
+                className="fixed inset-0 z-[210] flex items-center justify-center bg-black/50 p-4"
+                role="presentation"
+                variants={fadeInOverlay}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setPayosIframeOpen(false);
+                }}
+              >
+                <motion.div
+                  className="flex flex-col w-full max-w-3xl h-[min(90vh,880px)] rounded-xl bg-white shadow-xl border border-slate-200 overflow-hidden"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Tạo link thanh toán PayOS"
+                  variants={zoomInPopup}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 border-b border-slate-200 bg-slate-50/90">
+                    <h2 className="text-sm font-semibold text-slate-900">Tạo link nạp (PayOS)</h2>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-600 hover:text-slate-900"
+                      onClick={() => setPayosIframeOpen(false)}
+                    >
+                      Đóng
+                    </Button>
+                  </div>
+                  <iframe
+                    key={embedPaymentLinkSrc}
+                    title="Tạo link thanh toán PayOS"
+                    src={embedPaymentLinkSrc}
+                    className="w-full flex-1 min-h-0 border-0 bg-white"
+                  />
                 </motion.div>
               </motion.div>
             )}

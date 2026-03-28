@@ -27,3 +27,7 @@ export const googleLoginSchema = z.object({
 export const saveGameSchema = z.object({
   saveGame: z.record(z.string(), z.unknown()).nullable().optional(),
 });
+
+export const clientLogErrorSchema = z.object({
+  args: z.array(z.string().max(4000)).max(30),
+});

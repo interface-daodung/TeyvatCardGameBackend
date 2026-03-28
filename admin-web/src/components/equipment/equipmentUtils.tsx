@@ -13,6 +13,7 @@ export interface GameItem {
   _id: string;
   name: string;
   nameId: string;
+  /** Đường dẫn web đầy đủ `/assets/images/...` hoặc rỗng — không fallback nameId */
   image: string;
   basePower: number;
   baseCooldown: number;
@@ -69,8 +70,22 @@ export const renderColoredDescription = (
   return <>{parts}</>;
 };
 
-export const getItemImageUrl = (imageName: string) =>
-  `/assets/images/item/${imageName}.webp`;
+const ASSETS_IMAGES_PREFIX = '/assets/images/';
+
+/** `src` cho thẻ img từ field DB — null = không có link hợp lệ → hiện placeholder */
+export function getItemImageSrcFromDb(link: string | undefined): string | null {
+  const s = (link ?? '').trim().replace(/\\/g, '/');
+  if (!s) return null;
+  if (s.startsWith(ASSETS_IMAGES_PREFIX)) return s;
+  return null;
+}
+
+/**
+ * URL mặc định theo nameId (không từ field Item.image) — ví dụ UserDetail / saveGame.
+ */
+export function getDefaultItemImageUrl(nameId: string): string {
+  return `/assets/images/item/${nameId}.webp`;
+}
 
 /** Map Item from API + localization data -> GameItem for display */
 export function toGameItem(
@@ -80,11 +95,13 @@ export function toGameItem(
 ): GameItem {
   const nameTranslations = nameLoc?.translations ?? {};
   const descriptionTranslations = descLoc?.translations ?? {};
+  const image =
+    typeof item.image === 'string' ? item.image.trim().replace(/\\/g, '/') : '';
   return {
     _id: item._id,
     name: nameTranslations.en ?? item.nameId,
     nameId: item.nameId,
-    image: item.nameId,
+    image,
     basePower: item.basePower,
     baseCooldown: item.baseCooldown,
     description: descriptionTranslations.en ?? '',

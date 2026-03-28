@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
@@ -44,7 +44,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { path: '/server-configuration-versions', label: 'Server config', icon: '⚙️' },
       { path: '/logs', label: 'Logs', icon: '📝' },
-      { path: '/ExtendedGridSupport.html', label: 'Calculate Movement', icon: '🧩' },
+      { path: '/calculate-movement', label: 'Calculate Movement', icon: '🧩' },
       { path: '/ai-manage', label: 'AI Manage', icon: '🤖' },
       { path: '/database-management', label: 'Database Management', icon: '🗄️' },
       { path: '/about', label: 'About', icon: 'ℹ️' },
@@ -62,6 +62,19 @@ type RecentLinkEntry = {
 };
 
 const FLAT_NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((section) => section.items);
+
+/** Gợi ý link search (khớp prefix trong handleSearchKeyDown); hash theo từng trang: Users name, Localization key, Payments/Logs email */
+export const SEARCH_ROUTE_HINTS: {
+  prefix: string;
+  label: string;
+  hint: string;
+  basePath: string;
+}[] = [
+  { prefix: 'users:', label: 'Users', hint: 'name', basePath: '/users' },
+  { prefix: 'local:', label: 'Localization', hint: 'key', basePath: '/localization' },
+  { prefix: 'pays:', label: 'Payments', hint: 'email', basePath: '/payments' },
+  { prefix: 'logs:', label: 'Logs', hint: 'email', basePath: '/logs' },
+];
 
 function updateRecentLinks(pathname: string) {
   if (typeof window === 'undefined') return;
@@ -88,6 +101,8 @@ function updateRecentLinks(pathname: string) {
 export default function Layout() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [searchValue, setSearchValue] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [lastViewedNotifications, setLastViewedNotifications] = useState<string | null>(null);
@@ -116,6 +131,38 @@ export default function Layout() {
     setNotifications([]);
     navigate('/login');
   };
+
+  const filteredSearchHints = useMemo(() => {
+    const q = searchValue.trim().toLowerCase();
+    if (!q) return SEARCH_ROUTE_HINTS;
+    return SEARCH_ROUTE_HINTS.filter(
+      (h) =>
+        h.prefix.toLowerCase().includes(q) ||
+        h.label.toLowerCase().includes(q) ||
+        h.hint.toLowerCase().includes(q) ||
+        h.basePath.toLowerCase().includes(q)
+    );
+  }, [searchValue]);
+
+  const handleSearchSuggestionPick = useCallback(
+    (basePath: string) => {
+      navigate(basePath);
+      setSearchValue('');
+      setSearchFocused(false);
+      searchInputRef.current?.blur();
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    const onDocKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'k') return;
+      e.preventDefault();
+      searchInputRef.current?.focus();
+    };
+    document.addEventListener('keydown', onDocKey);
+    return () => document.removeEventListener('keydown', onDocKey);
+  }, []);
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return;
@@ -301,8 +348,16 @@ export default function Layout() {
         <AppHeader
           isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
+          searchInputRef={searchInputRef}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
+          onSearchFocus={() => setSearchFocused(true)}
+          onSearchBlur={() => {
+            window.setTimeout(() => setSearchFocused(false), 180);
+          }}
+          searchHintsOpen={searchFocused}
+          filteredSearchHints={filteredSearchHints}
+          onSearchSuggestionPick={handleSearchSuggestionPick}
           onSearchKeyDown={handleSearchKeyDown}
           notifications={notifications}
           showNotifications={showNotifications}
@@ -318,7 +373,7 @@ export default function Layout() {
 
         <div
           className={`relative z-30 flex-1 min-h-0 bg-gradient-to-br from-background via-primary-50/20 to-blue-50/20 ${
-            location.pathname === '/ai-manage'
+            location.pathname === '/ai-manage' || location.pathname === '/calculate-movement'
               ? 'flex flex-col overflow-hidden p-0'
               : 'overflow-y-auto p-4 md:p-8'
           }`}
@@ -328,7 +383,9 @@ export default function Layout() {
           </DbAuthGuard>
         </div>
 
-        {location.pathname !== '/ai-manage' && <AIChatBubble />}
+        {location.pathname !== '/ai-manage' && location.pathname !== '/calculate-movement' && (
+          <AIChatBubble />
+        )}
       </main>
     </div>
   );

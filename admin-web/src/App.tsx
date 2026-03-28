@@ -21,6 +21,7 @@ import ManagerAssets from './pages/ManagerAssets';
 import ServerConfigurationVersions from './pages/ServerConfigurationVersions';
 import AIManage from './pages/AIManage';
 import DatabaseManagement from './pages/DatabaseManagement';
+import CalculateMovement from './pages/CalculateMovement';
 import Layout from './components/layout';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,14 @@ function App() {
       <Routes>
       <Route path="/login" element={<Login />} />
       <Route
+        path="/embed/payment-link/:userId"
+        element={
+          <PrivateRoute>
+            <CreatePaymentLink />
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/"
         element={
           <PrivateRoute>
@@ -48,6 +57,7 @@ function App() {
         <Route path="users/:id" element={<UserDetail />} />
         <Route path="payments" element={<Payments />} />
         <Route path="payment-link" element={<CreatePaymentLink />} />
+        <Route path="payment-link/:userId" element={<CreatePaymentLink />} />
         <Route path="characters" element={<Characters />} />
         <Route path="characters/:id" element={<CharacterDetail />} />
         <Route path="equipment" element={<Equipment />} />
@@ -58,6 +68,7 @@ function App() {
         <Route path="manager-assets" element={<ManagerAssets />} />
         <Route path="server-configuration-versions" element={<ServerConfigurationVersions />} />
         <Route path="logs" element={<Logs />} />
+        <Route path="calculate-movement" element={<CalculateMovement />} />
         <Route path="ai-manage" element={<AIManage />} />
         <Route path="database-management" element={<DatabaseManagement />} />
         <Route path="about" element={<About />} />

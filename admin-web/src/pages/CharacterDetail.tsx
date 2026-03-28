@@ -15,7 +15,11 @@ import { CharacterDetailEditPanel } from '../components/characters/CharacterDeta
 import { useCharacterDetail } from '../components/characters/useCharacterDetail';
 import { SourceClassEditor } from '../components/code/SourceClassEditor';
 import { CharacterClassAstFlow } from '../components/code/CharacterClassAstFlow';
-import { filesService, type CharacterClassAstMapResult } from '../services/filesService';
+import {
+  filesService,
+  type CharacterClassAstMapResult,
+  type FileTreeItem,
+} from '../services/filesService';
 
 const SPRITESHEET_FRAME_WIDTH = 350;
 const SPRITESHEET_FRAME_HEIGHT = 590;
@@ -157,6 +161,56 @@ export default function CharacterDetail() {
     };
   }, [characterClassName, characterRelativeClassPath]);
 
+  const [cardReferenceImage, setCardReferenceImage] = useState<string | null>(null);
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [imageTree, setImageTree] = useState<FileTreeItem[] | null>(null);
+  const [imageTreeLoading, setImageTreeLoading] = useState(false);
+  const [imageTreeExpanded, setImageTreeExpanded] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setCardReferenceImage(null);
+    setImagePickerOpen(false);
+    setImageTree(null);
+    setImageTreeExpanded(new Set());
+  }, [id]);
+
+  const characterImageTree = useMemo(() => {
+    if (!imageTree) return null;
+    const node = imageTree.find((n) => n.type === 'dir' && n.name === 'character');
+    return node?.children ?? [];
+  }, [imageTree]);
+
+  const openCharacterImagePicker = async () => {
+    setImagePickerOpen(true);
+    if (imageTree === null && !imageTreeLoading) {
+      setImageTreeLoading(true);
+      try {
+        const tree = await filesService.getImageTree();
+        setImageTree(tree);
+      } catch {
+        setImageTree([]);
+      } finally {
+        setImageTreeLoading(false);
+      }
+    }
+  };
+
+  const toggleImageTreeExpanded = (path: string) => {
+    setImageTreeExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  };
+
+  const selectCharacterReferenceImage = (path: string) => {
+    setCardReferenceImage(path);
+    setImagePickerOpen(false);
+  };
+
+  const closeCharacterImagePicker = () => setImagePickerOpen(false);
+
   if (detail.loading) return <CharacterDetailLoading />;
   if (detail.error || !detail.character) {
     return (
@@ -196,7 +250,19 @@ export default function CharacterDetail() {
         animate="visible"
       >
         <div className="xl:col-span-4">
-          <CharacterDetailImage character={detail.character} effectiveElement={effectiveElement} />
+          <CharacterDetailImage
+            character={detail.character}
+            effectiveElement={effectiveElement}
+            referenceImagePath={cardReferenceImage}
+            isPickerOpen={imagePickerOpen}
+            characterImageTree={characterImageTree}
+            imageTreeLoading={imageTreeLoading}
+            imageTreeExpanded={imageTreeExpanded}
+            onToggleExpanded={toggleImageTreeExpanded}
+            onSelectReferenceImage={selectCharacterReferenceImage}
+            onClosePicker={closeCharacterImagePicker}
+            onOpenPicker={openCharacterImagePicker}
+          />
         </div>
         <div className="space-y-4 xl:col-span-8">
           <CharacterDetailInfo

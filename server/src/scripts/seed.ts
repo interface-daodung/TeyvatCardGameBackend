@@ -145,6 +145,7 @@ const seed = async () => {
       const maxLevel = 10;
       return {
         nameId,
+        image: `/assets/images/item/${nameId}.webp`,
         basePower,
         baseCooldown,
         maxLevel,

@@ -10,6 +10,7 @@ import {
   patchLastViewedNotifications,
   getSaveGame,
   putSaveGame,
+  postClientLogError,
   logout,
   verifyEmail,
 } from '../controllers/authController.js';
@@ -25,5 +26,6 @@ authRoutes.get('/me', authenticate, getMe);
 authRoutes.patch('/last-viewed-notifications', authenticate, patchLastViewedNotifications);
 authRoutes.get('/save-game', authenticate, getSaveGame);
 authRoutes.put('/save-game', authenticate, putSaveGame);
+authRoutes.post('/client-log-error', authenticate, postClientLogError);
 authRoutes.post('/refresh', refreshToken);
 authRoutes.post('/logout', logout);

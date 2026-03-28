@@ -1,7 +1,9 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faImage } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import {
-  getItemImageUrl,
+  getItemImageSrcFromDb,
   getDisplayPower,
   getDisplayCooldown,
   renderColoredDescription,
@@ -24,6 +26,8 @@ export function EquipmentItemCard({
   getItemDisplayDescription,
   onClick,
 }: EquipmentItemCardProps) {
+  const imageSrc = getItemImageSrcFromDb(item.image);
+
   return (
     <Card
       role="button"
@@ -35,11 +39,18 @@ export function EquipmentItemCard({
       <div className="bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-50 p-0.5 rounded-lg overflow-visible">
         <CardContent className="bg-card p-0 overflow-visible">
           <div className="relative aspect-square bg-gradient-to-b from-emerald-200/50 to-teal-100/50 overflow-visible">
-            <img
-              src={getItemImageUrl(item.image)}
-              alt={getItemDisplayName(item, editLang)}
-              className="absolute inset-0 w-full h-full object-cover z-10 rounded-lg group-hover:scale-150 group-hover:-translate-y-3 transition-transform duration-300 ease-out"
-            />
+            {imageSrc ? (
+              <img
+                src={imageSrc}
+                alt={getItemDisplayName(item, editLang)}
+                className="absolute inset-0 w-full h-full object-cover z-10 rounded-lg group-hover:scale-150 group-hover:-translate-y-3 transition-transform duration-300 ease-out"
+              />
+            ) : (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 rounded-lg bg-muted text-muted-foreground">
+                <FontAwesomeIcon icon={faImage} className="w-10 h-10 opacity-35" aria-hidden />
+                <span className="text-[9px] px-1 text-center">Chưa có ảnh</span>
+              </div>
+            )}
             <div className="absolute top-0.5 right-0.5 z-20">
               <Badge
                 variant="secondary"

@@ -1,5 +1,23 @@
 import { AuditLog } from '../models/AuditLog.js';
 import { User } from '../models/User.js';
+import { createAuditLog } from '../utils/auditLog.js';
+import type { AuthRequest } from '../types/index.js';
+
+/** Payload từ `Log.error` (TeyvatCard production): các tham số đã serialize. */
+export async function logClientGameError(
+  req: AuthRequest,
+  payload: { args: string[] },
+) {
+  await createAuditLog(
+    req,
+    'client_game_error',
+    'teyvat_card_game',
+    undefined,
+    { args: payload.args },
+    req.user?.userId,
+    'error',
+  );
+}
 
 export interface GetLogsParams {
   page?: number;
@@ -53,4 +71,28 @@ export async function getLogs(params: GetLogsParams) {
 export async function getLogById(id: string) {
   const log = await AuditLog.findById(id).populate('adminId', 'email');
   return log;
+}
+
+/** Ghi audit khi admin tạo link thanh toán PayOS cho người chơi (content: info). */
+export async function logPaymentLinkCreatedByAdmin(
+  req: AuthRequest,
+  targetUserId: string,
+  meta: { packageName: string; orderCode: number },
+) {
+  const u = await User.findById(targetUserId).select('email').lean();
+  const targetEmail = typeof u?.email === 'string' ? u.email : '(unknown)';
+  await createAuditLog(
+    req,
+    'create_payment_link',
+    'payment',
+    targetUserId,
+    {
+      targetUserId,
+      targetEmail,
+      packageName: meta.packageName,
+      orderCode: meta.orderCode,
+    },
+    undefined,
+    'info',
+  );
 }

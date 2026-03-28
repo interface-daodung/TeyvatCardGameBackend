@@ -91,6 +91,8 @@ export interface LevelStat {
 export interface Item {
   _id: string;
   nameId: string;
+  /** Đường dẫn web đầy đủ `/assets/images/...` — có thể rỗng nếu DB chưa sửa */
+  image?: string;
   basePower: number;
   baseCooldown: number;
   maxLevel: number;
@@ -190,8 +192,24 @@ export const gameDataService = {
     return response.data;
   },
 
+  createItem: async (data: {
+    nameId: string;
+    image: string;
+    basePower: number;
+    baseCooldown: number;
+    maxLevel?: number;
+    levelStats?: LevelStat[];
+  }): Promise<Item> => {
+    const response = await api.post<Item>('/items', data);
+    return response.data;
+  },
+
   updateItem: async (id: string, data: Partial<Item>): Promise<Item> => {
     const response = await api.patch<Item>(`/items/${id}`, data);
     return response.data;
+  },
+
+  deleteItem: async (id: string): Promise<void> => {
+    await api.delete(`/items/${id}`);
   },
 };

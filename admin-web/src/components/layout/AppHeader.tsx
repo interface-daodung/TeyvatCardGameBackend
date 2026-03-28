@@ -1,6 +1,14 @@
+import type { RefObject } from 'react';
 import { motion } from 'framer-motion';
 import { NotificationDropdown, type NotificationItem } from './NotificationDropdown';
 import { fadeSlideCard } from '../animations/motionPresets';
+
+export type SearchRouteHint = {
+  prefix: string;
+  label: string;
+  hint: string;
+  basePath: string;
+};
 
 function stringToSafeColor(str: string): string {
   let hash = 0;
@@ -14,8 +22,14 @@ function stringToSafeColor(str: string): string {
 interface AppHeaderProps {
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
+  searchInputRef: RefObject<HTMLInputElement>;
   searchValue: string;
   onSearchChange: (v: string) => void;
+  onSearchFocus: () => void;
+  onSearchBlur: () => void;
+  searchHintsOpen: boolean;
+  filteredSearchHints: SearchRouteHint[];
+  onSearchSuggestionPick: (basePath: string) => void;
   onSearchKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   notifications: NotificationItem[];
   showNotifications: boolean;
@@ -32,8 +46,14 @@ interface AppHeaderProps {
 export function AppHeader({
   isSidebarOpen,
   onToggleSidebar,
+  searchInputRef,
   searchValue,
   onSearchChange,
+  onSearchFocus,
+  onSearchBlur,
+  searchHintsOpen,
+  filteredSearchHints,
+  onSearchSuggestionPick,
   onSearchKeyDown,
   notifications,
   showNotifications,
@@ -60,16 +80,47 @@ export function AppHeader({
         >
           {isSidebarOpen ? <span className="text-xl">✕</span> : <span className="text-xl">☰</span>}
         </button>
-        <div className="hidden md:flex items-center bg-slate-100 rounded-full px-4 py-1.5 w-64">
-          <span className="text-slate-400 mr-2">🔍</span>
-          <input
-            type="text"
-            placeholder="Search everything..."
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            onKeyDown={onSearchKeyDown}
-            className="bg-transparent border-none text-sm focus:ring-0 w-full outline-none"
-          />
+        <div className="hidden md:block relative w-64">
+          <div className="flex items-center bg-slate-100 rounded-full px-4 py-1.5">
+            <span className="text-slate-400 mr-2 shrink-0">🔍</span>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search everything..."
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onFocus={onSearchFocus}
+              onBlur={onSearchBlur}
+              onKeyDown={onSearchKeyDown}
+              className="bg-transparent border-none text-sm focus:ring-0 w-full outline-none min-w-0"
+            />
+          </div>
+          {searchHintsOpen && filteredSearchHints.length > 0 && (
+            <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+              <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                Search link
+              </p>
+              <ul className="max-h-56 overflow-y-auto">
+                {filteredSearchHints.map((h) => (
+                  <li key={h.prefix}>
+                    <button
+                      type="button"
+                      className="flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => onSearchSuggestionPick(h.basePath)}
+                    >
+                      <span className="font-mono text-xs text-slate-600">{h.prefix}</span>
+                      <span className="flex-1">
+                        <span className="font-medium text-slate-800">{h.label}</span>
+                        <span className="text-slate-400"> · </span>
+                        <span className="text-xs text-slate-500">{h.hint}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 

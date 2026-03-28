@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { z } from 'zod';
 import * as paymentPayosService from '../services/paymentPayosService.js';
+import { logPaymentLinkCreatedByAdmin } from '../services/logService.js';
 import { AuthRequest } from '../types/index.js';
 
 const createPaymentLinkSchema = z.object({
@@ -24,6 +25,10 @@ export const createPaymentLink = async (req: AuthRequest, res: Response) => {
         data: null,
       });
     }
+    await logPaymentLinkCreatedByAdmin(req, uid, {
+      packageName: data.packageName,
+      orderCode: data.orderCode,
+    });
     res.json({
       error: 0,
       message: 'Success',

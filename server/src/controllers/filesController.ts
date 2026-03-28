@@ -43,22 +43,27 @@ export async function getImageTreeHandler(req: Request, res: Response) {
 
     // Map scope -> basePath + webRoot so `FileTreeItem.path` is always correct.
     // - `map-background`: assets/images/ui/background
+    // - `item`: assets/images/item
     // - `manager-assets`: assets/images
     // - `cards-assets` (default): assets/images/cards
     const normalizedScope =
       scopeFromQuery === 'map-background'
         ? 'map-background'
-        : scopeFromQuery === 'manager-assets'
-          ? 'manager-assets'
-          : 'cards-assets';
+        : scopeFromQuery === 'item'
+          ? 'item'
+          : scopeFromQuery === 'manager-assets'
+            ? 'manager-assets'
+            : 'cards-assets';
 
     const tree =
       normalizedScope === 'map-background'
         ? filesService.getMapBackgroundImageTree()
-        : filesService.getImageTree(
-            normalizedScope === 'manager-assets' ? filesService.getImagesRootPath() : filesService.getImagesBasePath(),
-            normalizedScope === 'manager-assets' ? '/assets/images' : '/assets/images/cards',
-          );
+        : normalizedScope === 'item'
+          ? filesService.getItemImageTree()
+          : filesService.getImageTree(
+              normalizedScope === 'manager-assets' ? filesService.getImagesRootPath() : filesService.getImagesBasePath(),
+              normalizedScope === 'manager-assets' ? '/assets/images' : '/assets/images/cards',
+            );
     res.json({ tree });
   } catch (err) {
     console.error('Failed to read image tree:', err);

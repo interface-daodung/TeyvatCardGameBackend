@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { gameDataService } from '../../services/gameDataService';
 import { localizationService } from '../../services/localizationService';
+import { filesService, type FileTreeItem } from '../../services/filesService';
 import type { EditLang } from '../LangDropdown';
 import { useUnsavedBaseline } from '../unsavedChanges';
 import {
@@ -10,6 +11,25 @@ import {
   type I18nPopupField,
   toGameItem,
 } from './equipmentUtils';
+
+const ITEM_LINK_PREFIX = '/assets/images/';
+import type { EquipmentCreateFormValues } from './EquipmentCreateModal';
+
+function buildDefaultLevelStats(
+  basePower: number,
+  baseCooldown: number,
+  maxLevel: number
+): LevelStat[] {
+  const arr: LevelStat[] = [];
+  for (let i = 0; i < maxLevel; i++) {
+    arr.push({
+      power: Math.round(basePower * (1 + (i + 1) * 0.15)),
+      cooldown: Math.max(0, baseCooldown - (i + 1) * 0.5),
+      price: (i + 1) * 100,
+    });
+  }
+  return arr;
+}
 
 export function useEquipment() {
   const [items, setItems] = useState<GameItem[]>([]);
@@ -35,6 +55,15 @@ export function useEquipment() {
   const { setBaseline, clearBaseline, isDirty: checkDirty } =
     useUnsavedBaseline<Partial<GameItem>>();
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [imageTreeOpen, setImageTreeOpen] = useState(false);
+  const [imageTree, setImageTree] = useState<FileTreeItem[] | null>(null);
+  const [imageTreeLoading, setImageTreeLoading] = useState(false);
+  const [imageTreeExpanded, setImageTreeExpanded] = useState<Set<string>>(new Set());
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +105,62 @@ export function useEquipment() {
     };
   }, []);
 
+  const openCreateModal = () => {
+    setCreateError(null);
+    setCreateModalOpen(true);
+  };
+
+  const closeCreateModal = () => {
+    setCreateModalOpen(false);
+    setCreateError(null);
+  };
+
+  const handleCreateItem = async (values: EquipmentCreateFormValues) => {
+    const img = values.image.trim().replace(/\\/g, '/');
+    if (!img.startsWith(ITEM_LINK_PREFIX)) {
+      setCreateError('Bắt buộc chọn link ảnh đầy đủ (/assets/images/...).');
+      return;
+    }
+    setCreateLoading(true);
+    setCreateError(null);
+    try {
+      const levelStats = buildDefaultLevelStats(
+        values.basePower,
+        values.baseCooldown,
+        values.maxLevel
+      );
+      const created = await gameDataService.createItem({
+        nameId: values.nameId,
+        image: img,
+        basePower: values.basePower,
+        baseCooldown: values.baseCooldown,
+        maxLevel: values.maxLevel,
+        levelStats,
+      });
+      const gameItem = toGameItem(created, null, null);
+      setItems((prev) =>
+        [...prev, gameItem].sort((a, b) => a.nameId.localeCompare(b.nameId))
+      );
+      setCreateModalOpen(false);
+      openEditModal(gameItem);
+    } catch (err: unknown) {
+      console.error('Create item failed:', err);
+      let msg = err instanceof Error ? err.message : 'Lỗi tạo item';
+      const e = err as { response?: { data?: { error?: string | unknown[] } } };
+      if (e.response?.data?.error) {
+        const serverErr = e.response.data.error;
+        if (Array.isArray(serverErr)) {
+          msg = (serverErr as { message?: string }[]).map((z) => z.message ?? '').join(', ');
+        } else if (typeof serverErr === 'string') {
+          msg = serverErr;
+        }
+      }
+      setCreateError(msg);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const openEditModal = (item: GameItem) => {
     const next = structuredClone(item);
     setSelectedItem(item);
@@ -85,6 +170,8 @@ export function useEquipment() {
     setI18nPopupField(null);
     setError(null);
     setShowUnsavedConfirm(false);
+    setImageTreeOpen(false);
+    setShowDeleteConfirm(false);
     setEditModalOpen(true);
   };
 
@@ -96,6 +183,66 @@ export function useEquipment() {
     setEditingField(null);
     setI18nPopupField(null);
     setError(null);
+    setImageTreeOpen(false);
+    setShowDeleteConfirm(false);
+  };
+
+  const openItemImageTree = async () => {
+    setImageTreeOpen(true);
+    if (imageTree === null && !imageTreeLoading) {
+      setImageTreeLoading(true);
+      try {
+        const tree = await filesService.getImageTree('item');
+        setImageTree(tree);
+      } catch {
+        setImageTree([]);
+      } finally {
+        setImageTreeLoading(false);
+      }
+    }
+  };
+
+  const toggleImageTreeExpanded = (path: string) => {
+    setImageTreeExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  };
+
+  const selectItemImage = (webPath: string) => {
+    setFormValues((p) => ({
+      ...p,
+      image: webPath.trim().replace(/\\/g, '/'),
+    }));
+    setImageTreeOpen(false);
+  };
+
+  const requestDeleteItem = () => setShowDeleteConfirm(true);
+  const cancelDeleteItem = () => setShowDeleteConfirm(false);
+  const closeItemImageTree = () => setImageTreeOpen(false);
+
+  const confirmDeleteItem = async () => {
+    if (!selectedItem) return;
+    setDeleteLoading(true);
+    setError(null);
+    try {
+      await gameDataService.deleteItem(selectedItem._id);
+      setItems((prev) => prev.filter((it) => it._id !== selectedItem._id));
+      setShowDeleteConfirm(false);
+      closeEditModal();
+    } catch (err: unknown) {
+      console.error('Delete item failed:', err);
+      let msg = err instanceof Error ? err.message : 'Lỗi xóa item';
+      const e = err as { response?: { data?: { error?: string } } };
+      if (e.response?.data?.error && typeof e.response.data.error === 'string') {
+        msg = e.response.data.error;
+      }
+      setError(msg);
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const requestCloseEditModal = () => {
@@ -297,9 +444,16 @@ export function useEquipment() {
     setSaveLoading(true);
     try {
       const nameId = formValues.nameId ?? selectedItem.nameId;
+      const img = (formValues.image ?? selectedItem.image ?? '').trim().replace(/\\/g, '/');
+      if (!img.startsWith(ITEM_LINK_PREFIX)) {
+        setError('Bắt buộc link ảnh đầy đủ bắt đầu bằng /assets/images/ (chọn từ cây hoặc sửa DB).');
+        setSaveLoading(false);
+        return;
+      }
       const promises: Promise<unknown>[] = [];
       promises.push(
         gameDataService.updateItem(selectedItem._id, {
+          image: img,
           basePower: formValues.basePower ?? selectedItem.basePower,
           baseCooldown: formValues.baseCooldown ?? selectedItem.baseCooldown,
           maxLevel: formValues.maxLevel ?? selectedItem.maxLevel,
@@ -416,5 +570,24 @@ export function useEquipment() {
     getItemDisplayDescription,
     translateLoading,
     i18nError,
+    createModalOpen,
+    createLoading,
+    createError,
+    openCreateModal,
+    closeCreateModal,
+    handleCreateItem,
+    imageTreeOpen,
+    imageTree,
+    imageTreeLoading,
+    imageTreeExpanded,
+    openItemImageTree,
+    toggleImageTreeExpanded,
+    selectItemImage,
+    closeItemImageTree,
+    showDeleteConfirm,
+    deleteLoading,
+    requestDeleteItem,
+    cancelDeleteItem,
+    confirmDeleteItem,
   };
 }

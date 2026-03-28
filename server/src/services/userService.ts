@@ -90,3 +90,13 @@ export async function revokeRefreshToken(userId: string) {
   await User.findByIdAndUpdate(userId, { $set: { refreshToken: null } });
   return { email: user.email };
 }
+
+/** Admin: đánh dấu email đã xác nhận (tương đương bấm link trong mail). */
+export async function verifyUserEmail(userId: string) {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $set: { isVerified: true, verifyToken: null, verifyTokenExpiry: null } },
+    { new: true },
+  ).select('email isVerified');
+  return user;
+}

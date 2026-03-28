@@ -1,21 +1,41 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { filesService, type CardClassTreeNode } from '../../services/filesService';
 
+function filterTreeToSubfolder(
+  nodes: CardClassTreeNode[] | null,
+  subfolder: string | undefined
+): CardClassTreeNode[] | null {
+  if (!nodes || !subfolder) return nodes;
+  const dir = nodes.find((n) => n.type === 'dir' && n.name === subfolder);
+  return dir?.children ?? [];
+}
+
 interface ClassNamePickerPanelProps {
-  onSelect: (className: string) => void;
+  /** Nếu trả về `false` (sync hoặc Promise), panel không đóng (ví dụ trùng nameId). */
+  onSelect: (className: string) => void | boolean | Promise<void | boolean>;
   onClose: () => void;
   currentValue?: string;
+  /** Chỉ hiển thị nhánh con của thư mục này trong `TeyvatCard/src/models/cards` (vd: `character`). */
+  subfolder?: string;
+  title?: string;
 }
 
 export function ClassNamePickerPanel({
   onSelect,
   onClose,
   currentValue = '',
+  subfolder,
+  title = 'Chọn Class name',
 }: ClassNamePickerPanelProps) {
   const [tree, setTree] = useState<CardClassTreeNode[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const displayTree = useMemo(
+    () => filterTreeToSubfolder(tree, subfolder),
+    [tree, subfolder]
+  );
 
   const loadTree = useCallback(async () => {
     setLoading(true);
@@ -49,15 +69,20 @@ export function ClassNamePickerPanel({
     });
   };
 
-  const handleSelect = (className: string) => {
-    onSelect(className);
-    onClose();
+  const handleSelect = async (className: string) => {
+    try {
+      const result = onSelect(className);
+      const resolved = result instanceof Promise ? await result : result;
+      if (resolved !== false) onClose();
+    } catch {
+      // Giữ panel mở khi lỗi
+    }
   };
 
   return (
     <div className="w-full max-w-md rounded-lg bg-card overflow-hidden shadow-xl border border-border flex-shrink-0 flex flex-col">
       <div className="flex items-center justify-between px-6 py-4 bg-emerald-600 text-white">
-        <h3 className="text-lg font-semibold">Chọn Class name</h3>
+        <h3 className="text-lg font-semibold">{title}</h3>
         <button
           type="button"
           onClick={onClose}
@@ -74,12 +99,16 @@ export function ClassNamePickerPanel({
         {error && (
           <p className="text-sm text-destructive mb-2">{error}</p>
         )}
-        {!loading && tree && tree.length === 0 && !error && (
-          <p className="text-sm text-muted-foreground">Không có file .ts trong TeyvatCard/src/models/cards</p>
+        {!loading && displayTree && displayTree.length === 0 && !error && (
+          <p className="text-sm text-muted-foreground">
+            {subfolder
+              ? `Không có file .ts trong TeyvatCard/src/models/cards/${subfolder}`
+              : 'Không có file .ts trong TeyvatCard/src/models/cards'}
+          </p>
         )}
-        {!loading && tree && tree.length > 0 && (
+        {!loading && displayTree && displayTree.length > 0 && (
           <TreeNodeList
-            nodes={tree}
+            nodes={displayTree}
             parentPath=""
             expanded={expanded}
             onToggle={toggle}
@@ -90,6 +119,7 @@ export function ClassNamePickerPanel({
       </div>
       <div className="px-4 py-3 border-t border-border text-xs text-muted-foreground">
         Bấm vào tên file .ts để chọn (mỗi file lấy `export default class`)
+        {subfolder ? ` — thư mục: ${subfolder}/` : ''}
       </div>
     </div>
   );

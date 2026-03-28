@@ -1,9 +1,13 @@
 import { motion } from 'framer-motion';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { PageHeader } from '../components/PageHeader';
 import { LangDropdown } from '../components/LangDropdown';
+import { Button } from '../components/ui/button';
 import { EquipmentLoading } from '../components/equipment/EquipmentLoading';
 import { EquipmentItemCard } from '../components/equipment/EquipmentItemCard';
 import { EquipmentEditModal } from '../components/equipment/EquipmentEditModal';
+import { EquipmentCreateModal } from '../components/equipment/EquipmentCreateModal';
 import { useEquipment } from '../components/equipment/useEquipment';
 import { fadeSlideCard, slideUpItem } from '../components/animations/motionPresets';
 
@@ -19,12 +23,18 @@ export default function Equipment() {
           title="Equipment"
           description="Xem và quản lý các item trong game (đọc từ DB)"
         />
-        <LangDropdown
-          value={eq.editLang}
-          onChange={eq.setEditLang}
-          open={eq.langDropdownOpen}
-          onOpenChange={eq.setLangDropdownOpen}
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button type="button" variant="default" onClick={eq.openCreateModal}>
+            <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5 mr-1.5" />
+            Thêm item
+          </Button>
+          <LangDropdown
+            value={eq.editLang}
+            onChange={eq.setEditLang}
+            open={eq.langDropdownOpen}
+            onOpenChange={eq.setLangDropdownOpen}
+          />
+        </div>
       </div>
 
       {eq.error && (
@@ -61,6 +71,14 @@ export default function Equipment() {
         </motion.div>
       )}
 
+      <EquipmentCreateModal
+        open={eq.createModalOpen}
+        onClose={eq.closeCreateModal}
+        loading={eq.createLoading}
+        error={eq.createError}
+        onSubmit={eq.handleCreateItem}
+      />
+
       {eq.editModalOpen && eq.selectedItem && (
         <EquipmentEditModal
           selectedItem={eq.selectedItem}
@@ -96,6 +114,19 @@ export default function Equipment() {
           onLevelSave={eq.handleLevelSave}
           onI18nTranslate={eq.handleI18nTranslate}
           onI18nSave={eq.handleI18nSave}
+          imageTreeOpen={eq.imageTreeOpen}
+          imageTree={eq.imageTree}
+          imageTreeLoading={eq.imageTreeLoading}
+          imageTreeExpanded={eq.imageTreeExpanded}
+          onToggleImageTree={eq.openItemImageTree}
+          onToggleImageTreeExpanded={eq.toggleImageTreeExpanded}
+          onSelectItemImage={eq.selectItemImage}
+          onCloseImageTree={eq.closeItemImageTree}
+          showDeleteConfirm={eq.showDeleteConfirm}
+          deleteLoading={eq.deleteLoading}
+          onRequestDelete={eq.requestDeleteItem}
+          onCancelDelete={eq.cancelDeleteItem}
+          onConfirmDelete={eq.confirmDeleteItem}
         />
       )}
     </div>

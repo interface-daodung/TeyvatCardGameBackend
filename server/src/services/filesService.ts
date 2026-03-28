@@ -26,6 +26,15 @@ export function getMapBackgroundImagesBasePath(): string {
   return path.resolve(rootDir, '../admin-web/public/assets/images/ui/background');
 }
 
+/** Thư mục ảnh item (consumable) trong admin-web public */
+export function getItemImagesBasePath(): string {
+  return path.resolve(rootDir, '../admin-web/public/assets/images/item');
+}
+
+export function getItemImageTree(): FileTreeItem[] {
+  return getImageTree(getItemImagesBasePath(), '/assets/images/item', true);
+}
+
 export function getMapBackgroundImageTree(): FileTreeItem[] {
   return getImageTree(getMapBackgroundImagesBasePath(), '/assets/images/ui/background', true);
 }

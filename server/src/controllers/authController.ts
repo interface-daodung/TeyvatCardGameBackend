@@ -1,7 +1,14 @@
 import { Request, Response } from 'express';
 import * as authService from '../services/authService.js';
 import { User } from '../models/User.js';
-import { loginSchema, googleLoginSchema, registerSchema, saveGameSchema } from '../validators/auth.js';
+import {
+  loginSchema,
+  googleLoginSchema,
+  registerSchema,
+  saveGameSchema,
+  clientLogErrorSchema,
+} from '../validators/auth.js';
+import * as logService from '../services/logService.js';
 import { createAuditLog } from '../utils/auditLog.js';
 import { AuthRequest } from '../types/index.js';
 
@@ -268,6 +275,21 @@ export const getSaveGame = async (req: Request, res: Response) => {
     res.json({ saveGame });
   } catch {
     res.status(500).json({ error: 'Failed to load save game' });
+  }
+};
+
+/** POST client-log-error: lỗi từ game (TeyvatCard production), chỉ khi user đã đăng nhập. */
+export const postClientLogError = async (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const body = clientLogErrorSchema.parse(req.body);
+    await logService.logClientGameError(authReq, body);
+    res.json({ ok: true });
+  } catch (error: unknown) {
+    const err = error as { name?: string; errors?: unknown };
+    if (err.name === 'ZodError') return res.status(400).json({ error: err.errors });
+    res.status(500).json({ error: 'Failed to log client error' });
   }
 };
 

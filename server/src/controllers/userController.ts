@@ -117,3 +117,16 @@ export const revokeRefreshToken = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to revoke refresh token' });
   }
 };
+
+export const verifyUserEmail = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await userService.verifyUserEmail(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    await createAuditLog(req, 'verify_email', 'user', req.params.id, { email: user.email }, undefined, 'info');
+    res.json({ message: 'Email đã được xác nhận', isVerified: user.isVerified });
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    console.error('verifyUserEmail error:', err?.message || error);
+    res.status(500).json({ error: 'Failed to verify email' });
+  }
+};

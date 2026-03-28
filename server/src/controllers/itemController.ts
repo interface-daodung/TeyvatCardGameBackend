@@ -1,7 +1,8 @@
+import mongoose from 'mongoose';
 import { Response } from 'express';
 import * as itemService from '../services/itemService.js';
 import { AuthRequest } from '../types/index.js';
-import { updateItemSchema } from '../validators/gameData.js';
+import { createItemSchema, updateItemSchema } from '../validators/gameData.js';
 import { createAuditLog } from '../utils/auditLog.js';
 
 export const getItems = async (_req: AuthRequest, res: Response) => {
@@ -23,6 +24,22 @@ export const getItemById = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const createItem = async (req: AuthRequest, res: Response) => {
+  try {
+    const data = createItemSchema.parse(req.body);
+    const item = await itemService.createItem(data);
+    await createAuditLog(req, 'create_item', 'item', item._id.toString());
+    res.status(201).json(item);
+  } catch (error: unknown) {
+    const err = error as { name?: string; errors?: unknown; code?: number };
+    if (err.name === 'ZodError') return res.status(400).json({ error: err.errors });
+    if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+      return res.status(409).json({ error: 'nameId đã tồn tại' });
+    }
+    res.status(500).json({ error: 'Failed to create item' });
+  }
+};
+
 export const updateItem = async (req: AuthRequest, res: Response) => {
   try {
     const data = updateItemSchema.parse(req.body);
@@ -34,5 +51,16 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
     const err = error as { name?: string; errors?: unknown };
     if (err.name === 'ZodError') return res.status(400).json({ error: err.errors });
     res.status(500).json({ error: 'Failed to update item' });
+  }
+};
+
+export const deleteItem = async (req: AuthRequest, res: Response) => {
+  try {
+    const item = await itemService.deleteItem(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    await createAuditLog(req, 'delete_item', 'item', req.params.id);
+    res.json({ message: 'Item deleted successfully' });
+  } catch {
+    res.status(500).json({ error: 'Failed to delete item' });
   }
 };
