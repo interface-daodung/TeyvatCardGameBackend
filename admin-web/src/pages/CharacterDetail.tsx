@@ -167,80 +167,91 @@ export default function CharacterDetail() {
     );
   }
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <PageHeader title="Character Details" description="View and manage character info" />
-        <LangDropdown
-          value={detail.editLang}
-          onChange={detail.setEditLang}
-          open={detail.langDropdownOpen}
-          onOpenChange={detail.setLangDropdownOpen}
-        />
+    <div className="space-y-5 px-4 pb-6 pt-4 md:px-6">
+      <div className="pointer-events-none sticky top-3 z-30">
+        <Button
+          onClick={() => navigate('/characters')}
+          variant="outline"
+          className="pointer-events-auto border-slate-300 bg-white/95 text-slate-700 shadow-sm backdrop-blur hover:bg-slate-100"
+        >
+          Back
+        </Button>
+      </div>
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <PageHeader title="Character Details" description="View and manage character info" />
+          <LangDropdown
+            value={detail.editLang}
+            onChange={detail.setEditLang}
+            open={detail.langDropdownOpen}
+            onOpenChange={detail.setLangDropdownOpen}
+          />
+        </div>
       </div>
 
       <motion.div
-        className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+        className="grid grid-cols-1 gap-4 xl:grid-cols-12"
         variants={fadeSlideCard}
         initial="hidden"
         animate="visible"
       >
-        <CharacterDetailImage character={detail.character} effectiveElement={effectiveElement} />
-        <CharacterDetailInfo
-          effectiveElement={effectiveElement}
-          displayName={detail.getDisplayName()}
-          displayHp={detail.displayHp}
-          displayLevel={detail.displayLevel}
-          displayDescription={detail.getDisplayDescription()}
-          editingField={detail.editingField}
-          onOpenI18n={detail.openI18nPopup}
-          onStartEdit={detail.startEdit}
-        />
-        <CharacterDetailEditPanel
-          editingField={detail.editingField}
-          editedHp={detail.editedHp}
-          onEditedHpChange={detail.setEditedHp}
-          effectiveElement={effectiveElement}
-          displayLevel={detail.displayLevel}
-          onDisplayLevelChange={detail.setDisplayLevel}
-          levelPrices={detail.levelPrices}
-          editingPriceForLevel={detail.editingPriceForLevel}
-          editedPriceValue={detail.editedPriceValue}
-          onEditedPriceValueChange={detail.setEditedPriceValue}
-          saveLoading={detail.saveLoading}
-          onSaveEdit={detail.saveEdit}
-          onCancelEdit={detail.cancelEdit}
-          onSavePriceEdit={detail.savePriceEdit}
-          onStartPriceEdit={detail.startPriceEdit}
-          onSetDisplayElementAndPersist={detail.setDisplayElementAndPersist}
-        />
+        <div className="xl:col-span-4">
+          <CharacterDetailImage character={detail.character} effectiveElement={effectiveElement} />
+        </div>
+        <div className="space-y-4 xl:col-span-8">
+          <CharacterDetailInfo
+            effectiveElement={effectiveElement}
+            displayName={detail.getDisplayName()}
+            displayHp={detail.displayHp}
+            displayLevel={detail.displayLevel}
+            displayDescription={detail.getDisplayDescription()}
+            editingField={detail.editingField}
+            onOpenI18n={detail.openI18nPopup}
+            onStartEdit={detail.startEdit}
+          />
+          <CharacterDetailEditPanel
+            editingField={detail.editingField}
+            editedHp={detail.editedHp}
+            onEditedHpChange={detail.setEditedHp}
+            effectiveElement={effectiveElement}
+            displayLevel={detail.displayLevel}
+            onDisplayLevelChange={detail.setDisplayLevel}
+            levelPrices={detail.levelPrices}
+            editingPriceForLevel={detail.editingPriceForLevel}
+            editedPriceValue={detail.editedPriceValue}
+            onEditedPriceValueChange={detail.setEditedPriceValue}
+            saveLoading={detail.saveLoading}
+            onSaveEdit={detail.saveEdit}
+            onCancelEdit={detail.cancelEdit}
+            onSavePriceEdit={detail.savePriceEdit}
+            onStartPriceEdit={detail.startPriceEdit}
+            onSetDisplayElementAndPersist={detail.setDisplayElementAndPersist}
+          />
+        </div>
       </motion.div>
 
       <motion.div
-        className="rounded-xl border border-slate-200 bg-white p-5 space-y-4"
+        className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 md:p-5"
         variants={fadeSlideCard}
         initial="hidden"
         animate="visible"
       >
-        <div className="flex flex-wrap items-start gap-6">
-          <div className="space-y-3">
-            <p className="text-sm text-slate-600">
-              Phát animation theo logic `SpritesheetWrapper.CharacterAnimation` (start: 0, end:
-              totalFrames - 1, 76 frame, 12 fps).
-            </p>
-            <div className="relative inline-flex min-h-[300px] w-[230px] items-center justify-center rounded-lg border border-slate-300 p-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+          <div className="space-y-3 xl:col-span-7">
+            <div className="relative flex min-h-[300px] w-full max-w-[250px] items-center justify-center rounded-lg border border-slate-300 p-2">
               <div ref={spriteContainerRef} className="inline-flex items-center justify-center" />
               {spriteLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-900/70">
                   <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-transparent" />
-                  <p className="text-xs text-slate-200">Đang tải spritesheet...</p>
+                  <p className="text-xs text-slate-200">Dang tai spritesheet...</p>
                 </div>
               )}
             </div>
-            <p className="text-xs text-slate-500 break-all">Nguồn: {spritesheetUrl}</p>
+            <p className="break-all text-xs text-slate-500">{spritesheetUrl}</p>
             {spriteError && <p className="text-sm text-red-600">{spriteError}</p>}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-5">
             <p className="text-sm text-slate-600">Icon Preview:</p>
             <div className="inline-flex items-center justify-center rounded-lg bg-black p-4">
               <img
@@ -261,10 +272,6 @@ export default function CharacterDetail() {
           classRelativePath={characterRelativeClassPath}
         />
       </motion.div>
-
-      <Button onClick={() => navigate('/characters')} className="bg-blue-600 hover:bg-blue-700 text-white">
-        Back
-      </Button>
 
       <I18nDescriptionModal
         open={detail.i18nModalField !== null}

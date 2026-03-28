@@ -10,6 +10,9 @@ import type { CollectionScanResult, ScanDatabaseRequest } from '../services/data
 import { databaseManagementService } from '../services/databaseManagementService';
 import { aiService, type ChatMessage } from '../services/aiService';
 import { AssistantMessageMarkdown } from '../components/ai/AssistantMessageMarkdown';
+import { FieldPathFlowPanel } from '../components/database/FieldPathFlowPanel';
+import { FieldPathTreePanel } from '../components/database/FieldPathTreePanel';
+import { buildPathToSummaryMap } from '../components/database/fieldPathTreeUtils';
 
 type UiMessage = ChatMessage & { id: string };
 
@@ -88,6 +91,7 @@ export default function DatabaseManagement() {
   }, [scanResult, selectedCollectionName]);
 
   const [fieldSearch, setFieldSearch] = useState('');
+  const [fieldViewTab, setFieldViewTab] = useState<'list' | 'tree' | 'flow'>('list');
   const aiSessionIdRef = useRef<string>(newSessionId());
   const [chatMessages, setChatMessages] = useState<UiMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -191,6 +195,11 @@ export default function DatabaseManagement() {
     if (!q) return list;
     return list.filter((f) => f.path.toLowerCase().includes(q));
   }, [fieldSearch, selectedCollection]);
+
+  const pathToFullSummary = useMemo(
+    () => buildPathToSummaryMap(selectedCollection?.fieldSummaries ?? []),
+    [selectedCollection]
+  );
 
   if (loading && !scanResult) {
     return (
@@ -361,74 +370,116 @@ export default function DatabaseManagement() {
                         </Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead className="bg-gradient-to-r from-slate-50 to-blue-50">
-                            <tr>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Field</th>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Value types</th>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Docs with path</th>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Examples</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-card divide-y divide-border">
-                            {filteredFieldSummaries.length === 0 ? (
-                              <tr>
-                                <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground text-sm">
-                                  Không tìm thấy field nào phù hợp.
-                                </td>
-                              </tr>
-                            ) : (
-                              filteredFieldSummaries.map((f) => {
-                                return (
-                                  <tr key={f.path} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-4 py-3 text-sm font-mono text-slate-800">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-slate-400">•</span>
-                                        <span title={f.path} className="truncate max-w-[240px]">
-                                          {f.path}
-                                        </span>
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                      <div className="flex items-center gap-2 flex-wrap">
-                                        <Badge variant="outline" className="text-xs">
-                                          {f.typeCount} types
-                                        </Badge>
-                                        <span className="text-slate-600">
-                                          {f.types.slice(0, 3).join(', ')}
-                                          {f.types.length > 3 ? ` +${f.types.length - 3}` : ''}
-                                        </span>
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-slate-700">
-                                      {f.docsWithPath}/{selectedCollection.sampleUsed}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-slate-700">
-                                      {f.examples.length ? (
-                                        <div className="flex flex-wrap gap-2">
-                                          {f.examples.slice(0, 3).map((ex) => (
-                                            <span
-                                              key={ex}
-                                              className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 max-w-[220px] truncate"
-                                              title={ex}
-                                            >
-                                              {ex}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <span className="text-muted-foreground">—</span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                );
-                              })
-                            )}
-                          </tbody>
-                        </table>
+                    <CardContent className="pt-0 space-y-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {(
+                          [
+                            { id: 'list' as const, label: 'Danh sách' },
+                            { id: 'tree' as const, label: 'Cây thư mục' },
+                            { id: 'flow' as const, label: 'Lưới quan hệ (Flow)' },
+                          ] as const
+                        ).map((t) => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setFieldViewTab(t.id)}
+                            className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${
+                              fieldViewTab === t.id
+                                ? 'bg-slate-900 text-white'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                            }`}
+                          >
+                            {t.label}
+                          </button>
+                        ))}
                       </div>
+
+                      {fieldViewTab === 'list' && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead className="bg-gradient-to-r from-slate-50 to-blue-50">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Field</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Value types</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Docs with path</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Examples</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-card divide-y divide-border">
+                              {filteredFieldSummaries.length === 0 ? (
+                                <tr>
+                                  <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground text-sm">
+                                    Không tìm thấy field nào phù hợp.
+                                  </td>
+                                </tr>
+                              ) : (
+                                filteredFieldSummaries.map((f) => {
+                                  return (
+                                    <tr key={f.path} className="hover:bg-slate-50 transition-colors">
+                                      <td className="px-4 py-3 text-sm font-mono text-slate-800">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-slate-400">•</span>
+                                          <span title={f.path} className="truncate max-w-[240px]">
+                                            {f.path}
+                                          </span>
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-3 text-sm">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <Badge variant="outline" className="text-xs">
+                                            {f.typeCount} types
+                                          </Badge>
+                                          <span className="text-slate-600">
+                                            {f.types.slice(0, 3).join(', ')}
+                                            {f.types.length > 3 ? ` +${f.types.length - 3}` : ''}
+                                          </span>
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-3 text-sm text-slate-700">
+                                        {f.docsWithPath}/{selectedCollection.sampleUsed}
+                                      </td>
+                                      <td className="px-4 py-3 text-sm text-slate-700">
+                                        {f.examples.length ? (
+                                          <div className="flex flex-wrap gap-2">
+                                            {f.examples.slice(0, 3).map((ex) => (
+                                              <span
+                                                key={ex}
+                                                className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 max-w-[220px] truncate"
+                                                title={ex}
+                                              >
+                                                {ex}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <span className="text-muted-foreground">—</span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {fieldViewTab === 'tree' && (
+                        <FieldPathTreePanel
+                          filteredFieldSummaries={filteredFieldSummaries}
+                          allFieldSummaries={selectedCollection.fieldSummaries}
+                          sampleUsed={selectedCollection.sampleUsed}
+                        />
+                      )}
+
+                      {fieldViewTab === 'flow' && (
+                        <FieldPathFlowPanel
+                          key={selectedCollection.name}
+                          filteredFieldSummaries={filteredFieldSummaries}
+                          sampleUsed={selectedCollection.sampleUsed}
+                          pathToSummary={pathToFullSummary}
+                        />
+                      )}
                     </CardContent>
                   </Card>
                 ) : null}

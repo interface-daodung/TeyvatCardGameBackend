@@ -59,7 +59,9 @@ export function EquipmentI18nPanel({
       className={`w-full max-w-md rounded-lg 
         bg-card overflow-hidden shadow-xl border border-border 
         flex-shrink-0 flex flex-col 
-        ${field === 'level' ? 'min-w-[28rem] w-[28rem]' : ''}`}
+        ${field === 'level' ? 'min-w-[28rem] w-[28rem]' : ''}
+        ${field === 'name' ? 'min-w-[34rem] w-[34rem] max-w-[90vw]' : ''}
+        ${field === 'description' ? 'min-w-[34rem] w-[34rem] max-w-[90vw]' : ''}`}
     >
       <div className="flex items-center justify-between px-6 py-4 bg-blue-600 text-white">
         <h3 className="text-lg font-semibold">{title}</h3>

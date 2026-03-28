@@ -89,7 +89,7 @@ export function ClassNamePickerPanel({
         )}
       </div>
       <div className="px-4 py-3 border-t border-border text-xs text-muted-foreground">
-        Bấm vào tên class để chọn (từ file .ts trong TeyvatCard/src/models/cards)
+        Bấm vào tên file .ts để chọn (mỗi file lấy `export default class`)
       </div>
     </div>
   );
@@ -148,26 +148,39 @@ function TreeNodeList({
         }
         return (
           <li key={path}>
-            <div className="flex items-center gap-2 flex-wrap py-0.5 px-2">
-              <span className="text-muted-foreground select-none w-4 shrink-0" />
-              <span className="text-sm text-muted-foreground shrink-0">📄 {node.name}</span>
-              {node.classes && node.classes.length > 0 && (
-                <>
-                  {node.classes.map((cls) => (
-                    <button
-                      key={cls}
-                      type="button"
-                      onClick={() => onSelectClass(cls)}
-                      className={`shrink-0 py-1 px-2 rounded text-sm hover:bg-emerald-100 hover:text-emerald-900 ${
-                        currentValue === cls ? 'bg-emerald-100 text-emerald-900 font-medium' : ''
-                      }`}
-                    >
-                      {cls}
-                    </button>
-                  ))}
-                </>
-              )}
-            </div>
+            {(() => {
+              const classes = node.classes ?? [];
+              const selectedClassName = classes[0];
+              const canSelect = Boolean(selectedClassName);
+              const isSelected = canSelect && currentValue === selectedClassName;
+
+              return (
+                <div
+                  className={`flex items-center gap-2 flex-wrap py-0.5 px-2 ${
+                    canSelect ? 'cursor-pointer hover:bg-muted/60 rounded' : ''
+                  } ${isSelected ? 'bg-muted/60' : ''}`}
+                  role={canSelect ? 'button' : undefined}
+                  tabIndex={canSelect ? 0 : undefined}
+                  onClick={canSelect ? () => onSelectClass(selectedClassName!) : undefined}
+                  onKeyDown={(e) => {
+                    if (!canSelect) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectClass(selectedClassName!);
+                    }
+                  }}
+                >
+                  <span className="text-muted-foreground select-none w-4 shrink-0" />
+                  <span
+                    className={`text-sm shrink-0 ${
+                      isSelected ? 'text-emerald-900 font-medium' : 'text-muted-foreground'
+                    }`}
+                  >
+                    📄 {node.name}
+                  </span>
+                </div>
+              );
+            })()}
           </li>
         );
       })}

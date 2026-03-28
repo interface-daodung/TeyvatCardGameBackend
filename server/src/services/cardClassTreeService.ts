@@ -112,9 +112,20 @@ function getExportedClassNames(filePath: string): string[] {
     const project = new Project({ skipAddingFilesFromTsConfig: true });
     const sourceFile = project.addSourceFileAtPath(filePath);
     const classes = sourceFile.getClasses();
+    const defaultExportNames: string[] = [];
+
     for (const cls of classes) {
       const name = cls.getName();
-      if (name && (cls.isDefaultExport() || cls.isExported())) names.push(name);
+      if (!name) continue;
+      if (cls.isDefaultExport()) defaultExportNames.push(name);
+      // fallback for files without default export
+      if (cls.isExported()) names.push(name);
+    }
+
+    // Only care about `export default class ...` in the UI.
+    // If a file has no default export, fall back to exported classes to avoid empty results.
+    if (defaultExportNames.length > 0) {
+      return [defaultExportNames[0]];
     }
   } catch {
     // ignore parse errors

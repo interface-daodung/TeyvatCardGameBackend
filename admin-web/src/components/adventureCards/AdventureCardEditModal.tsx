@@ -133,7 +133,7 @@ export function AdventureCardEditModal({
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-[1.1fr,1.2fr] gap-6 items-start">
-              <div className="space-y-3">
+              <div className="space-y-3 md:sticky md:top-6 md:z-10 md:self-start md:max-h-[calc(70vh-3rem)] md:overflow-y-auto md:rounded-xl md:bg-card md:ring-1 md:ring-border/60 md:shadow-sm">
                 <AdventureCardImagePicker
                   card={editCard}
                   formImage={form.image}

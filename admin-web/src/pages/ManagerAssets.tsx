@@ -9,6 +9,7 @@ import { AtlasBuilderModal } from '../components/assets/AtlasBuilderModal';
 import { filesService, type FileTreeItem, type FileMetadata, type FullImageMetadata } from '../services/filesService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { ImageLightbox } from '../components/ui/ImageLightbox';
 
 function buildCombinedTree(cardsTree: FileTreeItem[], uploadedTree: FileTreeItem[]): FileTreeItem {
   return {
@@ -76,6 +77,7 @@ export default function ManagerAssets() {
   const [animCurrentFrame, setAnimCurrentFrame] = useState(0);
   const [animPlaying, setAnimPlaying] = useState(false);
   const [animTotalFrames, setAnimTotalFrames] = useState(0);
+  const [previewLightbox, setPreviewLightbox] = useState<{ src: string; alt: string } | null>(null);
   const animCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const animImageRef = useRef<HTMLImageElement | null>(null);
 
@@ -590,14 +592,21 @@ export default function ManagerAssets() {
                     src={pendingUploadUrl}
                     alt={pendingUpload.name}
                     onLoad={handleImageLoaded}
-                    className={`max-h-[470px] h-auto w-auto max-w-full rounded-lg border border-border object-contain shadow-md ${previewImageClass}`}
+                    onClick={() => setPreviewLightbox({ src: pendingUploadUrl, alt: pendingUpload.name })}
+                    className={`max-h-[470px] h-auto w-auto max-w-full cursor-zoom-in rounded-lg border border-border object-contain shadow-md ${previewImageClass}`}
                   />
                 ) : selectedIsImage && selectedPath ? (
                   <img
                     src={selectedPath}
                     alt={selectedFileName || 'Preview'}
                     onLoad={handleImageLoaded}
-                    className={`max-h-[470px] h-auto w-auto max-w-full rounded-lg border border-border object-contain shadow-md ${previewImageClass}`}
+                    onClick={() =>
+                      setPreviewLightbox({
+                        src: selectedPath,
+                        alt: selectedFileName || 'Preview',
+                      })
+                    }
+                    className={`max-h-[470px] h-auto w-auto max-w-full cursor-zoom-in rounded-lg border border-border object-contain shadow-md ${previewImageClass}`}
                   />
                 ) : (
                   <div className={`flex flex-col items-center justify-center text-center text-sm space-y-2 ${previewHintClass}`}>
@@ -1126,6 +1135,11 @@ export default function ManagerAssets() {
         />,
         document.body
       )}
+
+      <ImageLightbox
+        open={previewLightbox}
+        onClose={() => setPreviewLightbox(null)}
+      />
     </div>
   );
 }

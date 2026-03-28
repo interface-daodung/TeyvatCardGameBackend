@@ -27,6 +27,8 @@ const ELEMENTS = [
   'none',
 ];
 
+const WEAPON_CATEGORIES = ['bow', 'catalyst', 'claymore', 'polearm', 'sword'] as const;
+
 interface AdventureCardEditFormProps {
   card: AdventureCard;
   form: Partial<AdventureCard>;
@@ -265,7 +267,41 @@ export function AdventureCardEditForm({
         </div>
       )}
 
-      {(card.type === 'treasure' || card.type === 'weapon') && (
+      {card.type === 'weapon' && (
+        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Weapon category</label>
+            <div className="relative">
+              <select
+                className="w-full appearance-none pl-3 pr-9 py-2.5 text-sm font-medium border border-input rounded-lg bg-background shadow-sm capitalize focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all cursor-pointer hover:border-muted-foreground/30"
+                value={form.category ?? card.category ?? ''}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, category: e.target.value || undefined }))
+                }
+              >
+                <option value="">Chọn loại vũ khí</option>
+                {WEAPON_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat} className="capitalize">
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-[10px]">
+                ▼
+              </span>
+            </div>
+          </div>
+          <DualRangeSlider
+            min={0}
+            max={49}
+            start={[form.durabilityMin ?? card.durabilityMin ?? 1, form.durabilityMax ?? card.durabilityMax ?? 5]}
+            label="Durability Range (Min - Max)"
+            onChange={([min, max]) => setForm((p) => ({ ...p, durabilityMin: min, durabilityMax: max }))}
+          />
+        </div>
+      )}
+
+      {card.type === 'treasure' && (
         <div className="p-4 rounded-lg bg-muted/30 border border-border">
           <DualRangeSlider
             min={0}

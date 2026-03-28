@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useMemo, useState } from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { ImageLightbox } from '../ui/ImageLightbox';
 
 export type AssistantMarkdownVariant = 'compact' | 'comfortable';
 
@@ -142,56 +142,6 @@ function buildMarkdownComponents(
   };
 }
 
-function MarkdownImageLightbox({
-  open,
-  onClose,
-}: {
-  open: { src: string; alt: string } | null;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open, onClose]);
-
-  if (typeof document === 'undefined' || !open) return null;
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Ảnh phóng to"
-      onClick={onClose}
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-xl text-white transition-colors hover:bg-white/20"
-        aria-label="Đóng"
-      >
-        ✕
-      </button>
-      <img
-        src={open.src}
-        alt={open.alt}
-        className="max-h-[min(100dvh,100vh)] max-w-full object-contain shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      />
-    </div>,
-    document.body
-  );
-}
-
 export function AssistantMessageMarkdown({
   content,
   variant = 'compact',
@@ -217,7 +167,7 @@ export function AssistantMessageMarkdown({
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {formatAssistantMarkdown(content)}
       </ReactMarkdown>
-      <MarkdownImageLightbox open={lightbox} onClose={closeLightbox} />
+      <ImageLightbox open={lightbox} onClose={closeLightbox} />
     </div>
   );
 }
