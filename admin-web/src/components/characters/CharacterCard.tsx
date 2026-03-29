@@ -18,16 +18,21 @@ export interface CharacterCardProps {
   character: CharacterCardData;
   /** Resolved description from i18n (character.{nameId}.description). Prefer this over character.description which may be the key. */
   descriptionDisplay?: string;
+  /** Khi có: thẻ là nút (vd. mở drawer), không điều hướng sang route chi tiết. */
+  onSelect?: () => void;
 }
 
-export function CharacterCard({ character, descriptionDisplay }: CharacterCardProps) {
+export function CharacterCard({
+  character,
+  descriptionDisplay,
+  onSelect,
+}: CharacterCardProps) {
   const descriptionText = descriptionDisplay ?? (character.description?.startsWith('character.') ? '' : character.description ?? '');
-  return (
-    <Link to={`/characters/${character.nameId}`} className="block w-[200px] shrink-0">
+  const card = (
       <Card
-        role="button"
-        tabIndex={0}
-        className="group border border-border shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer rounded-2xl bg-white"
+        role={onSelect ? 'presentation' : 'button'}
+        tabIndex={onSelect ? undefined : 0}
+        className="group border-0 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800"
       >
         <CardContent className="relative p-0">
           <div
@@ -43,8 +48,10 @@ export function CharacterCard({ character, descriptionDisplay }: CharacterCardPr
               }}
             />
 
-            <div className="absolute top-3 left-3">
-              <ElementIcon element={character.element ?? 'none'} size="sm" />
+            <div className="absolute top-3 left-3 max-w-[calc(100%-6rem)]">
+              <span className="inline-block truncate px-2 py-0.5 rounded-full border border-white/20 bg-black/45 font-mono text-[10px] tracking-wide text-slate-100 backdrop-blur-sm">
+                {character.name}
+              </span>
             </div>
 
             {character.status != null && (
@@ -76,7 +83,9 @@ export function CharacterCard({ character, descriptionDisplay }: CharacterCardPr
               <div className="rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 px-4 py-3 space-y-2 shadow-[0_10px_40px_rgba(0,0,0,0.7)]">
                 <CardHeader className="p-0">
                   <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-                    <span className="text-2xl drop-shadow">👤</span>
+                    <span className="shrink-0 drop-shadow">
+                      <ElementIcon element={character.element ?? 'none'} size="sm" />
+                    </span>
                     <span className="truncate">{character.name}</span>
                   </CardTitle>
                   {descriptionText !== '' && (
@@ -86,20 +95,42 @@ export function CharacterCard({ character, descriptionDisplay }: CharacterCardPr
                   )}
                 </CardHeader>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-100">
-                  <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 font-mono uppercase tracking-wide">
+                  <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 font-mono tracking-wide">
                     ID: {character.nameId}
                   </span>
-                  {character.element != null && character.element !== 'none' && (
-                    <Badge className="bg-sky-500/80 text-white border-sky-300/60">
-                      {character.element}
-                    </Badge>
-                  )}
                 </div>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
+  );
+
+  if (onSelect) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        className="block w-full min-w-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+        onClick={(e) => {
+          e.preventDefault();
+          onSelect();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
+      >
+        {card}
+      </div>
+    );
+  }
+
+  return (
+    <Link to={`/characters/${character.nameId}`} className="block w-full min-w-0">
+      {card}
     </Link>
   );
 }

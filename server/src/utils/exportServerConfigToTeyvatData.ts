@@ -213,17 +213,27 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
           },
         };
 
-  // items: Item[] -> game format (nameId, basePower, baseCooldown, maxLevel, levelStats)
-  const items = rawItems.map((doc) => {
-    const d = doc as any;
-    return {
-      nameId: d.nameId ?? '',
-      basePower: d.basePower ?? 1,
-      baseCooldown: d.baseCooldown ?? 4,
-      maxLevel: d.maxLevel ?? 10,
-      levelStats: Array.isArray(d.levelStats) ? d.levelStats : [],
-    };
-  });
+  // items: chỉ export khi status === 'enabled'; thiếu field hoặc disabled → bỏ qua (mặc định coi là disabled).
+  const items = rawItems
+    .filter((doc) => {
+      const d = doc as Record<string, unknown>;
+      return d.status === 'enabled';
+    })
+    .map((doc) => {
+      const d = doc as Record<string, unknown>;
+      const nameClassRaw = d.nameClass ?? d.className;
+      const nameClass =
+        typeof nameClassRaw === 'string' ? nameClassRaw.trim() : '';
+      return {
+        nameId: typeof d.nameId === 'string' ? d.nameId : '',
+        basePower: typeof d.basePower === 'number' ? d.basePower : 1,
+        baseCooldown: typeof d.baseCooldown === 'number' ? d.baseCooldown : 4,
+        maxLevel: typeof d.maxLevel === 'number' ? d.maxLevel : 10,
+        unlockPrice: typeof d.unlockPrice === 'number' ? d.unlockPrice : 0,
+        levelStats: Array.isArray(d.levelStats) ? d.levelStats : [],
+        nameClass,
+      };
+    });
 
   return {
     dungeonList,

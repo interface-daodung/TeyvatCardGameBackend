@@ -16,11 +16,22 @@ import { fadeInOverlay, scaleInModal } from '../animations/motionPresets';
 import { filesService } from '../../services/filesService';
 
 interface SourceClassEditorProps {
-  type: string;
-  className: string;
+  /** Mặc định `card`: dùng `type` + `className` → `models/cards/{type}/{className}.ts` */
+  editorMode?: 'card' | 'item';
+  /** Chế độ card: thư mục con trong models/cards */
+  type?: string;
+  /** Chế độ card: tên class / stem file */
+  className?: string;
+  /** Chế độ item: đường dẫn file .ts tương đối trong models/items */
+  itemRelativePath?: string;
 }
 
-export function SourceClassEditor({ type, className }: SourceClassEditorProps) {
+export function SourceClassEditor({
+  editorMode = 'card',
+  type = '',
+  className = '',
+  itemRelativePath = '',
+}: SourceClassEditorProps) {
   const [editableClassCode, setEditableClassCode] = useState('');
   const [classCodeError, setClassCodeError] = useState<string | null>(null);
   const [classCodeLoading, setClassCodeLoading] = useState(false);
@@ -39,14 +50,27 @@ export function SourceClassEditor({ type, className }: SourceClassEditorProps) {
   const codeContainerRef = useRef<HTMLDivElement | null>(null);
   const [isCodeFullscreen, setIsCodeFullscreen] = useState(false);
 
-  const relativePath = useMemo(() => `${type}/${className}.ts`, [type, className]);
-  const displayPath = useMemo(
-    () => `TeyvatCard/src/models/cards/${type}/${className}.ts`,
-    [type, className]
+  const isItemMode = editorMode === 'item';
+  const apiScope = isItemMode ? 'items' : 'cards';
+  const relativePath = useMemo(
+    () => (isItemMode ? itemRelativePath.trim().replace(/^\/+/, '') : `${type}/${className}.ts`),
+    [isItemMode, itemRelativePath, type, className]
   );
+  const displayPath = useMemo(
+    () =>
+      isItemMode
+        ? `TeyvatCard/src/models/items/${relativePath}`
+        : `TeyvatCard/src/models/cards/${type}/${className}.ts`,
+    [isItemMode, relativePath, type, className]
+  );
+  const classNameForApi = isItemMode ? undefined : className;
 
   useEffect(() => {
-    if (!className || !type) return;
+    if (isItemMode) {
+      if (!itemRelativePath?.trim()) return;
+    } else if (!className || !type) {
+      return;
+    }
     setClassCodeLoading(true);
     setClassCodeError(null);
     setEditableClassCode('');
@@ -57,7 +81,7 @@ export function SourceClassEditor({ type, className }: SourceClassEditorProps) {
     setIsEditingExistingComment(false);
     const loadClassCode = async () => {
       try {
-        const data = await filesService.getCardClassSource(relativePath, className);
+        const data = await filesService.getCardClassSource(relativePath, classNameForApi, apiScope);
         setEditableClassCode(data.sourceText);
       } catch (error) {
         const message =
@@ -68,7 +92,7 @@ export function SourceClassEditor({ type, className }: SourceClassEditorProps) {
       }
     };
     loadClassCode();
-  }, [relativePath, className, type]);
+  }, [relativePath, classNameForApi, type, className, itemRelativePath, isItemMode, apiScope]);
 
   const insertCommentAtLine = (lineIndex: number) => {
     const lines = editableClassCode.split('\n');
@@ -140,11 +164,15 @@ export function SourceClassEditor({ type, className }: SourceClassEditorProps) {
   };
 
   const generateTsDoc = async () => {
-    if (!className || !type) return;
+    if (isItemMode) {
+      if (!itemRelativePath?.trim()) return;
+    } else if (!className || !type) {
+      return;
+    }
     setClassCodeActionLoading(true);
     setClassCodeError(null);
     try {
-      const data = await filesService.buildCardClassTsDoc(relativePath, className);
+      const data = await filesService.buildCardClassTsDoc(relativePath, classNameForApi, apiScope);
       setEditableClassCode(data.sourceText);
     } catch (error) {
       const message =
@@ -159,7 +187,12 @@ export function SourceClassEditor({ type, className }: SourceClassEditorProps) {
     setClassCodeSaveLoading(true);
     setClassCodeError(null);
     try {
-      const data = await filesService.saveCardClassSource(relativePath, editableClassCode, className);
+      const data = await filesService.saveCardClassSource(
+        relativePath,
+        editableClassCode,
+        classNameForApi,
+        apiScope
+      );
       setEditableClassCode(data.sourceText);
       setClassCodeHistory([]);
     } catch (error) {
@@ -246,10 +279,12 @@ export function SourceClassEditor({ type, className }: SourceClassEditorProps) {
       {!classCodeLoading && !classCodeError && editableClassCode && (
         <div
           ref={codeContainerRef}
-          className={`relative rounded-lg border border-slate-700 bg-[#0f172a] ${
+          className={`relative w-full rounded-lg border border-slate-700 bg-[#0f172a] ${
             isCodeFullscreen
               ? 'h-screen max-h-screen overflow-auto'
-              : 'max-h-[500px] overflow-y-auto overflow-x-hidden'
+              : isItemMode
+                ? 'max-h-[min(52dvh,520px)] overflow-y-auto overflow-x-hidden'
+                : 'max-h-[500px] overflow-y-auto overflow-x-hidden'
           }`}
         >
           <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-[#0f172a]/95 p-2">

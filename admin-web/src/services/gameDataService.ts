@@ -93,10 +93,17 @@ export interface Item {
   nameId: string;
   /** Đường dẫn web đầy đủ `/assets/images/...` — có thể rỗng nếu DB chưa sửa */
   image?: string;
+  /** File .ts tương đối trong `TeyvatCard/src/models/items` (legacy). */
+  className?: string;
+  /** Link class đã chọn (DB `nameClass`), ưu tiên khi hiển thị. */
+  nameClass?: string;
   basePower: number;
   baseCooldown: number;
   maxLevel: number;
+  /** Giá mở khóa (mặc định 0). */
+  unlockPrice?: number;
   levelStats: LevelStat[];
+  status?: 'enabled' | 'disabled';
 }
 
 export const gameDataService = {
@@ -198,7 +205,10 @@ export const gameDataService = {
     basePower: number;
     baseCooldown: number;
     maxLevel?: number;
+    unlockPrice?: number;
     levelStats?: LevelStat[];
+    className?: string;
+    status?: 'enabled' | 'disabled';
   }): Promise<Item> => {
     const response = await api.post<Item>('/items', data);
     return response.data;

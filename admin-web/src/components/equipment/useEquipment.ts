@@ -10,26 +10,13 @@ import {
   type EditingField,
   type I18nPopupField,
   toGameItem,
+  buildDefaultLevelStats,
+  mergeLevelStatsForMax,
+  validateLevelStatsPowerCooldownUnique,
 } from './equipmentUtils';
 
 const ITEM_LINK_PREFIX = '/assets/images/';
 import type { EquipmentCreateFormValues } from './EquipmentCreateModal';
-
-function buildDefaultLevelStats(
-  basePower: number,
-  baseCooldown: number,
-  maxLevel: number
-): LevelStat[] {
-  const arr: LevelStat[] = [];
-  for (let i = 0; i < maxLevel; i++) {
-    arr.push({
-      power: Math.round(basePower * (1 + (i + 1) * 0.15)),
-      cooldown: Math.max(0, baseCooldown - (i + 1) * 0.5),
-      price: (i + 1) * 100,
-    });
-  }
-  return arr;
-}
 
 export function useEquipment() {
   const [items, setItems] = useState<GameItem[]>([]);
@@ -49,12 +36,27 @@ export function useEquipment() {
   const [formI18nJa, setFormI18nJa] = useState('');
   const [translateLoading, setTranslateLoading] = useState(false);
   const [i18nError, setI18nError] = useState<string | null>(null);
-  const [formLevelMax, setFormLevelMax] = useState(10);
+  const [formLevelMax, setFormLevelMax] = useState(1);
   const [formLevelStats, setFormLevelStats] = useState<LevelStat[]>([]);
+  const [levelStatsValidationError, setLevelStatsValidationError] = useState<
+    string | null
+  >(null);
   const [expandedLevels, setExpandedLevels] = useState<Set<number>>(new Set());
   const { setBaseline, clearBaseline, isDirty: checkDirty } =
     useUnsavedBaseline<Partial<GameItem>>();
+  const {
+    setBaseline: setLevelBaseline,
+    clearBaseline: clearLevelBaseline,
+    isDirty: checkLevelDirty,
+  } = useUnsavedBaseline<{ maxLevel: number; levelStats: LevelStat[] }>();
+  const {
+    setBaseline: setI18nTextBaseline,
+    clearBaseline: clearI18nTextBaseline,
+    isDirty: checkI18nTextDirty,
+  } = useUnsavedBaseline<{ en: string; vi: string; ja: string }>();
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+  const [showLevelUnsavedConfirm, setShowLevelUnsavedConfirm] = useState(false);
+  const [showI18nUnsavedConfirm, setShowI18nUnsavedConfirm] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -64,6 +66,8 @@ export function useEquipment() {
   const [imageTreeExpanded, setImageTreeExpanded] = useState<Set<string>>(new Set());
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  /** Khi đổi item khi dirty: lưu item đích để discard/save xong mở đúng item */
+  const [pendingEditItem, setPendingEditItem] = useState<GameItem | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,6 +131,7 @@ export function useEquipment() {
       const levelStats = buildDefaultLevelStats(
         values.basePower,
         values.baseCooldown,
+        values.unlockPrice,
         values.maxLevel
       );
       const created = await gameDataService.createItem({
@@ -135,6 +140,7 @@ export function useEquipment() {
         basePower: values.basePower,
         baseCooldown: values.baseCooldown,
         maxLevel: values.maxLevel,
+        unlockPrice: values.unlockPrice,
         levelStats,
       });
       const gameItem = toGameItem(created, null, null);
@@ -163,6 +169,7 @@ export function useEquipment() {
 
   const openEditModal = (item: GameItem) => {
     const next = structuredClone(item);
+    setPendingEditItem(null);
     setSelectedItem(item);
     setFormValues(next);
     setBaseline(next);
@@ -170,13 +177,32 @@ export function useEquipment() {
     setI18nPopupField(null);
     setError(null);
     setShowUnsavedConfirm(false);
+    setShowLevelUnsavedConfirm(false);
+    setShowI18nUnsavedConfirm(false);
     setImageTreeOpen(false);
     setShowDeleteConfirm(false);
     setEditModalOpen(true);
   };
 
+  const requestOpenEditModal = (item: GameItem) => {
+    if (!editModalOpen) {
+      openEditModal(item);
+      return;
+    }
+    if (selectedItem?._id === item._id) return;
+    if (checkDirty(formValues)) {
+      setPendingEditItem(item);
+      setShowUnsavedConfirm(true);
+    } else {
+      openEditModal(item);
+    }
+  };
+
   const closeEditModal = () => {
     setShowUnsavedConfirm(false);
+    setShowLevelUnsavedConfirm(false);
+    setShowI18nUnsavedConfirm(false);
+    setPendingEditItem(null);
     clearBaseline();
     setEditModalOpen(false);
     setSelectedItem(null);
@@ -247,6 +273,7 @@ export function useEquipment() {
 
   const requestCloseEditModal = () => {
     if (editModalOpen && checkDirty(formValues)) {
+      setPendingEditItem(null);
       setShowUnsavedConfirm(true);
     } else {
       closeEditModal();
@@ -254,7 +281,14 @@ export function useEquipment() {
   };
 
   const confirmDiscardEditModal = () => {
-    closeEditModal();
+    const pending = pendingEditItem;
+    setShowUnsavedConfirm(false);
+    setPendingEditItem(null);
+    if (pending) {
+      openEditModal(pending);
+    } else {
+      closeEditModal();
+    }
   };
 
   const getFormI18n = (lang: EditLang) =>
@@ -270,47 +304,98 @@ export function useEquipment() {
     setI18nError(null);
     if (field === 'name') {
       const t = formValues.nameTranslations ?? selectedItem?.nameTranslations;
-      setFormI18nEn(t?.en ?? formValues.name ?? selectedItem?.name ?? '');
-      setFormI18nVi(t?.vi ?? '');
-      setFormI18nJa(t?.ja ?? '');
+      const en = t?.en ?? formValues.name ?? selectedItem?.name ?? '';
+      const vi = t?.vi ?? '';
+      const ja = t?.ja ?? '';
+      setFormI18nEn(en);
+      setFormI18nVi(vi);
+      setFormI18nJa(ja);
+      setI18nTextBaseline({ en, vi, ja });
     } else if (field === 'description') {
       const t =
         formValues.descriptionTranslations ?? selectedItem?.descriptionTranslations;
-      setFormI18nEn(
-        t?.en ?? formValues.description ?? selectedItem?.description ?? ''
-      );
-      setFormI18nVi(t?.vi ?? '');
-      setFormI18nJa(t?.ja ?? '');
+      const en =
+        t?.en ?? formValues.description ?? selectedItem?.description ?? '';
+      const vi = t?.vi ?? '';
+      const ja = t?.ja ?? '';
+      setFormI18nEn(en);
+      setFormI18nVi(vi);
+      setFormI18nJa(ja);
+      setI18nTextBaseline({ en, vi, ja });
     } else if (field === 'level') {
-      const max = formValues.maxLevel ?? selectedItem?.maxLevel ?? 10;
-      setFormLevelMax(max);
-      const stats = formValues.levelStats ?? selectedItem?.levelStats;
-      if (stats && stats.length >= max) {
-        setFormLevelStats(stats.slice(0, max));
-      } else {
-        const baseP = formValues.basePower ?? selectedItem?.basePower ?? 2;
-        const baseC =
-          formValues.baseCooldown ?? selectedItem?.baseCooldown ?? 18;
-        const arr: LevelStat[] = [];
-        for (let i = 0; i < max; i++) {
-          arr.push(
-            stats?.[i] ?? {
-              power: Math.round(baseP * (1 + (i + 1) * 0.15)),
-              cooldown: Math.max(0, baseC - (i + 1) * 0.5),
-              price: (i + 1) * 100,
-            }
+      setLevelStatsValidationError(null);
+      const baseP = formValues.basePower ?? selectedItem?.basePower ?? 0;
+      const baseC = formValues.baseCooldown ?? selectedItem?.baseCooldown ?? 0;
+      const unlockP = formValues.unlockPrice ?? selectedItem?.unlockPrice ?? 0;
+      const rawStats = formValues.levelStats ?? selectedItem?.levelStats;
+      const hasStats = rawStats && rawStats.length > 0;
+      const max = !hasStats
+        ? 1
+        : Math.max(
+            1,
+            Math.min(
+              99,
+              formValues.maxLevel ??
+                selectedItem?.maxLevel ??
+                rawStats!.length
+            )
           );
-        }
-        setFormLevelStats(arr);
-      }
+      const levelStatsArr = mergeLevelStatsForMax(
+        rawStats,
+        max,
+        baseP,
+        baseC,
+        unlockP
+      );
+      setFormLevelMax(max);
+      setFormLevelStats(levelStatsArr);
       setExpandedLevels(new Set());
+      setLevelBaseline({
+        maxLevel: max,
+        levelStats: structuredClone(levelStatsArr),
+      });
     }
   };
 
   const closeI18nPopup = () => {
+    setShowLevelUnsavedConfirm(false);
+    setShowI18nUnsavedConfirm(false);
+    setLevelStatsValidationError(null);
+    clearLevelBaseline();
+    clearI18nTextBaseline();
     setI18nPopupField(null);
     setI18nError(null);
   };
+
+  const requestCloseI18nPopup = () => {
+    if (
+      i18nPopupField === 'level' &&
+      checkLevelDirty({
+        maxLevel: formLevelMax,
+        levelStats: formLevelStats,
+      })
+    ) {
+      setShowLevelUnsavedConfirm(true);
+      return;
+    }
+    if (
+      (i18nPopupField === 'name' || i18nPopupField === 'description') &&
+      checkI18nTextDirty({
+        en: formI18nEn,
+        vi: formI18nVi,
+        ja: formI18nJa,
+      })
+    ) {
+      setShowI18nUnsavedConfirm(true);
+      return;
+    }
+    closeI18nPopup();
+  };
+
+  const dismissLevelUnsavedConfirm = () => setShowLevelUnsavedConfirm(false);
+  const dismissI18nUnsavedConfirm = () => setShowI18nUnsavedConfirm(false);
+
+  const confirmDiscardLevelPopup = () => closeI18nPopup();
 
   const toggleLevelExpanded = (lvl: number) => {
     setExpandedLevels((prev) => {
@@ -321,22 +406,14 @@ export function useEquipment() {
 
   const handleLevelMaxChange = (val: number) => {
     const v = Math.max(1, Math.min(99, val));
+    setLevelStatsValidationError(null);
+    const baseP = formValues.basePower ?? selectedItem?.basePower ?? 0;
+    const baseC = formValues.baseCooldown ?? selectedItem?.baseCooldown ?? 0;
+    const unlockP = formValues.unlockPrice ?? selectedItem?.unlockPrice ?? 0;
     setFormLevelMax(v);
-    setFormLevelStats((prev) => {
-      const arr = [...prev];
-      const baseP = formValues.basePower ?? selectedItem?.basePower ?? 2;
-      const baseC =
-        formValues.baseCooldown ?? selectedItem?.baseCooldown ?? 18;
-      while (arr.length < v) {
-        const i = arr.length;
-        arr.push({
-          power: Math.round(baseP * (1 + (i + 1) * 0.15)),
-          cooldown: Math.max(0, baseC - (i + 1) * 0.5),
-          price: (i + 1) * 100,
-        });
-      }
-      return arr.slice(0, v);
-    });
+    setFormLevelStats((prev) =>
+      mergeLevelStatsForMax(prev, v, baseP, baseC, unlockP)
+    );
   };
 
   const updateLevelStat = (
@@ -344,21 +421,48 @@ export function useEquipment() {
     key: keyof LevelStat,
     value: number
   ) => {
+    if (lvlIdx === 0) return;
+    setLevelStatsValidationError(null);
     setFormLevelStats((prev) => {
       const next = [...prev];
       if (!next[lvlIdx]) return next;
-      next[lvlIdx] = { ...next[lvlIdx], [key]: value };
+      next[lvlIdx] = {
+        ...next[lvlIdx],
+        [key]: Math.max(0, Math.floor(Number(value) || 0)),
+      };
       return next;
     });
   };
 
   const handleLevelSave = () => {
+    if (!selectedItem) return;
+    const baseP = formValues.basePower ?? selectedItem.basePower;
+    const baseC = formValues.baseCooldown ?? selectedItem.baseCooldown;
+    const unlockP = formValues.unlockPrice ?? selectedItem.unlockPrice ?? 0;
+    const merged = mergeLevelStatsForMax(
+      formLevelStats,
+      formLevelMax,
+      baseP,
+      baseC,
+      unlockP
+    );
+    const uniqErr = validateLevelStatsPowerCooldownUnique(merged);
+    if (uniqErr) {
+      setLevelStatsValidationError(uniqErr);
+      return;
+    }
+    setLevelStatsValidationError(null);
     setFormValues((p) => ({
       ...p,
       maxLevel: formLevelMax,
-      levelStats: formLevelStats,
+      levelStats: merged,
     }));
     closeI18nPopup();
+  };
+
+  const confirmSaveLevelPopup = () => {
+    setShowLevelUnsavedConfirm(false);
+    handleLevelSave();
   };
 
   const handleI18nTranslate = async () => {
@@ -427,6 +531,13 @@ export function useEquipment() {
     closeI18nPopup();
   };
 
+  const confirmDiscardI18nPopup = () => closeI18nPopup();
+
+  const confirmSaveI18nPopup = () => {
+    setShowI18nUnsavedConfirm(false);
+    handleI18nSave();
+  };
+
   const getDisplayName = () =>
     formValues.nameTranslations?.[editLang] ??
     formValues.name ??
@@ -450,14 +561,44 @@ export function useEquipment() {
         setSaveLoading(false);
         return;
       }
+      const maxLv = Math.max(
+        1,
+        Math.min(
+          99,
+          Math.floor(formValues.maxLevel ?? selectedItem.maxLevel ?? 1)
+        )
+      );
+      const mergedLevelStats = mergeLevelStatsForMax(
+        formValues.levelStats ?? selectedItem.levelStats,
+        maxLv,
+        formValues.basePower ?? selectedItem.basePower,
+        formValues.baseCooldown ?? selectedItem.baseCooldown,
+        formValues.unlockPrice ?? selectedItem.unlockPrice ?? 0
+      );
+      const levelUniqErr = validateLevelStatsPowerCooldownUnique(mergedLevelStats);
+      if (levelUniqErr) {
+        setError(levelUniqErr);
+        setSaveLoading(false);
+        return;
+      }
+      const nextStatus: 'enabled' | 'disabled' =
+        (formValues.status ?? selectedItem.status) === 'enabled' ? 'enabled' : 'disabled';
       const promises: Promise<unknown>[] = [];
+      const classPath = (formValues.className ?? selectedItem.className ?? '').trim();
       promises.push(
         gameDataService.updateItem(selectedItem._id, {
           image: img,
+          nameClass: classPath,
+          className: classPath,
           basePower: formValues.basePower ?? selectedItem.basePower,
           baseCooldown: formValues.baseCooldown ?? selectedItem.baseCooldown,
-          maxLevel: formValues.maxLevel ?? selectedItem.maxLevel,
-          levelStats: formValues.levelStats ?? selectedItem.levelStats,
+          maxLevel: maxLv,
+          unlockPrice: Math.max(
+            0,
+            Math.floor(formValues.unlockPrice ?? selectedItem.unlockPrice ?? 0)
+          ),
+          levelStats: mergedLevelStats,
+          status: nextStatus,
         })
       );
       if (formValues.nameTranslations) {
@@ -483,6 +624,9 @@ export function useEquipment() {
             ? {
                 ...it,
                 ...formValues,
+                maxLevel: maxLv,
+                levelStats: mergedLevelStats,
+                status: nextStatus,
                 name:
                   formValues.nameTranslations?.[editLang] ??
                   formValues.name ??
@@ -496,9 +640,23 @@ export function useEquipment() {
         )
       );
       setSelectedItem((p) =>
-        p && p._id === selectedItem._id ? { ...p, ...formValues } : p
+        p && p._id === selectedItem._id
+          ? {
+              ...p,
+              ...formValues,
+              maxLevel: maxLv,
+              levelStats: mergedLevelStats,
+              status: nextStatus,
+            }
+          : p
       );
-      closeEditModal();
+      const switchAfter = pendingEditItem;
+      setPendingEditItem(null);
+      if (switchAfter && switchAfter._id !== selectedItem._id) {
+        openEditModal(switchAfter);
+      } else {
+        closeEditModal();
+      }
     } catch (err: any) {
       console.error('Save failed:', err);
       let msg = err instanceof Error ? err.message : 'Lỗi lưu';
@@ -547,16 +705,28 @@ export function useEquipment() {
     formLevelStats,
     expandedLevels,
     openEditModal,
+    requestOpenEditModal,
     closeEditModal,
     requestCloseEditModal,
     showUnsavedConfirm,
-    dismissUnsavedConfirm: () => setShowUnsavedConfirm(false),
+    dismissUnsavedConfirm: () => {
+      setShowUnsavedConfirm(false);
+      setPendingEditItem(null);
+    },
     confirmDiscardEditModal,
     confirmSaveEditModal,
     getFormI18n,
     setFormI18n,
     openI18nPopup,
-    closeI18nPopup,
+    requestCloseI18nPopup,
+    showLevelUnsavedConfirm,
+    dismissLevelUnsavedConfirm,
+    confirmDiscardLevelPopup,
+    confirmSaveLevelPopup,
+    showI18nUnsavedConfirm,
+    dismissI18nUnsavedConfirm,
+    confirmDiscardI18nPopup,
+    confirmSaveI18nPopup,
     toggleLevelExpanded,
     handleLevelMaxChange,
     updateLevelStat,
@@ -570,6 +740,7 @@ export function useEquipment() {
     getItemDisplayDescription,
     translateLoading,
     i18nError,
+    levelStatsValidationError,
     createModalOpen,
     createLoading,
     createError,

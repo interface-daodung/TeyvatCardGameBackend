@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
 import { gameDataService, type Character } from '../../services/gameDataService';
 import { localizationService } from '../../services/localizationService';
 import type { EditLang } from '../LangDropdown';
@@ -9,7 +9,15 @@ import {
   type EditingField,
 } from './characterDetailUtils';
 
-export function useCharacterDetail(id: string | undefined) {
+export type UseCharacterDetailLangControl = {
+  editLang: EditLang;
+  setEditLang: Dispatch<SetStateAction<EditLang>>;
+};
+
+export function useCharacterDetail(
+  id: string | undefined,
+  langControl?: UseCharacterDetailLangControl
+) {
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +36,9 @@ export function useCharacterDetail(id: string | undefined) {
   const [formI18nEn, setFormI18nEn] = useState('');
   const [formI18nVi, setFormI18nVi] = useState('');
   const [formI18nJa, setFormI18nJa] = useState('');
-  const [editLang, setEditLang] = useState<EditLang>('en');
+  const [internalEditLang, setInternalEditLang] = useState<EditLang>('en');
+  const editLang = langControl?.editLang ?? internalEditLang;
+  const setEditLang = langControl?.setEditLang ?? setInternalEditLang;
   const [translateLoading, setTranslateLoading] = useState(false);
   const [i18nError, setI18nError] = useState<string | null>(null);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);

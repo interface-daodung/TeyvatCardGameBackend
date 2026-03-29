@@ -1,6 +1,10 @@
 import { Badge } from '../ui/badge';
 import type { AdventureCard } from '../../services/gameDataService';
 import { DualRangeSlider } from '../ui/DualRangeSlider';
+import {
+  StatusCyclePillButton,
+  adventureCardStatusPillClass,
+} from '../share';
 
 const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled', 'hidden'];
 
@@ -50,18 +54,6 @@ export function AdventureCardEditForm({
   onOpenClassNamePicker,
 }: AdventureCardEditFormProps) {
   const currentStatus = (form.status ?? card.status) as AdventureCard['status'];
-  const statusClasses =
-    currentStatus === 'enabled'
-      ? 'bg-emerald-500 text-emerald-50 hover:bg-emerald-600'
-      : currentStatus === 'hidden'
-        ? 'bg-slate-600 text-slate-50 hover:bg-slate-700'
-        : 'bg-red-500 text-red-50 hover:bg-red-600';
-
-  const cycleStatus = () => {
-    const index = STATUSES.indexOf(currentStatus);
-    const next = STATUSES[(index + 1) % STATUSES.length];
-    setForm((p) => ({ ...p, status: next }));
-  };
 
   return (
     <div className="space-y-4">
@@ -173,20 +165,13 @@ export function AdventureCardEditForm({
         </div>
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1">Status</label>
-          <div
-            role="button"
-            tabIndex={0}
-            className={`inline-flex items-center rounded-full border px-3.5 py-1 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent select-none ${statusClasses}`}
-            onClick={cycleStatus}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                cycleStatus();
-              }
-            }}
-          >
-            {form.status ?? card.status}
-          </div>
+          <StatusCyclePillButton
+            value={currentStatus}
+            options={STATUSES}
+            onChange={(next) => setForm((p) => ({ ...p, status: next }))}
+            getPillClassName={adventureCardStatusPillClass}
+            aria-label="Trạng thái adventure card"
+          />
         </div>
       </div>
 

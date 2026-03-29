@@ -372,10 +372,14 @@ export default function Layout() {
         />
 
         <div
+          id="admin-main-scroll"
           className={`relative z-30 flex-1 min-h-0 bg-gradient-to-br from-background via-primary-50/20 to-blue-50/20 ${
             location.pathname === '/ai-manage' || location.pathname === '/calculate-movement'
               ? 'flex flex-col overflow-hidden p-0'
-              : 'overflow-y-auto p-4 md:p-8'
+              :             location.pathname.startsWith('/characters') ||
+                  location.pathname.startsWith('/equipment')
+                ? 'flex min-h-0 flex-col overflow-y-auto p-0'
+                : 'overflow-y-auto p-4 md:p-8'
           }`}
         >
           <DbAuthGuard>

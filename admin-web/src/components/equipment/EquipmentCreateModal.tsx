@@ -17,6 +17,7 @@ export interface EquipmentCreateFormValues {
   basePower: number;
   baseCooldown: number;
   maxLevel: number;
+  unlockPrice: number;
 }
 
 interface EquipmentCreateModalProps {
@@ -32,7 +33,8 @@ const DEFAULTS: EquipmentCreateFormValues = {
   image: '',
   basePower: 2,
   baseCooldown: 18,
-  maxLevel: 10,
+  maxLevel: 1,
+  unlockPrice: 0,
 };
 
 export function EquipmentCreateModal({
@@ -270,6 +272,23 @@ export function EquipmentCreateModal({
                 setForm((p) => ({
                   ...p,
                   maxLevel: Math.max(1, Math.min(99, Number(e.target.value) || 1)),
+                }))
+              }
+              onKeyDown={onlyPositiveInt}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">Unlock price</label>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={form.unlockPrice}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  unlockPrice: Math.max(0, Math.floor(Number(e.target.value) || 0)),
                 }))
               }
               onKeyDown={onlyPositiveInt}

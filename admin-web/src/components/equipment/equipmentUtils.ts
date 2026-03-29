@@ -4,6 +4,11 @@
  */
 export {
   onlyPositiveInt,
+  intNat,
+  levelStatFromBase,
+  buildDefaultLevelStats,
+  mergeLevelStatsForMax,
+  validateLevelStatsPowerCooldownUnique,
   getDisplayPower,
   getDisplayCooldown,
   renderColoredDescription,

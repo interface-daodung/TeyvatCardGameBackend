@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { filesService, type CardClassTreeNode } from '../../services/filesService';
+import {
+  filesService,
+  type CardClassTreeNode,
+  type ModelsClassScope,
+} from '../../services/filesService';
 
 function filterTreeToSubfolder(
   nodes: CardClassTreeNode[] | null,
@@ -10,13 +14,22 @@ function filterTreeToSubfolder(
   return dir?.children ?? [];
 }
 
+export type ClassPickerSelectionMode = 'className' | 'relativePath';
+
 interface ClassNamePickerPanelProps {
   /** Nếu trả về `false` (sync hoặc Promise), panel không đóng (ví dụ trùng nameId). */
-  onSelect: (className: string) => void | boolean | Promise<void | boolean>;
+  onSelect: (value: string) => void | boolean | Promise<void | boolean>;
   onClose: () => void;
   currentValue?: string;
   /** Chỉ hiển thị nhánh con của thư mục này trong `TeyvatCard/src/models/cards` (vd: `character`). */
   subfolder?: string;
+  /** `cards` (mặc định) hoặc `items` — cây từ `models/cards` / `models/items`. */
+  modelsScope?: ModelsClassScope;
+  /**
+   * `className`: giá trị chọn là tên class export default (như cũ).
+   * `relativePath`: giá trị là `path` file `.ts` tương đối so với thư mục models (vd: `Foo.ts`).
+   */
+  selectionMode?: ClassPickerSelectionMode;
   title?: string;
 }
 
@@ -25,6 +38,8 @@ export function ClassNamePickerPanel({
   onClose,
   currentValue = '',
   subfolder,
+  modelsScope = 'cards',
+  selectionMode = 'className',
   title = 'Chọn Class name',
 }: ClassNamePickerPanelProps) {
   const [tree, setTree] = useState<CardClassTreeNode[] | null>(null);
@@ -41,7 +56,7 @@ export function ClassNamePickerPanel({
     setLoading(true);
     setError(null);
     try {
-      const data = await filesService.getCardClassTree();
+      const data = await filesService.getCardClassTree(modelsScope);
       setTree(data);
       setExpanded(new Set());
     } catch {
@@ -50,7 +65,7 @@ export function ClassNamePickerPanel({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [modelsScope]);
 
   useEffect(() => {
     loadTree();
@@ -102,8 +117,8 @@ export function ClassNamePickerPanel({
         {!loading && displayTree && displayTree.length === 0 && !error && (
           <p className="text-sm text-muted-foreground">
             {subfolder
-              ? `Không có file .ts trong TeyvatCard/src/models/cards/${subfolder}`
-              : 'Không có file .ts trong TeyvatCard/src/models/cards'}
+              ? `Không có file .ts trong TeyvatCard/src/models/${modelsScope === 'items' ? 'items' : 'cards'}/${subfolder}`
+              : `Không có file .ts trong TeyvatCard/src/models/${modelsScope === 'items' ? 'items' : 'cards'}`}
           </p>
         )}
         {!loading && displayTree && displayTree.length > 0 && (
@@ -114,12 +129,14 @@ export function ClassNamePickerPanel({
             onToggle={toggle}
             onSelectClass={handleSelect}
             currentValue={currentValue}
+            selectionMode={selectionMode}
           />
         )}
       </div>
       <div className="px-4 py-3 border-t border-border text-xs text-muted-foreground">
         Bấm vào tên file .ts để chọn (mỗi file lấy `export default class`)
         {subfolder ? ` — thư mục: ${subfolder}/` : ''}
+        {modelsScope === 'items' ? ' — models/items' : ''}
       </div>
     </div>
   );
@@ -130,8 +147,9 @@ interface TreeNodeListProps {
   parentPath: string;
   expanded: Set<string>;
   onToggle: (path: string) => void;
-  onSelectClass: (className: string) => void;
+  onSelectClass: (value: string) => void;
   currentValue: string;
+  selectionMode: ClassPickerSelectionMode;
 }
 
 function TreeNodeList({
@@ -141,6 +159,7 @@ function TreeNodeList({
   onToggle,
   onSelectClass,
   currentValue,
+  selectionMode,
 }: TreeNodeListProps) {
   return (
     <ul className="list-none pl-0 space-y-0.5">
@@ -170,6 +189,7 @@ function TreeNodeList({
                     onToggle={onToggle}
                     onSelectClass={onSelectClass}
                     currentValue={currentValue}
+                    selectionMode={selectionMode}
                   />
                 </div>
               )}
@@ -181,8 +201,14 @@ function TreeNodeList({
             {(() => {
               const classes = node.classes ?? [];
               const selectedClassName = classes[0];
-              const canSelect = Boolean(selectedClassName);
-              const isSelected = canSelect && currentValue === selectedClassName;
+              const fileRelPath = path;
+              const selectValue =
+                selectionMode === 'relativePath' ? fileRelPath : selectedClassName;
+              const canSelect =
+                selectionMode === 'relativePath'
+                  ? Boolean(fileRelPath && node.name.endsWith('.ts'))
+                  : Boolean(selectedClassName);
+              const isSelected = canSelect && currentValue === selectValue;
 
               return (
                 <div
@@ -191,12 +217,12 @@ function TreeNodeList({
                   } ${isSelected ? 'bg-muted/60' : ''}`}
                   role={canSelect ? 'button' : undefined}
                   tabIndex={canSelect ? 0 : undefined}
-                  onClick={canSelect ? () => onSelectClass(selectedClassName!) : undefined}
+                  onClick={canSelect ? () => onSelectClass(selectValue!) : undefined}
                   onKeyDown={(e) => {
                     if (!canSelect) return;
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      onSelectClass(selectedClassName!);
+                      onSelectClass(selectValue!);
                     }
                   }}
                 >

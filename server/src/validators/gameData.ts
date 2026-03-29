@@ -89,19 +89,30 @@ const itemImageLinkSchema = z
     'image phải bắt đầu bằng /assets/images/ (link đầy đủ, không chỉ tên file)'
   );
 
+const itemStatusEnum = z.enum(['enabled', 'disabled']);
+
 export const createItemSchema = z.object({
   nameId: z.string().min(1),
   image: itemImageLinkSchema,
+  status: itemStatusEnum.optional(),
   basePower: z.number().min(0, "Base Power không được nhỏ hơn 0").max(50, "Base Power không được vượt quá 50"),
   baseCooldown: z.number().min(0, "Base Cooldown không được nhỏ hơn 0").max(50, "Base Cooldown không được vượt quá 50"),
   maxLevel: z.number().min(1, "Max Level tối thiểu là 1").max(99, "Max Level tối đa là 99").optional(),
+  unlockPrice: z.number().int().min(0, "Unlock price không được âm").max(999999999).optional(),
   levelStats: z.array(levelStatSchema).optional(),
+  /** Link class item (relative `models/items`); alias legacy `className`. */
+  nameClass: z.string().optional(),
+  className: z.string().optional(),
 });
 
 export const updateItemSchema = z.object({
+  status: itemStatusEnum.optional(),
   image: itemImageLinkSchema.optional(),
+  nameClass: z.string().optional(),
+  className: z.string().optional(),
   basePower: z.number().min(0, "Base Power không được nhỏ hơn 0").max(50, "Base Power không được vượt quá 50").optional(),
   baseCooldown: z.number().min(0, "Base Cooldown không được nhỏ hơn 0").max(50, "Base Cooldown không được vượt quá 50").optional(),
   maxLevel: z.number().min(1, "Max Level tối thiểu là 1").max(99, "Max Level tối đa là 99").optional(),
+  unlockPrice: z.number().int().min(0, "Unlock price không được âm").max(999999999).optional(),
   levelStats: z.array(levelStatSchema).optional(),
 });

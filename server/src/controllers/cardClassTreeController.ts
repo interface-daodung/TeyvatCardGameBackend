@@ -4,13 +4,20 @@ import {
   getCharacterClassAstMap,
   getCardClassSource,
   getCardClassTree,
+  getItemClassTree,
+  type ModelsClassScope,
   saveCardClassSource,
 } from '../services/cardClassTreeService.js';
 import { AuthRequest } from '../types/index.js';
 
-export async function getCardClassTreeHandler(_req: AuthRequest, res: Response) {
+function parseModelsScope(value: unknown): ModelsClassScope {
+  return value === 'items' ? 'items' : 'cards';
+}
+
+export async function getCardClassTreeHandler(req: AuthRequest, res: Response) {
   try {
-    const tree = getCardClassTree();
+    const scope = parseModelsScope(req.query.scope);
+    const tree = scope === 'items' ? getItemClassTree() : getCardClassTree();
     res.json({ tree });
   } catch (error) {
     console.error('getCardClassTree error:', error);
@@ -25,13 +32,14 @@ export async function getCardClassSourceHandler(req: AuthRequest, res: Response)
       typeof req.query.className === 'string' && req.query.className.trim().length > 0
         ? req.query.className.trim()
         : undefined;
+    const scope = parseModelsScope(req.query.scope);
 
     if (!filePath) {
       res.status(400).json({ error: 'Missing class file path' });
       return;
     }
 
-    const data = getCardClassSource(filePath, className);
+    const data = getCardClassSource(filePath, className, scope);
     res.json(data);
   } catch (error) {
     console.error('getCardClassSource error:', error);
@@ -48,13 +56,14 @@ export async function buildCardClassTsDocHandler(req: AuthRequest, res: Response
       typeof req.body.className === 'string' && req.body.className.trim().length > 0
         ? req.body.className.trim()
         : undefined;
+    const scope = parseModelsScope(req.body.scope);
 
     if (!filePath) {
       res.status(400).json({ error: 'Missing class file path' });
       return;
     }
 
-    const data = buildCardClassTsDoc(filePath, className);
+    const data = buildCardClassTsDoc(filePath, className, scope);
     res.json(data);
   } catch (error) {
     console.error('buildCardClassTsDoc error:', error);
@@ -72,6 +81,7 @@ export async function saveCardClassSourceHandler(req: AuthRequest, res: Response
       typeof req.body.className === 'string' && req.body.className.trim().length > 0
         ? req.body.className.trim()
         : undefined;
+    const scope = parseModelsScope(req.body.scope);
 
     if (!filePath) {
       res.status(400).json({ error: 'Missing class file path' });
@@ -82,7 +92,7 @@ export async function saveCardClassSourceHandler(req: AuthRequest, res: Response
       return;
     }
 
-    const data = saveCardClassSource({ relativePath: filePath, className, sourceText });
+    const data = saveCardClassSource({ relativePath: filePath, className, sourceText }, scope);
     res.json(data);
   } catch (error) {
     console.error('saveCardClassSource error:', error);

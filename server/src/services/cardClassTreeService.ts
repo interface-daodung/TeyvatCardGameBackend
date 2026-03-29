@@ -10,6 +10,16 @@ const cardsBasePath = process.env.TEYVAT_CARD_MODELS_PATH
   ? path.resolve(process.env.TEYVAT_CARD_MODELS_PATH)
   : path.resolve(rootDir, '../TeyvatCard/src/models/cards');
 
+const itemsBasePath = process.env.TEYVAT_ITEM_MODELS_PATH
+  ? path.resolve(process.env.TEYVAT_ITEM_MODELS_PATH)
+  : path.resolve(rootDir, '../TeyvatCard/src/models/items');
+
+export type ModelsClassScope = 'cards' | 'items';
+
+function getModelsRootPath(scope: ModelsClassScope): string {
+  return scope === 'items' ? itemsBasePath : cardsBasePath;
+}
+
 export interface CardClassTreeNode {
   name: string;
   type: 'dir' | 'file';
@@ -46,14 +56,15 @@ export interface CharacterClassAstMapResult {
   methodMap: Record<string, ClassMethodAstNode[]>;
 }
 
-function resolveClassFilePath(relativePath: string): string {
+function resolveClassFilePath(relativePath: string, scope: ModelsClassScope = 'cards'): string {
   const normalizedRelativePath = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
   if (!normalizedRelativePath.endsWith('.ts') || normalizedRelativePath.includes('..')) {
     throw new Error('Invalid class file path');
   }
 
-  const fullPath = path.resolve(cardsBasePath, normalizedRelativePath);
-  if (!fullPath.startsWith(path.resolve(cardsBasePath))) {
+  const base = getModelsRootPath(scope);
+  const fullPath = path.resolve(base, normalizedRelativePath);
+  if (!fullPath.startsWith(path.resolve(base))) {
     throw new Error('Invalid class file path');
   }
   if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
@@ -179,9 +190,21 @@ export function getCardClassTree(): CardClassTreeNode[] {
   return buildCardClassTree(cardsBasePath, '');
 }
 
-export function getCardClassSource(relativePath: string, className?: string): CardClassSourceResult {
+export function getItemClassTree(): CardClassTreeNode[] {
+  return buildCardClassTree(itemsBasePath, '');
+}
+
+export function getModelsClassTree(scope: ModelsClassScope): CardClassTreeNode[] {
+  return buildCardClassTree(getModelsRootPath(scope), '');
+}
+
+export function getCardClassSource(
+  relativePath: string,
+  className?: string,
+  scope: ModelsClassScope = 'cards'
+): CardClassSourceResult {
   const normalizedRelativePath = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  const fullPath = resolveClassFilePath(relativePath);
+  const fullPath = resolveClassFilePath(relativePath, scope);
 
   const project = new Project({ skipAddingFilesFromTsConfig: true });
   const sourceFile = project.addSourceFileAtPath(fullPath);
@@ -204,9 +227,13 @@ export function getCardClassSource(relativePath: string, className?: string): Ca
   };
 }
 
-export function buildCardClassTsDoc(relativePath: string, className?: string): CardClassSourceResult {
+export function buildCardClassTsDoc(
+  relativePath: string,
+  className?: string,
+  scope: ModelsClassScope = 'cards'
+): CardClassSourceResult {
   const normalizedRelativePath = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  const fullPath = resolveClassFilePath(relativePath);
+  const fullPath = resolveClassFilePath(relativePath, scope);
   const project = new Project({ skipAddingFilesFromTsConfig: true });
   const sourceFile = project.addSourceFileAtPath(fullPath);
   const classes = sourceFile.getClasses();
@@ -248,9 +275,12 @@ export function buildCardClassTsDoc(relativePath: string, className?: string): C
   };
 }
 
-export function saveCardClassSource(input: SaveCardClassSourceInput): CardClassSourceResult {
+export function saveCardClassSource(
+  input: SaveCardClassSourceInput,
+  scope: ModelsClassScope = 'cards'
+): CardClassSourceResult {
   const normalizedRelativePath = input.relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  const fullPath = resolveClassFilePath(input.relativePath);
+  const fullPath = resolveClassFilePath(input.relativePath, scope);
   const sourceText = input.sourceText?.trim();
   if (!sourceText) {
     throw new Error('Source text is required');
@@ -289,7 +319,7 @@ export function saveCardClassSource(input: SaveCardClassSourceInput): CardClassS
 
 export function getCharacterClassAstMap(relativePath: string, className?: string): CharacterClassAstMapResult {
   const normalizedRelativePath = normalizeRelativePath(relativePath);
-  const fullPath = resolveClassFilePath(relativePath);
+  const fullPath = resolveClassFilePath(relativePath, 'cards');
   const parentRelativePath = 'modules/typeCard/character.ts';
   const parentBasePath = process.env.TEYVAT_CARD_MODELS_PATH
     ? path.resolve(path.dirname(cardsBasePath), '../modules/typeCard')

@@ -34,6 +34,8 @@ export interface CardClassSource {
   sourceText: string;
 }
 
+export type ModelsClassScope = 'cards' | 'items';
+
 export interface ClassMethodAstNode {
   name: string;
   kind: 'method' | 'constructor' | 'get' | 'set';
@@ -58,22 +60,36 @@ export const filesService = {
     return response.data.tree;
   },
 
-  getCardClassTree: async (): Promise<CardClassTreeNode[]> => {
-    const response = await api.get<{ tree: CardClassTreeNode[] }>('/files/card-class-tree');
+  getCardClassTree: async (scope: ModelsClassScope = 'cards'): Promise<CardClassTreeNode[]> => {
+    const response = await api.get<{ tree: CardClassTreeNode[] }>('/files/card-class-tree', {
+      params: scope === 'items' ? { scope: 'items' } : undefined,
+    });
     return response.data.tree;
   },
 
-  getCardClassSource: async (path: string, className?: string): Promise<CardClassSource> => {
+  getCardClassSource: async (
+    path: string,
+    className?: string,
+    scope: ModelsClassScope = 'cards'
+  ): Promise<CardClassSource> => {
     const response = await api.get<CardClassSource>('/files/card-class-source', {
-      params: className ? { path, className } : { path },
+      params:
+        className || scope === 'items'
+          ? { path, ...(className ? { className } : {}), ...(scope === 'items' ? { scope: 'items' } : {}) }
+          : { path },
     });
     return response.data;
   },
 
-  buildCardClassTsDoc: async (path: string, className?: string): Promise<CardClassSource> => {
+  buildCardClassTsDoc: async (
+    path: string,
+    className?: string,
+    scope: ModelsClassScope = 'cards'
+  ): Promise<CardClassSource> => {
     const response = await api.post<CardClassSource>('/files/card-class-tsdoc', {
       path,
       className,
+      ...(scope === 'items' ? { scope: 'items' } : {}),
     });
     return response.data;
   },
@@ -81,12 +97,14 @@ export const filesService = {
   saveCardClassSource: async (
     path: string,
     sourceText: string,
-    className?: string
+    className?: string,
+    scope: ModelsClassScope = 'cards'
   ): Promise<CardClassSource> => {
     const response = await api.post<CardClassSource>('/files/card-class-source/save', {
       path,
       sourceText,
       className,
+      ...(scope === 'items' ? { scope: 'items' } : {}),
     });
     return response.data;
   },

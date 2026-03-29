@@ -35,7 +35,7 @@ export function EquipmentItemImagePicker({
 
   return (
     <div
-      className="w-40 sm:w-48 aspect-square rounded-lg overflow-hidden bg-muted relative border border-border cursor-pointer shrink-0"
+      className="w-52 sm:w-64 md:w-72 aspect-square rounded-xl overflow-hidden bg-muted relative border border-border cursor-pointer shrink-0 shadow-sm"
       onClick={() => !isTreeOpen && onToggleTree()}
       role="button"
       tabIndex={0}

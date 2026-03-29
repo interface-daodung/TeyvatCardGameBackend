@@ -3,6 +3,9 @@ import { Button } from '../ui/button';
 import { onlyPositiveInt, type LevelStat, type I18nPopupField } from './equipmentUtils';
 import type { EditLang } from '../LangDropdown';
 
+/** Mở/đóng chi tiết level: ngắn, không dùng layout để tránh giật với height animation */
+const levelExpandTransition = { duration: 0.1, ease: 'easeOut' as const };
+
 const LANG_OPTIONS: EditLang[] = ['en', 'vi', 'ja'];
 const LANG_LABELS: Record<EditLang, string> = {
   en: 'English',
@@ -10,7 +13,11 @@ const LANG_LABELS: Record<EditLang, string> = {
   ja: 'Japanese',
 };
 
-interface EquipmentI18nPanelProps {
+interface EquipmentItemFieldModalProps {
+  /** Trong drawer: full width, bỏ min-width cố định của popup */
+  embedded?: boolean;
+  /** Popup i18n: bọc ngoài đã có ring/shadow — bỏ shadow/border trùng */
+  modalSurface?: boolean;
   field: I18nPopupField;
   editLang: EditLang;
   getFormI18n: (lang: EditLang) => string;
@@ -20,6 +27,12 @@ interface EquipmentI18nPanelProps {
   expandedLevels: Set<number>;
   translateLoading: boolean;
   i18nError: string | null;
+  /** Lỗi validate cặp Power/Cooldown trùng khi lưu popup Level */
+  levelStatsValidationError?: string | null;
+  /** Level 1: đồng bộ Base Power / Base Cooldown / Unlock price — chỉ đọc */
+  level1Power: number;
+  level1Cooldown: number;
+  level1Price: number;
   onLevelMaxChange: (val: number) => void;
   onToggleLevelExpanded: (lvl: number) => void;
   onUpdateLevelStat: (lvlIdx: number, key: keyof LevelStat, value: number) => void;
@@ -28,7 +41,9 @@ interface EquipmentI18nPanelProps {
   onClose: () => void;
 }
 
-export function EquipmentI18nPanel({
+export function EquipmentItemFieldModal({
+  embedded = false,
+  modalSurface = false,
   field,
   editLang,
   getFormI18n,
@@ -38,13 +53,17 @@ export function EquipmentI18nPanel({
   expandedLevels,
   translateLoading,
   i18nError,
+  levelStatsValidationError = null,
+  level1Power,
+  level1Cooldown,
+  level1Price,
   onLevelMaxChange,
   onToggleLevelExpanded,
   onUpdateLevelStat,
   onTranslate,
   onSave,
   onClose,
-}: EquipmentI18nPanelProps) {
+}: EquipmentItemFieldModalProps) {
   const title =
     field === 'name'
       ? 'Sửa Name (i18n)'
@@ -52,17 +71,23 @@ export function EquipmentI18nPanel({
         ? 'Sửa Description (i18n)'
         : 'Level';
 
-  return (
-    <motion.div
-      layout
-      transition={{ layout: { duration: 0.2, ease: 'easeOut' } }}
-      className={`w-full max-w-md rounded-lg 
+  const rootClass =
+    embedded
+      ? `w-full min-w-0 max-w-none rounded-none border-x-0 border-b-0 shadow-none
+        bg-card overflow-hidden border-t border-border flex flex-col flex-1 min-h-0`
+      : modalSurface
+        ? `w-full min-w-0 rounded-none border-0 shadow-none bg-transparent overflow-hidden flex flex-col min-h-0 max-h-full h-full ${
+            field === 'level' ? 'min-w-[min(100%,36rem)]' : ''
+          }`
+        : `w-full max-w-md rounded-lg 
         bg-card overflow-hidden shadow-xl border border-border 
         flex-shrink-0 flex flex-col 
         ${field === 'level' ? 'min-w-[28rem] w-[28rem]' : ''}
         ${field === 'name' ? 'min-w-[34rem] w-[34rem] max-w-[90vw]' : ''}
-        ${field === 'description' ? 'min-w-[34rem] w-[34rem] max-w-[90vw]' : ''}`}
-    >
+        ${field === 'description' ? 'min-w-[34rem] w-[34rem] max-w-[90vw]' : ''}`;
+
+  return (
+    <motion.div className={rootClass}>
       <div className="flex items-center justify-between px-6 py-4 bg-blue-600 text-white">
         <h3 className="text-lg font-semibold">{title}</h3>
         <button
@@ -75,14 +100,25 @@ export function EquipmentI18nPanel({
         </button>
       </div>
       <div
-        className={`p-6 flex-1 overflow-auto ${field === 'level' ? 'min-h-[380px]' : ''}`}
+        className={`p-6 flex-1 overflow-auto ${
+          field === 'level'
+            ? modalSurface
+              ? 'min-h-[420px]'
+              : 'min-h-[380px]'
+            : ''
+        }`}
       >
         {field === 'level' ? (
-          <motion.div
-            layout
-            transition={{ layout: { duration: 0.2, ease: 'easeOut' } }}
-            className="space-y-4 min-h-[360px] flex flex-col"
+          <div
+            className={`space-y-4 flex flex-col ${
+              modalSurface ? 'min-h-[400px]' : 'min-h-[360px]'
+            }`}
           >
+            {levelStatsValidationError && (
+              <p className="text-sm text-red-600 shrink-0" role="alert">
+                {levelStatsValidationError}
+              </p>
+            )}
             <div className="flex-shrink-0">
               <label className="block text-sm font-medium mb-1">Max Level</label>
               <div className="flex items-center justify-between">
@@ -111,19 +147,21 @@ export function EquipmentI18nPanel({
                 </div>
               </div>
             </div>
-            <motion.div
-              layout
-              transition={{ layout: { duration: 0.18, ease: 'easeOut' } }}
-              className="space-y-1 h-[280px] overflow-y-scroll overflow-x-hidden shrink-0 [scrollbar-gutter:stable]"
+            <div
+              className={`space-y-1 overflow-y-scroll overflow-x-hidden shrink-0 [scrollbar-gutter:stable] ${
+                modalSurface ? 'h-[min(340px,42vh)] min-h-[260px]' : 'h-[280px]'
+              }`}
             >
               {formLevelStats.map((stat, idx) => {
                 const lvl = idx + 1;
                 const expanded = expandedLevels.has(lvl);
+                const isLevel1 = idx === 0;
+                const dispPower = isLevel1 ? level1Power : stat.power;
+                const dispCd = isLevel1 ? level1Cooldown : stat.cooldown;
+                const dispPrice = isLevel1 ? level1Price : stat.price;
                 return (
-                  <motion.div
+                  <div
                     key={lvl}
-                    layout
-                    transition={{ layout: { duration: 0.18, ease: 'easeOut' } }}
                     className={`border rounded overflow-hidden ${expanded ? 'border-blue-400 ring-1 ring-blue-200' : ''}`}
                   >
                     <button
@@ -138,9 +176,14 @@ export function EquipmentI18nPanel({
                         {expanded ? '▼' : '▶'}
                       </span>
                       <span className="font-medium shrink-0">Level {lvl}</span>
-                      <span className="text-red-600">Power {stat.power}</span>
-                      <span className="text-blue-600">Cooldown {stat.cooldown}</span>
-                      <span className="text-amber-600">Price 🪙 : {stat.price}</span>
+                      {isLevel1 && (
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          (theo Base / Unlock)
+                        </span>
+                      )}
+                      <span className="text-red-600">Power {dispPower}</span>
+                      <span className="text-blue-600">Cooldown {dispCd}</span>
+                      <span className="text-amber-600">Price 🪙 : {dispPrice}</span>
                     </button>
                     <AnimatePresence initial={false}>
                       {expanded && (
@@ -149,8 +192,8 @@ export function EquipmentI18nPanel({
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.18, ease: 'easeOut' }}
-                          className="px-4 pb-3 pt-2 grid grid-cols-3 gap-3 bg-slate-50/50 border-t border-slate-200"
+                          transition={levelExpandTransition}
+                          className="px-4 pb-3 pt-2 grid grid-cols-3 gap-3 bg-slate-50/50 border-t border-slate-200 overflow-hidden"
                         >
                           <div>
                             <label className="text-xs font-medium text-muted-foreground block mb-1">
@@ -159,7 +202,9 @@ export function EquipmentI18nPanel({
                             <input
                               type="number"
                               min={0}
-                              value={stat.power}
+                              value={isLevel1 ? level1Power : stat.power}
+                              readOnly={isLevel1}
+                              disabled={isLevel1}
                               onChange={(e) =>
                                 onUpdateLevelStat(
                                   idx,
@@ -168,7 +213,9 @@ export function EquipmentI18nPanel({
                                 )
                               }
                               onKeyDown={onlyPositiveInt}
-                              className="w-full border rounded px-2 py-1 text-sm"
+                              className={`w-full border rounded px-2 py-1 text-sm ${
+                                isLevel1 ? 'bg-muted cursor-not-allowed opacity-90' : ''
+                              }`}
                             />
                           </div>
                           <div>
@@ -178,7 +225,9 @@ export function EquipmentI18nPanel({
                             <input
                               type="number"
                               min={0}
-                              value={stat.cooldown}
+                              value={isLevel1 ? level1Cooldown : stat.cooldown}
+                              readOnly={isLevel1}
+                              disabled={isLevel1}
                               onChange={(e) =>
                                 onUpdateLevelStat(
                                   idx,
@@ -187,7 +236,9 @@ export function EquipmentI18nPanel({
                                 )
                               }
                               onKeyDown={onlyPositiveInt}
-                              className="w-full border rounded px-2 py-1 text-sm"
+                              className={`w-full border rounded px-2 py-1 text-sm ${
+                                isLevel1 ? 'bg-muted cursor-not-allowed opacity-90' : ''
+                              }`}
                             />
                           </div>
                           <div>
@@ -197,7 +248,9 @@ export function EquipmentI18nPanel({
                             <input
                               type="number"
                               min={0}
-                              value={stat.price}
+                              value={isLevel1 ? level1Price : stat.price}
+                              readOnly={isLevel1}
+                              disabled={isLevel1}
                               onChange={(e) =>
                                 onUpdateLevelStat(
                                   idx,
@@ -206,17 +259,19 @@ export function EquipmentI18nPanel({
                                 )
                               }
                               onKeyDown={onlyPositiveInt}
-                              className="w-full border rounded px-2 py-1 text-sm"
+                              className={`w-full border rounded px-2 py-1 text-sm ${
+                                isLevel1 ? 'bg-muted cursor-not-allowed opacity-90' : ''
+                              }`}
                             />
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </motion.div>
+                  </div>
                 );
               })}
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         ) : (
           <div className="space-y-4">
             {([editLang, ...LANG_OPTIONS.filter((l) => l !== editLang)] as EditLang[]).map(

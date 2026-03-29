@@ -1,0 +1,92 @@
+import { useId } from 'react';
+import { Button } from './ui/button';
+
+export interface ConfirmDangerDialogProps {
+  open: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  /** Đang xử lý hành động xác nhận (khóa nút, đổi nhãn) */
+  confirmLoading?: boolean;
+  title?: string;
+  description: string;
+  cancelLabel?: string;
+  confirmLabel?: string;
+  confirmLoadingLabel?: string;
+  /** class z-index cho lớp phủ */
+  overlayClassName?: string;
+}
+
+const defaultTitle = 'Xác nhận?';
+
+/**
+ * Popup xác nhận hành động nguy hiểm (xóa, gỡ, v.v.), dùng chung admin.
+ * Backdrop / nút ✕ / Hủy = onCancel; nút xác nhận = onConfirm.
+ */
+export function ConfirmDangerDialog({
+  open,
+  onCancel,
+  onConfirm,
+  confirmLoading = false,
+  title = defaultTitle,
+  description,
+  cancelLabel = 'Hủy',
+  confirmLabel = 'Xóa',
+  confirmLoadingLabel = 'Đang xử lý…',
+  overlayClassName = 'z-[10000]',
+}: ConfirmDangerDialogProps) {
+  const titleId = useId();
+
+  if (!open) return null;
+
+  return (
+    <div className={`fixed inset-0 flex items-center justify-center p-4 ${overlayClassName}`}>
+      <div
+        className="absolute inset-0 bg-black/60"
+        onClick={onCancel}
+        aria-hidden
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative z-10 w-full max-w-md rounded-lg border border-border bg-card shadow-xl overflow-hidden"
+      >
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-muted/30 px-4 py-3">
+          <h3 id={titleId} className="min-w-0 pr-2 text-lg font-semibold text-destructive">
+            {title}
+          </h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={confirmLoading}
+            className="shrink-0 rounded-md p-1.5 text-xl leading-none text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+            aria-label="Đóng"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="space-y-4 p-4">
+          <p className="text-sm text-muted-foreground">{description}</p>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={confirmLoading}
+            >
+              {cancelLabel}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={onConfirm}
+              disabled={confirmLoading}
+            >
+              {confirmLoading ? confirmLoadingLabel : confirmLabel}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

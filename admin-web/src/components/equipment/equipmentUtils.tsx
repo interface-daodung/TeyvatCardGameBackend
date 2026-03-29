@@ -8,6 +8,98 @@ export const onlyPositiveInt = (e: React.KeyboardEvent<HTMLInputElement>) => {
 /** Re-export for consumers that need LevelStat */
 export type { LevelStat };
 
+/** Số tự nhiên (0, 1, 2, …) — power / cooldown / price level */
+export function intNat(n: number): number {
+  return Math.max(0, Math.floor(Number(n) || 0));
+}
+
+/** Level 1: Power = base, Cooldown = base cooldown, Price = unlock price */
+export function levelStatFromBase(
+  basePower: number,
+  baseCooldown: number,
+  unlockPrice: number
+): LevelStat {
+  return {
+    power: intNat(basePower),
+    cooldown: intNat(baseCooldown),
+    price: intNat(unlockPrice),
+  };
+}
+
+/**
+ * Level 1 từ base/unlock; mỗi level tiếp theo: cùng power & cooldown level trước, price = trước + 50.
+ */
+export function buildDefaultLevelStats(
+  basePower: number,
+  baseCooldown: number,
+  unlockPrice: number,
+  maxLevel: number
+): LevelStat[] {
+  const n = Math.max(1, Math.min(99, Math.floor(maxLevel) || 1));
+  const arr: LevelStat[] = [];
+  const l1 = levelStatFromBase(basePower, baseCooldown, unlockPrice);
+  arr.push(l1);
+  for (let i = 1; i < n; i++) {
+    const prev = arr[i - 1];
+    arr.push({
+      power: intNat(prev.power),
+      cooldown: intNat(prev.cooldown),
+      price: intNat(prev.price + 50),
+    });
+  }
+  return arr;
+}
+
+/**
+ * Gắn max level với dữ liệu có sẵn: [0] luôn từ base/unlock; các dòng sau lấy từ existing nếu có, không thì +50 từ trước.
+ */
+export function mergeLevelStatsForMax(
+  existing: LevelStat[] | undefined,
+  max: number,
+  basePower: number,
+  baseCooldown: number,
+  unlockPrice: number
+): LevelStat[] {
+  const n = Math.max(1, Math.min(99, max));
+  const l1 = levelStatFromBase(basePower, baseCooldown, unlockPrice);
+  const arr: LevelStat[] = [l1];
+  for (let i = 1; i < n; i++) {
+    const fromDb = existing?.[i];
+    if (fromDb) {
+      arr.push({
+        power: intNat(fromDb.power),
+        cooldown: intNat(fromDb.cooldown),
+        price: intNat(fromDb.price),
+      });
+    } else {
+      const prev = arr[i - 1];
+      arr.push({
+        power: intNat(prev.power),
+        cooldown: intNat(prev.cooldown),
+        price: intNat(prev.price + 50),
+      });
+    }
+  }
+  return arr;
+}
+
+/** Power + Cooldown (số tự nhiên) không được trùng cặp giữa hai level */
+export function validateLevelStatsPowerCooldownUnique(
+  stats: LevelStat[]
+): string | null {
+  const seen = new Map<string, number>();
+  for (let i = 0; i < stats.length; i++) {
+    const s = stats[i];
+    const key = `${intNat(s.power)},${intNat(s.cooldown)}`;
+    if (seen.has(key)) {
+      const firstLvl = seen.get(key)! + 1;
+      return `Cặp Power/Cooldown (${intNat(s.power)}, ${intNat(s.cooldown)}) bị trùng giữa level ${firstLvl} và level ${i + 1}.`;
+    }
+    seen.set(key, i);
+  }
+  return null;
+}
+
 /** Item type for display - combines Item from API + localization name/description */
 export interface GameItem {
   _id: string;
@@ -20,11 +112,16 @@ export interface GameItem {
   description: string;
   level: number;
   maxLevel: number;
+  /** Giá mở khóa item (DB `unlockPrice`). */
+  unlockPrice: number;
   powerFormula?: 'healing' | 'base';
   nameTranslations?: Record<string, string>;
   descriptionTranslations?: Record<string, string>;
   levelStats?: LevelStat[];
-  status?: 'ban' | 'pre-release' | string;
+  /** Trạng thái item trong DB (enabled / disabled). */
+  status: 'enabled' | 'disabled';
+  /** Đường dẫn file .ts trong `models/items` (field DB `className`). */
+  className?: string;
 }
 
 export const getDisplayPower = (item: GameItem): number => {
@@ -102,16 +199,23 @@ export function toGameItem(
     name: nameTranslations.en ?? item.nameId,
     nameId: item.nameId,
     image,
+    className: (() => {
+      const nc = typeof item.nameClass === 'string' ? item.nameClass.trim() : '';
+      const legacy = typeof item.className === 'string' ? item.className.trim() : '';
+      return nc || legacy;
+    })(),
     basePower: item.basePower,
     baseCooldown: item.baseCooldown,
     description: descriptionTranslations.en ?? '',
     level: 0,
     maxLevel: item.maxLevel,
+    unlockPrice: typeof item.unlockPrice === 'number' ? Math.max(0, Math.floor(item.unlockPrice)) : 0,
     levelStats: item.levelStats ?? [],
+    status: item.status === 'enabled' ? 'enabled' : 'disabled',
     nameTranslations,
     descriptionTranslations,
   };
 }
 
-export type EditingField = 'basePower' | 'baseCooldown' | null;
+export type EditingField = 'basePower' | 'baseCooldown' | 'unlockPrice' | null;
 export type I18nPopupField = 'name' | 'description' | 'level' | null;
