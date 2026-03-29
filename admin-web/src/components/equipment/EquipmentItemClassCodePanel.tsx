@@ -24,7 +24,11 @@ export function EquipmentItemClassCodePanel({
   return (
     <>
       <div
-        className="flex min-h-0 w-full min-w-0 flex-col gap-3"
+        className={
+          isFull
+            ? 'flex min-h-[min(42dvh,22rem)] w-full min-w-0 flex-1 flex-col gap-3'
+            : 'flex min-h-0 w-full min-w-0 flex-col gap-3'
+        }
       >
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-xs font-medium text-muted-foreground">Item class (TeyvatCard)</span>
@@ -39,7 +43,13 @@ export function EquipmentItemClassCodePanel({
           ) : null}
         </div>
         {hasPath ? (
-          <div className="min-h-0 w-full min-w-0">
+          <div
+            className={
+              isFull
+                ? 'flex min-h-[min(36dvh,18rem)] min-w-0 flex-1 flex-col'
+                : 'min-h-0 w-full min-w-0'
+            }
+          >
             <SourceClassEditor editorMode="item" itemRelativePath={trimmed} />
           </div>
         ) : (
@@ -48,7 +58,7 @@ export function EquipmentItemClassCodePanel({
             onClick={() => setPickerOpen(true)}
             className={
               isFull
-                ? 'flex min-h-[min(36dvh,14rem)] max-h-[min(48dvh,22rem)] w-full flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/40 bg-muted/25 px-4 py-6 text-center font-mono text-sm text-muted-foreground transition-colors hover:bg-muted/45'
+                ? 'flex min-h-[min(40dvh,16rem)] w-full flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/40 bg-muted/25 px-4 py-6 text-center font-mono text-sm text-muted-foreground transition-colors hover:bg-muted/45'
                 : 'flex min-h-[min(40vh,14rem)] w-full flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/40 bg-muted/25 px-4 py-8 text-center font-mono text-sm text-muted-foreground transition-colors hover:bg-muted/45 lg:min-h-[min(48vh,18rem)]'
             }
           >
@@ -64,7 +74,7 @@ export function EquipmentItemClassCodePanel({
         typeof document !== 'undefined' &&
         createPortal(
           <div
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-3 sm:p-4"
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-3 sm:p-4"
             role="presentation"
             onClick={() => setPickerOpen(false)}
           >

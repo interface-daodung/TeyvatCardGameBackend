@@ -13,6 +13,7 @@ import { EquipmentCreateModal } from '../components/equipment/EquipmentCreateMod
 import { useEquipment } from '../components/equipment/useEquipment';
 import {
   fadeSlideCard,
+  equipmentDrawerShellYTransition,
   equipmentLayoutDuration,
   equipmentLayoutEase,
 } from '../components/animations/motionPresets';
@@ -187,16 +188,7 @@ export default function Equipment() {
               className="w-full"
             >
               <LayoutGroup id="equipment-items">
-                <motion.div
-                  layout
-                  className="w-full min-w-0"
-                  transition={{
-                    layout: {
-                      duration: equipmentLayoutDuration,
-                      ease: equipmentLayoutEase,
-                    },
-                  }}
-                >
+                <div className="w-full min-w-0">
                   <div
                     ref={stripScrollRef}
                     className={
@@ -213,15 +205,21 @@ export default function Equipment() {
                   >
                     {equipmentItemNodes}
                   </div>
-                </motion.div>
+                </div>
               </LayoutGroup>
             </motion.div>
           </div>
 
           <AnimatePresence>
             {eq.editModalOpen && eq.selectedItem ? (
+            <motion.div
+              className="flex min-h-0 min-w-0 flex-1 flex-col"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={equipmentDrawerShellYTransition}
+            >
             <EquipmentEditDrawer
-              key={eq.selectedItem._id}
               selectedItem={eq.selectedItem}
               formValues={eq.formValues}
               setFormValues={eq.setFormValues}
@@ -277,6 +275,7 @@ export default function Equipment() {
               onCancelDelete={eq.cancelDeleteItem}
               onConfirmDelete={eq.confirmDeleteItem}
             />
+            </motion.div>
             ) : null}
           </AnimatePresence>
         </div>

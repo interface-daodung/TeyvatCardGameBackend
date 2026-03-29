@@ -35,7 +35,7 @@ import {
   type EnabledDisabledStatus,
 } from '../share';
 import {
-  slideInDrawerBottom,
+  equipmentDockFabTransition,
   fadeInOverlay,
   fadeSlideUpModal,
 } from '../animations/motionPresets';
@@ -208,11 +208,7 @@ export function EquipmentEditDrawer({
           onCloseTree={onCloseImageTree}
         />
       </div>
-      <motion.div
-        layout
-        transition={{ layout: { duration: 0.2, ease: 'easeOut' } }}
-        className="min-w-0 flex-1 space-y-3 text-base leading-relaxed"
-      >
+      <div className="min-w-0 flex-1 space-y-3 text-base leading-relaxed">
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className="font-medium text-muted-foreground">NameId:</span>
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-base">
@@ -418,29 +414,13 @@ export function EquipmentEditDrawer({
               </button>
             </p>
           </div>
-      </motion.div>
+      </div>
     </>
-  );
-
-  const mainForm = itemClassDrawerOpen ? (
-    <div className="flex min-h-0 min-w-0 max-h-[calc(100dvh-11.5rem)] flex-col overflow-y-auto overscroll-contain px-4 py-3 sm:px-5">
-      <EquipmentItemClassCodePanel
-        variant="fullDrawer"
-        itemRelativePath={itemClassPath}
-        onChangePath={(path) => setFormValues((p) => ({ ...p, className: path }))}
-      />
-    </div>
-  ) : (
-    <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-start sm:gap-8 sm:p-6 md:p-8">
-      {metaFields}
-    </div>
   );
 
   const drawer = (
     <motion.aside
-      variants={slideInDrawerBottom}
-      initial="hidden"
-      animate="visible"
+      layout={false}
       drag="y"
       dragControls={dragControls}
       dragListener={false}
@@ -463,29 +443,48 @@ export function EquipmentEditDrawer({
         <div className="h-1.5 w-12 rounded-full bg-muted-foreground/35" />
       </div>
 
-      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div
-          className={
-            'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain ' +
-            'pb-[calc(500px+1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(500px+2rem+env(safe-area-inset-bottom,0px))]'
-          }
-        >
-          {mainForm}
-          <AnimatePresence initial={false}>
-            {error && (
-              <motion.div
-                key="error"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="mx-4 mt-3 shrink-0 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive sm:mx-5"
-              >
-                {error}
-              </motion.div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={selectedItem._id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.14, ease: 'easeOut' }}
+            className={
+              'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain ' +
+              'pb-[calc(500px+1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(500px+2rem+env(safe-area-inset-bottom,0px))]'
+            }
+          >
+            {itemClassDrawerOpen ? (
+              <div className="flex min-h-[min(42dvh,22rem)] flex-1 flex-col px-4 py-3 sm:px-5">
+                <EquipmentItemClassCodePanel
+                  variant="fullDrawer"
+                  itemRelativePath={itemClassPath}
+                  onChangePath={(path) => setFormValues((p) => ({ ...p, className: path }))}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-start sm:gap-8 sm:p-6 md:p-8">
+                {metaFields}
+              </div>
             )}
-          </AnimatePresence>
-        </div>
+            <AnimatePresence initial={false}>
+              {error && (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className="mx-4 mt-3 shrink-0 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive sm:mx-5"
+                >
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </motion.aside>
   );
@@ -503,10 +502,7 @@ export function EquipmentEditDrawer({
                   ? { y: 0, opacity: 1 }
                   : { y: 72, opacity: 0 }
               }
-              transition={{
-                duration: 0.36,
-                ease: [0.22, 1, 0.36, 1],
-              }}
+              transition={equipmentDockFabTransition}
               onAnimationComplete={() => {
                 if (!isPresent) safeToRemove();
               }}

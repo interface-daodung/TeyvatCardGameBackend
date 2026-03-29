@@ -154,8 +154,11 @@ export const slideInDrawerRight: Variants = {
   },
 };
 
-/** Drawer nhân vật: trượt theo translateX từ phải (100% → 0), tween ~0.5s ease-out. */
+/** Drawer nhân vật: trượt translateX từ phải; ease chung. */
 const characterDrawerSlideEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+/** Đổi nhân vật (mode="wait"): exit + enter = 0.5s → mỗi pha 0.25s. */
+const characterDrawerSlideDuration = 0.25;
 
 /** Ease chung (Framer) cho item strip khi đổi layout — khớp vỏ CSS ~500ms. */
 export const characterDrawerLayoutEase = characterDrawerSlideEase;
@@ -166,16 +169,16 @@ export const slideInCharacterDrawer: Variants = {
     opacity: 1,
     x: 0,
     transition: {
-      x: { duration: 0.5, ease: characterDrawerSlideEase },
-      opacity: { duration: 0.4, ease: characterDrawerSlideEase },
+      x: { duration: characterDrawerSlideDuration, ease: characterDrawerSlideEase },
+      opacity: { duration: 0.2, ease: characterDrawerSlideEase },
     },
   },
+  /** Đổi thẻ: trượt ra phải rồi drawer mới vào (AnimatePresence mode="wait"). */
   exit: {
-    opacity: 0,
     x: '100%',
+    opacity: 1,
     transition: {
-      x: { duration: 0.5, ease: characterDrawerSlideEase },
-      opacity: { duration: 0.38, ease: characterDrawerSlideEase },
+      x: { duration: characterDrawerSlideDuration, ease: characterDrawerSlideEase },
     },
   },
 };
@@ -188,32 +191,21 @@ export const charactersLayoutDuration = 0.55;
 export const charactersDrawerShellDurationClass = 'duration-[500ms]';
 export const charactersDrawerShellEaseClass = 'ease-[cubic-bezier(0.22,1,0.36,1)]';
 
-const bottomSheetSpring: Transition = {
-  type: 'spring',
-  stiffness: 320,
-  damping: 34,
-  mass: 0.85,
-};
-
-/**
- * Bottom sheet / drawer trượt từ dưới lên (mobile-first panel).
- * Dùng trên container đặt sát đáy layout (flex order hoặc fixed bottom).
- */
-export const slideInDrawerBottom: Variants = {
-  hidden: { opacity: 0, y: '100%' },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: bottomSheetSpring,
-  },
-  exit: {
-    opacity: 0.98,
-    y: '100%',
-    transition: { duration: 0.4, ease: [0.32, 0.72, 0, 1] as const },
-  },
-};
-
 /** Đồng bộ với chuyển lưới → strip trên trang Equipment */
 export const equipmentLayoutEase = [0.32, 0.72, 0, 1] as const;
 export const equipmentLayoutDuration = 0.48;
+
+/** Transition Y cho vỏ drawer (mở/đóng lần đầu); đổi item không unmount wrapper → không replay. */
+export const equipmentDrawerShellYTransition: Transition = {
+  y: {
+    duration: equipmentLayoutDuration,
+    ease: equipmentLayoutEase,
+  },
+};
+
+/** FAB neo đáy (portal) khi mở Equipment edit — cùng hệ số với strip, không dùng curve drawer Characters. */
+export const equipmentDockFabTransition: Transition = {
+  duration: 0.36,
+  ease: equipmentLayoutEase,
+};
 

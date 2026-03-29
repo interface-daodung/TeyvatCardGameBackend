@@ -1,6 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, useDragControls } from 'framer-motion';
-import { Button } from '../ui/button';
 import { slideInCharacterDrawer } from '../animations/motionPresets';
 import { CharacterDetailView } from './CharacterDetailView';
 import type { UseCharacterDetailLangControl } from './useCharacterDetail';
@@ -44,6 +43,16 @@ export function CharacterDetailDrawer({
       ro.disconnect();
     };
   }, [nameId]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
 
   const maxDragRight =
     panelWidth > 0 ? panelWidth : typeof window !== 'undefined' ? Math.min(1200, window.innerWidth * 0.92) : 800;
@@ -93,24 +102,11 @@ export function CharacterDetailDrawer({
         </div>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <div
-            className="flex shrink-0 cursor-grab touch-none select-none items-center justify-between gap-2 border-b border-border/50 px-3 py-2.5 active:cursor-grabbing"
-            title="Kéo sang phải để đóng"
-            onPointerDown={(e) => {
-              if ((e.target as HTMLElement).closest('button')) return;
-              startDrawerDrag(e);
-            }}
+            className="flex shrink-0 cursor-grab touch-none select-none items-center border-b border-border/50 px-3 py-2.5 active:cursor-grabbing"
+            title="Kéo sang phải để đóng — hoặc nhấn Esc"
+            onPointerDown={startDrawerDrag}
           >
             <h2 className="text-sm font-semibold tracking-tight truncate">Chi tiết nhân vật</h2>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="shrink-0"
-              onClick={onClose}
-              aria-label="Đóng"
-            >
-              Đóng
-            </Button>
           </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain touch-pan-y">
             <CharacterDetailView

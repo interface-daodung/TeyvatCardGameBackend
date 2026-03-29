@@ -45,8 +45,14 @@ export default function Characters() {
 
   const colScrollRef = useRef<HTMLDivElement>(null);
   const suppressItemClickRef = useRef(false);
+  /** Bỏ hiệu ứng vào lần mount đầu (chỉ animate khi đổi trạng thái drawer). */
+  const skipFirstToolbarMotion = useRef(true);
 
   const detailOpen = selectedNameId !== null;
+
+  useEffect(() => {
+    skipFirstToolbarMotion.current = false;
+  }, []);
 
   useEffect(() => {
     gameDataService
@@ -291,17 +297,34 @@ export default function Characters() {
       )}
     >
       {!detailOpen && (
-        <div className="flex w-full max-w-[min(100%,calc(100%-13rem))] shrink-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="shrink-0 max-w-[min(100%,calc(100%-13rem))]">
           <PageHeader title="Characters" description="Manage game characters and their stats" />
-          <div className="shrink-0">{characterToolbar}</div>
         </div>
       )}
 
-      {detailOpen && (
-        <motion.div className="pointer-events-none fixed right-8 top-[calc(4rem+2rem)] z-50 flex items-start justify-end md:right-12 md:top-[calc(4rem+3rem)]">
-          <div className="pointer-events-auto">{characterToolbar}</div>
+      <div
+        className={cn(
+          'pointer-events-none fixed right-8 flex items-start justify-end md:right-12',
+          'transition-[top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+          detailOpen
+            ? 'top-[calc(4rem+10px)] z-[70] md:top-[calc(4rem+14px)]'
+            : 'top-[calc(4rem+2rem)] z-50 md:top-[calc(4rem+3rem)]'
+        )}
+      >
+        <motion.div
+          key={detailOpen ? 'toolbar-drawer' : 'toolbar-grid'}
+          className="pointer-events-auto"
+          initial={
+            skipFirstToolbarMotion.current
+              ? false
+              : { opacity: 0.92, y: detailOpen ? 10 : -8 }
+          }
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: characterDrawerLayoutEase }}
+        >
+          {characterToolbar}
         </motion.div>
-      )}
+      </div>
 
       <div
         className={cn(
@@ -364,16 +387,18 @@ export default function Characters() {
             </motion.div>
           </div>
 
-          <AnimatePresence mode="popLayout">
-            {selectedNameId ? (
-              <CharacterDetailDrawer
-                key={selectedNameId}
-                nameId={selectedNameId}
-                onClose={closeDetailDrawer}
-                langControl={{ editLang, setEditLang }}
-              />
-            ) : null}
-          </AnimatePresence>
+          <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <AnimatePresence mode="wait">
+              {selectedNameId ? (
+                <CharacterDetailDrawer
+                  key={selectedNameId}
+                  nameId={selectedNameId}
+                  onClose={closeDetailDrawer}
+                  langControl={{ editLang, setEditLang }}
+                />
+              ) : null}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
