@@ -29,13 +29,13 @@ function buildLevelStats(basePower: number, baseCooldown: number, maxLevel: numb
   return stats;
 }
 
-/** Generate character levelStats (level 1..maxLevel, price = level * 100, level 10 = 0) */
+/** Generate character levelStats (level 1..maxLevel, price = level * 100 mỗi bậc) */
 function buildCharacterLevelStats(maxLevel: number) {
   const stats: { level: number; price: number }[] = [];
   for (let l = 1; l <= maxLevel; l++) {
     stats.push({
       level: l,
-      price: l === maxLevel ? 0 : l * 100,
+      price: l * 100,
     });
   }
   return stats;

@@ -393,6 +393,9 @@ export default function Characters() {
                 <CharacterDetailDrawer
                   key={selectedNameId}
                   nameId={selectedNameId}
+                  characterId={
+                    characters.find((c) => c.nameId === selectedNameId)?._id ?? ''
+                  }
                   onClose={closeDetailDrawer}
                   langControl={{ editLang, setEditLang }}
                 />

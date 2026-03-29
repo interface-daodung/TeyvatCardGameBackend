@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from './ui/button';
 
 export interface ConfirmDangerDialogProps {
@@ -32,13 +33,14 @@ export function ConfirmDangerDialog({
   cancelLabel = 'Hủy',
   confirmLabel = 'Xóa',
   confirmLoadingLabel = 'Đang xử lý…',
-  overlayClassName = 'z-[10000]',
+  /** Trên header (z-40) và vùng #admin-main-scroll (z-30); portal ra body để không bị kẹt stacking context */
+  overlayClassName = 'z-[10050]',
 }: ConfirmDangerDialogProps) {
   const titleId = useId();
 
   if (!open) return null;
 
-  return (
+  const node = (
     <div className={`fixed inset-0 flex items-center justify-center p-4 ${overlayClassName}`}>
       <div
         className="absolute inset-0 bg-black/60"
@@ -89,4 +91,6 @@ export function ConfirmDangerDialog({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(node, document.body) : null;
 }

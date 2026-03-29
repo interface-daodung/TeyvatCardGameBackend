@@ -9,7 +9,6 @@ import UserDetail from './pages/UserDetail';
 import Payments from './pages/Payments';
 import CreatePaymentLink from './pages/CreatePaymentLink';
 import Characters from './pages/Characters';
-import CharacterDetail from './pages/CharacterDetail';
 import Equipment from './pages/Equipment';
 import AdventureCards from './pages/AdventureCards';
 import Maps from './pages/Maps';
@@ -59,7 +58,6 @@ function App() {
         <Route path="payment-link" element={<CreatePaymentLink />} />
         <Route path="payment-link/:userId" element={<CreatePaymentLink />} />
         <Route path="characters" element={<Characters />} />
-        <Route path="characters/:id" element={<CharacterDetail />} />
         <Route path="equipment" element={<Equipment />} />
         <Route path="adventure-cards" element={<AdventureCards />} />
         <Route path="maps" element={<Maps />} />

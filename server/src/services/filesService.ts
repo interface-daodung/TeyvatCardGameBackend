@@ -81,27 +81,37 @@ export function getImageTree(dirPath: string, webPath: string, imageOnly = false
   const result: FileTreeItem[] = [];
   if (!fs.existsSync(dirPath)) return result;
   const isImage = (name: string) => IMAGE_EXT.includes(path.extname(name).toLowerCase());
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dirPath, entry.name);
-    const relativeWebPath = webPath ? `${webPath}/${entry.name}` : `/${entry.name}`;
-    if (entry.isDirectory()) {
+  let names: string[];
+  try {
+    names = fs.readdirSync(dirPath);
+  } catch {
+    return result;
+  }
+  for (const name of names) {
+    const fullPath = path.join(dirPath, name);
+    const relativeWebPath = webPath ? `${webPath}/${name}` : `/${name}`;
+    let st: fs.Stats;
+    try {
+      st = fs.statSync(fullPath);
+    } catch {
+      continue;
+    }
+    if (st.isDirectory()) {
       result.push({
-        name: entry.name,
+        name,
         path: relativeWebPath,
         type: 'dir',
         children: getImageTree(fullPath, relativeWebPath, imageOnly),
       });
-    } else if (entry.isFile() && (!imageOnly || isImage(entry.name))) {
-      const stat = fs.statSync(fullPath);
+    } else if (st.isFile() && (!imageOnly || isImage(name))) {
       result.push({
-        name: entry.name,
+        name,
         path: relativeWebPath,
         type: 'file',
         meta: {
-          size: stat.size,
-          mtimeMs: stat.mtimeMs,
-          ctimeMs: stat.ctimeMs,
+          size: st.size,
+          mtimeMs: st.mtimeMs,
+          ctimeMs: st.ctimeMs,
         },
       });
     }

@@ -11,10 +11,13 @@ export const createCharacterSchema = z.object({
   nameId: z.string().min(1),
   name: z.string().min(1),
   description: z.string().optional(),
+  image: z.string().optional(),
+  spritesheetImage: z.string().optional(),
+  imageUnlock: z.string().optional(),
   element: elementEnum.optional(),
   HP: z.number().min(1).optional(),
   maxLevel: z.number().min(1).max(99).optional(),
-  status: z.enum(['enabled', 'disabled', 'hidden', 'unreleased']).optional(),
+  status: z.enum(['enabled', 'disabled']).optional(),
   levelStats: z.array(characterLevelStatSchema).optional(),
 });
 

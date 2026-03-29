@@ -17,6 +17,21 @@ function canonicalJson(obj: unknown): string {
   return '{' + parts.join(',') + '}';
 }
 
+/** Chỉ nhân vật `enabled` mới đưa vào CharacterData khi sync / hash cấu hình (bản ghi cũ không có `status` coi như enabled). */
+function isCharacterIncludedInClientConfig(ch: Record<string, unknown>): boolean {
+  return (ch.status ?? 'enabled') === 'enabled';
+}
+
+function buildCharacterDataForConfig(characters: Record<string, unknown>[]): Record<string, unknown>[] {
+  return characters.filter(isCharacterIncludedInClientConfig).map((ch) => ({
+    ...ch,
+    maxLevel: (ch as Record<string, unknown>).maxLevel ?? 10,
+    levelStats: Array.isArray((ch as Record<string, unknown>).levelStats)
+      ? (ch as Record<string, unknown>).levelStats
+      : [],
+  }));
+}
+
 function buildCardsDataForConfig(cards: Record<string, unknown>[]): { cards: Record<string, unknown>[] } {
   const idToClassName: Record<string, string> = {};
   for (const c of cards) {
@@ -197,11 +212,7 @@ export async function checkServerConfigurationUpdate(): Promise<CheckServerConfi
     MapsData: { maps: mapsWithBackground },
     CardsData: buildCardsDataForConfig(cards as Record<string, unknown>[]),
     CharacterData: {
-      characters: (characters as Record<string, unknown>[]).map((ch) => ({
-        ...ch,
-        maxLevel: (ch as Record<string, unknown>).maxLevel ?? 10,
-        levelStats: Array.isArray((ch as Record<string, unknown>).levelStats) ? (ch as Record<string, unknown>).levelStats : [],
-      })),
+      characters: buildCharacterDataForConfig(characters as Record<string, unknown>[]),
     },
     localizations: localizationSnapshot,
     themeData: { themes },
@@ -257,7 +268,7 @@ export async function checkServerConfigurationUpdate(): Promise<CheckServerConfi
     const prevItems = (latestCfg?.itemData as { items?: Record<string, unknown>[] })?.items ?? [];
     diff('maps', mapsWithBackground as Record<string, unknown>[], prevMaps);
     diff('cards', (configuration.CardsData as { cards?: Record<string, unknown>[] }).cards ?? [], prevCards);
-    diff('characters', characters as Record<string, unknown>[], prevChars);
+    diff('characters', buildCharacterDataForConfig(characters as Record<string, unknown>[]), prevChars);
     diff('themes', themes as Record<string, unknown>[], prevThemes);
     diff('items', items as Record<string, unknown>[], prevItems);
     const prevEn = (latestCfg?.localizations as { en?: Record<string, string> })?.en ?? {};
@@ -356,10 +367,11 @@ export async function syncServerConfigurationVersion(): Promise<
   const prevThemes = (prevCfg?.themeData as { themes?: unknown[] })?.themes ?? [];
   const prevItems = (prevCfg?.itemData as { items?: unknown[] })?.items ?? [];
   const prevLocaleKeys = Object.keys((prevCfg?.localizations as { en?: Record<string, string> })?.en ?? {}).length;
+  const charactersInConfig = buildCharacterDataForConfig(characters as Record<string, unknown>[]);
   const currentCounts = {
     maps: mapsWithBackground.length,
     cards: cards.length,
-    characters: characters.length,
+    characters: charactersInConfig.length,
     themes: themes.length,
     items: items.length,
     localeKeys: Object.keys(localizationSnapshot.en).length,
@@ -384,11 +396,7 @@ export async function syncServerConfigurationVersion(): Promise<
     MapsData: { maps: mapsWithBackground },
     CardsData: buildCardsDataForConfig(cards as Record<string, unknown>[]),
     CharacterData: {
-      characters: (characters as Record<string, unknown>[]).map((ch) => ({
-        ...ch,
-        maxLevel: (ch as Record<string, unknown>).maxLevel ?? 10,
-        levelStats: Array.isArray((ch as Record<string, unknown>).levelStats) ? (ch as Record<string, unknown>).levelStats : [],
-      })),
+      characters: charactersInConfig,
     },
     localizations: localizationSnapshot,
     themeData: { themes },

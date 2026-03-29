@@ -5,7 +5,9 @@ export {
 export {
   enabledDisabledStatusPillClass,
   adventureCardStatusPillClass,
+  characterStatusPillClass,
   type EnabledDisabledStatus,
+  type CharacterStatus,
 } from './statusPillClasses';
 
 export { BottomDockFabShell, type BottomDockFabShellProps } from './BottomDockFabShell';

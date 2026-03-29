@@ -15,7 +15,15 @@ export const dockPeekFabButtonBaseClassName =
 
 export const dockPeekFabIconClassName = 'h-[22px] w-[22px]';
 
-export type DockPeekFabTone = 'destructive' | 'primary' | 'slate' | 'slateActive';
+export type DockPeekFabTone =
+  | 'destructive'
+  | 'primary'
+  | 'slate'
+  | 'slateActive'
+  /** Luồng AST / cây: đóng — xanh biển */
+  | 'astFlowOff'
+  /** Luồng AST / cây: mở — vàng */
+  | 'astFlowOn';
 
 export const dockPeekFabToneClassName: Record<DockPeekFabTone, string> = {
   destructive: 'bg-[#ef4444]',
@@ -23,4 +31,8 @@ export const dockPeekFabToneClassName: Record<DockPeekFabTone, string> = {
   slate: 'bg-slate-600 hover:bg-slate-700 focus-visible:outline-white/70',
   slateActive:
     'bg-emerald-600 hover:bg-emerald-700 focus-visible:outline-emerald-200/80',
+  astFlowOff:
+    'bg-[#0369a1] text-white hover:bg-[#075985] focus-visible:outline-sky-200/80',
+  astFlowOn:
+    'bg-[#eab308] text-slate-900 hover:bg-[#ca8a04] focus-visible:outline-amber-900/40',
 };

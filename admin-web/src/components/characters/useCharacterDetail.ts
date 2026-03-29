@@ -1,11 +1,13 @@
-import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
+import { useState, useEffect, useRef, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { gameDataService, type Character } from '../../services/gameDataService';
 import { localizationService } from '../../services/localizationService';
 import type { EditLang } from '../LangDropdown';
 import {
-  ELEMENT_OPTIONS,
-  getDefaultLevelPrice,
+  DEFAULT_UNLOCK_PRICE,
   LEVEL_MAX_DEFAULT,
+  mergeCharacterLevelPrices,
+  resolveUnlockPriceFromCharacter,
+  UNLOCK_PRICE_MIN,
   type EditingField,
 } from './characterDetailUtils';
 
@@ -24,8 +26,6 @@ export function useCharacterDetail(
   const [saveLoading, setSaveLoading] = useState(false);
 
   const [editingField, setEditingField] = useState<EditingField>(null);
-  const [editedHp, setEditedHp] = useState('');
-  const [editedElement, setEditedElement] = useState('');
 
   const [displayHp, setDisplayHp] = useState(0);
   const [displayElement, setDisplayElement] = useState('');
@@ -43,14 +43,29 @@ export function useCharacterDetail(
   const [i18nError, setI18nError] = useState<string | null>(null);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
+  const [displayUnlockPrice, setDisplayUnlockPriceState] = useState(DEFAULT_UNLOCK_PRICE);
   const [levelPrices, setLevelPrices] = useState<{ level: number; price: number }[]>(() =>
-    Array.from({ length: LEVEL_MAX_DEFAULT }, (_, i) => ({
-      level: i + 1,
-      price: getDefaultLevelPrice(i + 1),
-    }))
+    mergeCharacterLevelPrices(
+      LEVEL_MAX_DEFAULT,
+      DEFAULT_UNLOCK_PRICE,
+      []
+    )
   );
+
+  const setDisplayUnlockPrice = useCallback((v: number) => {
+    setDisplayUnlockPriceState(v);
+    setLevelPrices((prev) =>
+      prev.length ? prev.map((r, i) => (i === 0 ? { ...r, price: v } : r)) : prev
+    );
+  }, []);
   const [editingPriceForLevel, setEditingPriceForLevel] = useState<number | null>(null);
   const [editedPriceValue, setEditedPriceValue] = useState('');
+
+  const [levelEditModalOpen, setLevelEditModalOpen] = useState(false);
+  const levelEditSnapshot = useRef<{
+    max: number;
+    rows: { level: number; price: number }[];
+  } | null>(null);
 
   useEffect(() => {
     if (!id) {
@@ -65,14 +80,12 @@ export function useCharacterDetail(
         setCharacter(c);
         setDisplayHp(c.HP);
         setDisplayElement(c.element ?? 'cryo');
-        setDisplayLevel(c.maxLevel ?? 10);
-        const stats = c.levelStats?.length
-          ? c.levelStats.map((s) => ({ level: s.level, price: s.price }))
-          : Array.from({ length: c.maxLevel ?? 10 }, (_, i) => ({
-              level: i + 1,
-              price: getDefaultLevelPrice(i + 1),
-            }));
-        setLevelPrices(stats);
+        const maxLv = c.maxLevel ?? LEVEL_MAX_DEFAULT;
+        setDisplayLevel(maxLv);
+        const unlock = resolveUnlockPriceFromCharacter(c);
+        setDisplayUnlockPriceState(unlock);
+        const rawStats = (c.levelStats ?? []).map((s) => ({ level: s.level, price: s.price }));
+        setLevelPrices(mergeCharacterLevelPrices(maxLv, unlock, rawStats));
       })
       .catch((err) => setError(err?.message ?? 'Failed to load character'))
       .finally(() => setLoading(false));
@@ -93,10 +106,12 @@ export function useCharacterDetail(
     setLevelPrices((prev) => {
       if (prev.length === levelMax) return prev;
       if (prev.length < levelMax) {
-        const newRows = Array.from({ length: levelMax - prev.length }, (_, i) => ({
-          level: prev.length + i + 1,
-          price: getDefaultLevelPrice(prev.length + i + 1),
-        }));
+        const newRows: { level: number; price: number }[] = [];
+        let lastPrice = prev.length > 0 ? prev[prev.length - 1].price : DEFAULT_UNLOCK_PRICE;
+        for (let lvl = prev.length + 1; lvl <= levelMax; lvl++) {
+          lastPrice += 100;
+          newRows.push({ level: lvl, price: lastPrice });
+        }
         return [...prev, ...newRows];
       }
       return prev.slice(0, levelMax);
@@ -105,10 +120,15 @@ export function useCharacterDetail(
 
   const savePriceEdit = (level: number) => {
     const num = parseInt(editedPriceValue, 10);
-    if (!isNaN(num) && num >= 0) {
-      setLevelPrices((prev) =>
-        prev.map((row) => (row.level === level ? { ...row, price: num } : row))
-      );
+    const min = level === 1 ? UNLOCK_PRICE_MIN : 0;
+    if (!isNaN(num) && num >= min) {
+      if (level === 1) {
+        setDisplayUnlockPrice(num);
+      } else {
+        setLevelPrices((prev) =>
+          prev.map((row) => (row.level === level ? { ...row, price: num } : row))
+        );
+      }
     }
     setEditingPriceForLevel(null);
   };
@@ -118,56 +138,73 @@ export function useCharacterDetail(
     setEditedPriceValue(String(price));
   };
 
-  const startEdit = (field: EditingField, currentValue?: string | number) => {
+  const startEdit = (field: EditingField) => {
     setEditingField(field);
-    if (field === 'hp') setEditedHp(String(currentValue ?? displayHp));
-    if (field === 'element') {
-      const val = String(
-        currentValue ?? displayElement ?? character?.element ?? 'cryo'
-      ).toLowerCase();
-      setEditedElement(
-        val === 'none' || ELEMENT_OPTIONS.includes(val as (typeof ELEMENT_OPTIONS)[number])
-          ? val
-          : ELEMENT_OPTIONS[0]
-      );
-    }
   };
 
   const persistChanges = async (updates: Partial<Character>) => {
-    if (!character) return;
+    if (!character) return undefined;
     setSaveLoading(true);
     try {
       const updated = await gameDataService.updateCharacter(character._id, updates);
       setCharacter(updated);
+      return updated;
     } finally {
       setSaveLoading(false);
     }
   };
 
-  const saveEdit = async () => {
-    if (!character) return;
-    if (editingField === 'hp') {
-      const num = parseInt(editedHp, 10);
-      if (!isNaN(num) && num >= 0) {
-        setDisplayHp(num);
-        await persistChanges({ HP: num });
-      }
+  /** Chỉ cập nhật HP khi API thành công. */
+  const commitHp = async (value: number): Promise<boolean> => {
+    if (!character) return false;
+    setSaveLoading(true);
+    try {
+      const updated = await gameDataService.updateCharacter(character._id, { HP: value });
+      setCharacter(updated);
+      setDisplayHp(updated.HP ?? value);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      setSaveLoading(false);
     }
-    if (editingField === 'element' && editedElement.trim()) {
-      const val = editedElement.trim().toLowerCase();
-      setDisplayElement(val);
-      await persistChanges({ element: val });
-    }
-    if (editingField === 'level') {
-      await persistChanges({
-        maxLevel: displayLevel,
-        levelStats: levelPrices.map((r) => ({ level: r.level, price: r.price })),
-      });
-    }
-    setEditingField(null);
   };
 
-  const cancelEdit = () => setEditingField(null);
+  const openLevelEditModal = () => {
+    levelEditSnapshot.current = {
+      max: displayLevel,
+      rows: levelPrices.map((r) => ({ ...r })),
+    };
+    setEditingPriceForLevel(null);
+    setLevelEditModalOpen(true);
+  };
+
+  const cancelLevelEditModal = () => {
+    if (levelEditSnapshot.current) {
+      setDisplayLevel(levelEditSnapshot.current.max);
+      const rows = levelEditSnapshot.current.rows.map((r) => ({ ...r }));
+      setLevelPrices(rows);
+      const u = rows.find((r) => r.level === 1)?.price;
+      if (typeof u === 'number' && Number.isFinite(u)) setDisplayUnlockPriceState(u);
+    }
+    setEditingPriceForLevel(null);
+    setLevelEditModalOpen(false);
+    levelEditSnapshot.current = null;
+  };
+
+  const saveLevelEditModal = async () => {
+    if (!character) return;
+    const unlock =
+      levelPrices.find((r) => r.level === 1)?.price ?? displayUnlockPrice;
+    const updated = await persistChanges({
+      maxLevel: displayLevel,
+      unlockPrice: unlock,
+      levelStats: levelPrices.map((r) => ({ level: r.level, price: r.price })),
+    });
+    if (updated?.unlockPrice != null) setDisplayUnlockPriceState(updated.unlockPrice);
+    setLevelEditModalOpen(false);
+    levelEditSnapshot.current = null;
+  };
 
   const openI18nPopup = (field: 'name' | 'description') => {
     setI18nModalField(field);
@@ -284,10 +321,6 @@ export function useCharacterDetail(
     saveLoading,
     editingField,
     setEditingField,
-    editedHp,
-    setEditedHp,
-    editedElement,
-    setEditedElement,
     displayHp,
     displayElement,
     displayLevel,
@@ -304,6 +337,8 @@ export function useCharacterDetail(
     i18nError,
     langDropdownOpen,
     setLangDropdownOpen,
+    displayUnlockPrice,
+    setDisplayUnlockPrice,
     levelPrices,
     editingPriceForLevel,
     editedPriceValue,
@@ -312,8 +347,11 @@ export function useCharacterDetail(
     startPriceEdit,
     startEdit,
     persistChanges,
-    saveEdit,
-    cancelEdit,
+    commitHp,
+    levelEditModalOpen,
+    openLevelEditModal,
+    cancelLevelEditModal,
+    saveLevelEditModal,
     openI18nPopup,
     closeI18nPopup,
     getFormI18n,

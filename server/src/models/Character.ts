@@ -9,11 +9,17 @@ export interface ICharacter extends mongoose.Document {
   nameId: string;
   name: string;
   image: string;
+  /** Đường dẫn web spritesheet animation (vd. .../character/Spritesheet/foo.webp). Rỗng = dùng mặc định `{nameId}-sprite.webp`. */
+  spritesheetImage?: string;
+  /** Ảnh unlock (thư mục cards/character/unlock). Rỗng/null → hiển thị empty.webp. */
+  imageUnlock?: string;
   description: string; // i18n key: Character.{nameId}.description
   element: string; // anemo | cryo | dendro | electro | geo | hydro | pyro | none
   HP: number;
   maxLevel: number;
-  status: 'enabled' | 'disabled' | 'hidden' | 'unreleased';
+  /** Giá mở khóa level 1 (trùng giá level 1 trong levelStats khi lưu). Bản ghi cũ có thể chưa có field. */
+  unlockPrice?: number;
+  status: 'enabled' | 'disabled';
   levelStats: ICharacterLevelStat[];
   createdAt: Date;
   updatedAt: Date;
@@ -42,6 +48,14 @@ const characterSchema = new Schema<ICharacter>(
       type: String,
       default: '',
     },
+    spritesheetImage: {
+      type: String,
+      default: '',
+    },
+    imageUnlock: {
+      type: String,
+      default: '',
+    },
     description: {
       type: String,
       default: '',
@@ -61,9 +75,14 @@ const characterSchema = new Schema<ICharacter>(
       type: Number,
       default: 10,
     },
+    unlockPrice: {
+      type: Number,
+      default: 100,
+      min: 2,
+    },
     status: {
       type: String,
-      enum: ['enabled', 'disabled', 'hidden', 'unreleased'],
+      enum: ['enabled', 'disabled'],
       default: 'enabled',
     },
     levelStats: {

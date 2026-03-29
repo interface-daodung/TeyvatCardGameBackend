@@ -19,3 +19,10 @@ export function adventureCardStatusPillClass(
   }
   return 'bg-red-500 text-red-50 hover:bg-red-600';
 }
+
+/** Character (DB): chỉ enabled (xanh) / disabled (đỏ) — chỉ `enabled` mới đưa vào JSON client */
+export type CharacterStatus = EnabledDisabledStatus;
+
+export function characterStatusPillClass(status: CharacterStatus): string {
+  return enabledDisabledStatusPillClass(status);
+}

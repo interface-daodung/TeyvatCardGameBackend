@@ -425,7 +425,7 @@ export default function UserDetail() {
               </p>
             ) : (
               <motion.div
-                className="flex flex-wrap gap-1"
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
                 variants={fadeSlideCard}
                 initial="hidden"
                 animate="visible"
@@ -435,20 +435,17 @@ export default function UserDetail() {
                   return (
                     <motion.div
                       key={nameId}
-                      className="relative z-0 scale-25 origin-top-left hover:z-20"
+                      className="min-w-0"
                       variants={fadeSlideCard}
                       initial="hidden"
                       animate="visible"
                       custom={index}
                     >
-                      <div className="transform scale-25 origin-top-left w-[50px]">
-                        <CharacterCard character={characterCard} />
-                      </div>
-                      <div className="pointer-events-none absolute top-2 left-2 z-10">
-                        <span className="inline-flex items-center rounded-full bg-amber-500/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow">
-                          Lv. {safeLevel}
-                        </span>
-                      </div>
+                      <CharacterCard
+                        character={characterCard}
+                        variant="compact"
+                        level={safeLevel}
+                      />
                     </motion.div>
                   );
                 })}

@@ -10,10 +10,18 @@ export interface Character {
   nameId: string;
   name: string;
   description: string; // i18n key: character.{nameId}.description
+  /** Ảnh thẻ (path web). */
+  image?: string;
+  /** Spritesheet Phaser; rỗng/undefined = mặc định theo nameId. */
+  spritesheetImage?: string;
+  /** Ảnh unlock (`cards/character/unlock`). Rỗng → empty.webp. */
+  imageUnlock?: string;
   element?: string; // anemo | cryo | dendro | electro | geo | hydro | pyro | none
   HP: number;
   maxLevel: number;
-  status: 'enabled' | 'disabled' | 'hidden' | 'unreleased';
+  /** Giá unlock level 1 (số nguyên > 1, mặc định 100). */
+  unlockPrice?: number;
+  status: 'enabled' | 'disabled';
   levelStats: CharacterLevelStat[];
 }
 

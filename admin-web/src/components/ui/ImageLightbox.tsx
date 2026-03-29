@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 export type LightboxImage = {
@@ -6,15 +6,37 @@ export type LightboxImage = {
   alt?: string;
 };
 
+/** Nội dung tùy chỉnh (vd. canvas Phaser) thay cho thẻ img. */
+export type LightboxCustom = {
+  type: 'custom';
+  label: string;
+  children: ReactNode;
+};
+
+export type ImageLightboxOpen = LightboxImage | LightboxCustom;
+
+function isLightboxCustom(open: ImageLightboxOpen): open is LightboxCustom {
+  return 'type' in open && open.type === 'custom';
+}
+
 export function ImageLightbox({
   open,
   onClose,
   dialogLabel = 'Ảnh phóng to',
+  /** Ảnh nhỏ (vd. icon item): phóng to gần full viewport; không dùng cho ảnh lớn (card/character) vì dễ tràn màn hình. */
+  smallAssetLightbox = false,
 }: {
-  open: LightboxImage | null;
+  open: ImageLightboxOpen | null;
   onClose: () => void;
   dialogLabel?: string;
+  smallAssetLightbox?: boolean;
 }) {
+  const openKey = open
+    ? isLightboxCustom(open)
+      ? `custom:${open.label}`
+      : `img:${open.src}`
+    : null;
+
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -27,16 +49,18 @@ export function ImageLightbox({
       document.body.style.overflow = prev;
       document.removeEventListener('keydown', onKey);
     };
-  }, [open, onClose]);
+  }, [openKey, onClose]);
 
   if (typeof document === 'undefined' || !open) return null;
+
+  const ariaLabel = isLightboxCustom(open) ? open.label : dialogLabel;
 
   return createPortal(
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={dialogLabel}
+      aria-label={ariaLabel}
       onClick={onClose}
     >
       <button
@@ -47,12 +71,25 @@ export function ImageLightbox({
       >
         ✕
       </button>
-      <img
-        src={open.src}
-        alt={open.alt ?? ''}
-        className="max-h-[min(100dvh,100vh)] max-w-full object-contain shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      />
+      {isLightboxCustom(open) ? (
+        <div
+          className="flex max-h-[min(100dvh,100vh)] max-w-full flex-col items-center justify-center shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {open.children}
+        </div>
+      ) : (
+        <img
+          src={open.src}
+          alt={open.alt ?? ''}
+          className={
+            smallAssetLightbox
+              ? 'h-auto max-h-[min(92dvh,92vh)] w-[min(92vw,960px)] max-w-full object-contain shadow-2xl'
+              : 'max-h-[min(100dvh,100vh)] max-w-full object-contain shadow-2xl'
+          }
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
     </div>,
     document.body
   );
