@@ -56,25 +56,98 @@ export interface CharacterClassAstMapResult {
   methodMap: Record<string, ClassMethodAstNode[]>;
 }
 
-function resolveClassFilePath(relativePath: string, scope: ModelsClassScope = 'cards'): string {
+function findFilesWithBasename(rootDir: string, basename: string): string[] {
+  const matches: string[] = [];
+  if (!fs.existsSync(rootDir) || !fs.statSync(rootDir).isDirectory()) return matches;
+  const walk = (dir: string) => {
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (e.isFile() && e.name === basename) matches.push(full);
+    }
+  };
+  walk(rootDir);
+  return matches;
+}
+
+function pickCandidateByClassNameHint(
+  candidates: string[],
+  classNameHint: string | undefined,
+  base: string
+): string | null {
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0];
+  const stem = classNameHint?.replace(/\.ts$/i, '').trim();
+  if (!stem) return null;
+  const project = new Project({ skipAddingFilesFromTsConfig: true });
+  for (const full of candidates) {
+    try {
+      const sf = project.addSourceFileAtPath(full);
+      const cls = sf.getClass(stem);
+      const decl = cls ?? sf.getClasses().find((c) => c.getName() === stem);
+      if (decl?.isDefaultExport()) return full;
+    } catch {
+      // try next candidate
+    }
+  }
+  const sub = stem.toLowerCase();
+  const pathMatch = candidates.find((p) => {
+    const rel = path.relative(base, p).replace(/\\/g, '/').toLowerCase();
+    return rel.includes(`/${sub}/`) || rel.startsWith(`${sub}/`);
+  });
+  return pathMatch ?? null;
+}
+
+interface ResolvedClassFile {
+  fullPath: string;
+  /** Path relative to `models/cards` or `models/items` (normalized forward slashes). */
+  relativeToBase: string;
+}
+
+function resolveClassFilePath(
+  relativePath: string,
+  scope: ModelsClassScope = 'cards',
+  classNameHint?: string
+): ResolvedClassFile {
   const normalizedRelativePath = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
   if (!normalizedRelativePath.endsWith('.ts') || normalizedRelativePath.includes('..')) {
     throw new Error('Invalid class file path');
   }
 
   const base = getModelsRootPath(scope);
-  const fullPath = path.resolve(base, normalizedRelativePath);
-  if (!fullPath.startsWith(path.resolve(base))) {
+  const resolvedBase = path.resolve(base);
+  const fullPath = path.resolve(resolvedBase, normalizedRelativePath);
+  if (!fullPath.startsWith(resolvedBase)) {
     throw new Error('Invalid class file path');
   }
-  if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
+  if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+    return {
+      fullPath,
+      relativeToBase: normalizedRelativePath,
+    };
+  }
+
+  const baseName = path.basename(normalizedRelativePath);
+  const candidates = findFilesWithBasename(resolvedBase, baseName);
+  const picked = pickCandidateByClassNameHint(candidates, classNameHint, resolvedBase);
+  if (!picked) {
+    if (candidates.length > 1) {
+      throw new Error(
+        `Ambiguous class file: multiple matches for ${baseName} under models/${scope === 'items' ? 'items' : 'cards'}. Pass the full relative path (e.g. weapon/catalyst/${baseName}) or className.`
+      );
+    }
     throw new Error('Class file not found');
   }
-  return fullPath;
-}
-
-function normalizeRelativePath(relativePath: string): string {
-  return relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
+  return {
+    fullPath: picked,
+    relativeToBase: path.relative(resolvedBase, picked).replace(/\\/g, '/'),
+  };
 }
 
 function getClassMethodNodes(classDecl: import('ts-morph').ClassDeclaration): ClassMethodAstNode[] {
@@ -138,6 +211,10 @@ function getExportedClassNames(filePath: string): string[] {
     if (defaultExportNames.length > 0) {
       return [defaultExportNames[0]];
     }
+    if (names.length > 0) return names;
+    const first = classes[0];
+    const n = first?.getName();
+    if (n) return [n];
   } catch {
     // ignore parse errors
   }
@@ -203,11 +280,10 @@ export function getCardClassSource(
   className?: string,
   scope: ModelsClassScope = 'cards'
 ): CardClassSourceResult {
-  const normalizedRelativePath = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  const fullPath = resolveClassFilePath(relativePath, scope);
+  const resolved = resolveClassFilePath(relativePath, scope, className);
 
   const project = new Project({ skipAddingFilesFromTsConfig: true });
-  const sourceFile = project.addSourceFileAtPath(fullPath);
+  const sourceFile = project.addSourceFileAtPath(resolved.fullPath);
   const classes = sourceFile.getClasses();
   if (!classes.length) {
     throw new Error('No class found in file');
@@ -222,7 +298,7 @@ export function getCardClassSource(
 
   return {
     className: resolvedClassName,
-    filePath: normalizedRelativePath,
+    filePath: resolved.relativeToBase,
     sourceText,
   };
 }
@@ -232,10 +308,9 @@ export function buildCardClassTsDoc(
   className?: string,
   scope: ModelsClassScope = 'cards'
 ): CardClassSourceResult {
-  const normalizedRelativePath = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  const fullPath = resolveClassFilePath(relativePath, scope);
+  const resolved = resolveClassFilePath(relativePath, scope, className);
   const project = new Project({ skipAddingFilesFromTsConfig: true });
-  const sourceFile = project.addSourceFileAtPath(fullPath);
+  const sourceFile = project.addSourceFileAtPath(resolved.fullPath);
   const classes = sourceFile.getClasses();
   if (!classes.length) {
     throw new Error('No class found in file');
@@ -270,7 +345,7 @@ export function buildCardClassTsDoc(
 
   return {
     className: resolvedClassName,
-    filePath: normalizedRelativePath,
+    filePath: resolved.relativeToBase,
     sourceText: classDecl.getText(),
   };
 }
@@ -279,15 +354,14 @@ export function saveCardClassSource(
   input: SaveCardClassSourceInput,
   scope: ModelsClassScope = 'cards'
 ): CardClassSourceResult {
-  const normalizedRelativePath = input.relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  const fullPath = resolveClassFilePath(input.relativePath, scope);
+  const resolved = resolveClassFilePath(input.relativePath, scope, input.className);
   const sourceText = input.sourceText?.trim();
   if (!sourceText) {
     throw new Error('Source text is required');
   }
 
   const project = new Project({ skipAddingFilesFromTsConfig: true });
-  const sourceFile = project.addSourceFileAtPath(fullPath);
+  const sourceFile = project.addSourceFileAtPath(resolved.fullPath);
   const classes = sourceFile.getClasses();
   if (!classes.length) {
     throw new Error('No class found in file');
@@ -312,14 +386,14 @@ export function saveCardClassSource(
 
   return {
     className: updatedClass.getName() ?? input.className ?? 'UnknownClass',
-    filePath: normalizedRelativePath,
+    filePath: resolved.relativeToBase,
     sourceText: updatedClass.getText(),
   };
 }
 
 export function getCharacterClassAstMap(relativePath: string, className?: string): CharacterClassAstMapResult {
-  const normalizedRelativePath = normalizeRelativePath(relativePath);
-  const fullPath = resolveClassFilePath(relativePath, 'cards');
+  const resolved = resolveClassFilePath(relativePath, 'cards', className);
+  const { fullPath } = resolved;
   const parentRelativePath = 'modules/typeCard/character.ts';
   const parentBasePath = process.env.TEYVAT_CARD_MODELS_PATH
     ? path.resolve(path.dirname(cardsBasePath), '../modules/typeCard')
@@ -345,7 +419,7 @@ export function getCharacterClassAstMap(relativePath: string, className?: string
 
   return {
     className: resolvedClassName,
-    classRelativePath: normalizedRelativePath,
+    classRelativePath: resolved.relativeToBase,
     parentClassName: resolvedParentClassName,
     parentRelativePath,
     methodMap: {

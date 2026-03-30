@@ -9,6 +9,8 @@ import { CardDeckBuilder } from '../maps/CardDeckBuilder';
 import { getAdventureCardImageUrl, contentsToIds } from './adventureCardUtils';
 import { UnsavedChangesDialog } from '../unsavedChanges';
 import { scaleInModal, fadeInOverlay } from '../animations/motionPresets';
+import { ElementReactionPicker } from '../characters/ElementReactionPicker';
+import { ClanReactionPicker } from './ClanReactionPicker';
 
 const TYPES: AdventureCard['type'][] = [
   'weapon',
@@ -21,28 +23,6 @@ const TYPES: AdventureCard['type'][] = [
   'empty',
 ];
 
-const CLANS = [
-  'abyss',
-  'Automatons',
-  'boss',
-  'eremite',
-  'fatui',
-  'hilichurl',
-  'kairagi',
-  'shroom',
-  'slime',
-];
-
-const ELEMENTS = [
-  'anemo',
-  'cryo',
-  'dendro',
-  'electro',
-  'geo',
-  'hydro',
-  'pyro',
-  'none',
-];
 const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled', 'hidden'];
 
 interface AdventureCardCreateModalProps {
@@ -222,36 +202,31 @@ export function AdventureCardCreateModal({
                 {/* Conditional Fields based on Type */}
                 {type === 'enemy' && (
                   <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-muted-foreground mb-1">Element</label>
-                        <select
-                          className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-primary-500 transition-all shadow-sm capitalize"
-                          value={form.element ?? ''}
-                          onChange={(e) => setForm((p) => ({ ...p, element: e.target.value }))}
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-3 rounded-lg bg-slate-100 p-3 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="shrink-0 text-sm font-medium text-muted-foreground">⚡ Element</span>
+                        <div
+                          className="min-w-0 w-full flex justify-center sm:w-auto sm:justify-end sm:pl-2"
+                          onPointerDown={(e) => e.stopPropagation()}
                         >
-                          <option value="">Chọn Element</option>
-                          {ELEMENTS.map((el) => (
-                            <option key={el} value={el} className="capitalize">
-                              {el}
-                            </option>
-                          ))}
-                        </select>
+                          <ElementReactionPicker
+                            selectedElement={form.element ?? ''}
+                            onSelect={(e) => setForm((p) => ({ ...p, element: e }))}
+                            includeNoneInRail
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-muted-foreground mb-1">Clan</label>
-                        <select
-                          className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-primary-500 transition-all shadow-sm capitalize"
-                          value={form.clan ?? ''}
-                          onChange={(e) => setForm((p) => ({ ...p, clan: e.target.value }))}
+                      <div className="flex flex-col gap-3 rounded-lg bg-slate-100 p-3 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="shrink-0 text-sm font-medium text-muted-foreground">🏴 Clan</span>
+                        <div
+                          className="min-w-0 w-full flex justify-center sm:w-auto sm:justify-end sm:pl-2"
+                          onPointerDown={(e) => e.stopPropagation()}
                         >
-                          <option value="">Chọn Clan</option>
-                          {CLANS.map((clan) => (
-                            <option key={clan} value={clan} className="capitalize">
-                              {clan}
-                            </option>
-                          ))}
-                        </select>
+                          <ClanReactionPicker
+                            selectedClan={form.clan ?? ''}
+                            onSelect={(c) => setForm((p) => ({ ...p, clan: c }))}
+                          />
+                        </div>
                       </div>
                     </div>
                     <DualRangeSlider

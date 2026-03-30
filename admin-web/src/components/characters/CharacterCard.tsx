@@ -21,9 +21,10 @@ export interface CharacterCardProps {
   onSelect?: () => void;
   /**
    * `compact`: ảnh + tên + level (không mô tả, ID, status) — dùng lưới nhỏ (vd. UserDetail).
+   * `minLabel`: chỉ tên + nameId, chữ trên ảnh (không panel nền) — lưới khi mở drawer.
    * `default`: đầy đủ như trang Characters.
    */
-  variant?: 'default' | 'compact';
+  variant?: 'default' | 'compact' | 'minLabel';
   /** Khi `variant="compact"`: hiển thị cấp (vd. từ saveGame). */
   level?: number;
 }
@@ -35,11 +36,13 @@ export function CharacterCard({
   variant = 'default',
   level,
 }: CharacterCardProps) {
-  const isCompact = variant === 'compact';
+  const isMinLabel = variant === 'minLabel';
+  const isCompact = variant === 'compact' || isMinLabel;
   const descriptionText = descriptionDisplay ?? (character.description?.startsWith('character.') ? '' : character.description ?? '');
   const statusPill: 'enabled' | 'disabled' | undefined =
     character.status == null ? undefined : character.status === 'enabled' ? 'enabled' : 'disabled';
   const showStatus = !isCompact && statusPill != null;
+  const showTopNameBadge = !isCompact && !isMinLabel;
   const levelDisplay = typeof level === 'number' && Number.isFinite(level) ? Math.max(1, Math.floor(level)) : null;
 
   const card = (
@@ -70,7 +73,7 @@ export function CharacterCard({
               }}
             />
 
-            {!isCompact && (
+            {showTopNameBadge && (
               <div className="absolute top-3 left-3 max-w-[calc(100%-6rem)]">
                 <span className="inline-block truncate px-2 py-0.5 rounded-full border border-white/20 bg-black/45 font-mono text-[10px] tracking-wide text-slate-100 backdrop-blur-sm">
                   {character.name}
@@ -93,7 +96,18 @@ export function CharacterCard({
               </div>
             )}
 
-            {isCompact ? (
+            {isMinLabel ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 p-2 pt-10">
+                <CardHeader className="space-y-0.5 p-0">
+                  <CardTitle className="text-[11px] font-semibold leading-tight text-white line-clamp-2 [paint-order:stroke_fill] [-webkit-text-stroke:1.75px_rgba(0,0,0,0.9)]">
+                    {character.name}
+                  </CardTitle>
+                  <p className="font-mono text-[9px] lowercase text-white [paint-order:stroke_fill] [-webkit-text-stroke:1.75px_rgba(0,0,0,0.9)]">
+                    {character.nameId}
+                  </p>
+                </CardHeader>
+              </div>
+            ) : isCompact ? (
               <div className="absolute inset-x-0 bottom-0 p-2 pt-8 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
                 <div className="flex items-end justify-between gap-2 min-h-[2.5rem]">
                   <CardHeader className="p-0 flex-1 min-w-0">

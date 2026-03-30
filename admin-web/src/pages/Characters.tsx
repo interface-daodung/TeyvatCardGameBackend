@@ -231,6 +231,7 @@ export default function Characters() {
     >
       <CharacterCard
         character={character}
+        variant={detailOpen ? 'minLabel' : 'default'}
         descriptionDisplay={descriptionByNameId[character.nameId]}
         onSelect={() => {
           if (suppressItemClickRef.current) {

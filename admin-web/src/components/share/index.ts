@@ -15,6 +15,17 @@ export { DockFabButtonRow, type DockFabButtonRowProps } from './DockFabButtonRow
 export { DockPeekFabButton, type DockPeekFabButtonProps } from './DockPeekFabButton';
 export { DockFabMotionGroup, type DockFabMotionGroupProps } from './DockFabMotionGroup';
 export {
+  ReactionPicker,
+  ReactionPickerMenu,
+  ReactionPickerRail,
+  reactionPickerOpenWidth,
+  type ReactionPickerItem,
+  type ReactionPickerMenuProps,
+  type ReactionPickerProps,
+  type ReactionPickerRailProps,
+} from './ReactionPicker';
+
+export {
   bottomDockFabShellClassName,
   dockFabButtonRowClassName,
   dockPeekFabButtonBaseClassName,

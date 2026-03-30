@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { gameDataService, type AdventureCard } from '../../services/gameDataService';
 import { useUnsavedBaseline } from '../unsavedChanges';
 import { contentsToIds } from './adventureCardUtils';
@@ -31,23 +31,27 @@ export function useAdventureCardEdit(
   const [createOpen, setCreateOpen] = useState(false);
   const [formCreate, setFormCreate] = useState<Partial<AdventureCard>>(CREATE_DEFAULT);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editLang, setEditLang] = useState<EditLang>('vi');
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-  const [i18nField, setI18nField] = useState<'name' | 'description' | null>(null);
-  const [formI18nEn, setFormI18nEn] = useState('');
-  const [formI18nVi, setFormI18nVi] = useState('');
-  const [formI18nJa, setFormI18nJa] = useState('');
-  const [translateLoading, setTranslateLoading] = useState(false);
-  const [i18nError, setI18nError] = useState<string | null>(null);
-  const [nameTranslations, setNameTranslations] = useState<Record<string, string> | null>(null);
-  const [descriptionTranslations, setDescriptionTranslations] = useState<Record<string, string> | null>(null);
+  const [nameI18nEn, setNameI18nEn] = useState('');
+  const [nameI18nVi, setNameI18nVi] = useState('');
+  const [nameI18nJa, setNameI18nJa] = useState('');
+  const [descI18nEn, setDescI18nEn] = useState('');
+  const [descI18nVi, setDescI18nVi] = useState('');
+  const [descI18nJa, setDescI18nJa] = useState('');
+  const [translateNameLoading, setTranslateNameLoading] = useState(false);
+  const [translateDescLoading, setTranslateDescLoading] = useState(false);
+  const [i18nNameError, setI18nNameError] = useState<string | null>(null);
+  const [i18nDescError, setI18nDescError] = useState<string | null>(null);
   const [imageTreeOpen, setImageTreeOpen] = useState(false);
   const [imageTree, setImageTree] = useState<FileTreeItem[] | null>(null);
   const [imageTreeLoading, setImageTreeLoading] = useState(false);
   const [imageTreeExpanded, setImageTreeExpanded] = useState<Set<string>>(new Set());
 
   const [classNamePickerOpen, setClassNamePickerOpen] = useState(false);
+  const [i18nField, setI18nField] = useState<'name' | 'description' | null>(null);
 
   const {
     setBaseline: setEditBaseline,
@@ -59,116 +63,155 @@ export function useAdventureCardEdit(
     clearBaseline: clearCreateBaseline,
     isDirty: isCreateFormDirty,
   } = useUnsavedBaseline<Partial<AdventureCard>>();
+  const {
+    setBaseline: setI18nBaseline,
+    clearBaseline: clearI18nBaseline,
+    isDirty: isI18nSnapshotDirty,
+  } = useUnsavedBaseline<{ en: string; vi: string; ja: string }>();
   const [showUnsavedConfirmEdit, setShowUnsavedConfirmEdit] = useState(false);
   const [showUnsavedConfirmCreate, setShowUnsavedConfirmCreate] = useState(false);
+  const [showUnsavedConfirmI18n, setShowUnsavedConfirmI18n] = useState(false);
+  const [i18nSaveLoading, setI18nSaveLoading] = useState(false);
+  /** Thẻ đích khi đổi thẻ trong lúc drawer mở còn chỉnh sửa chưa lưu (giống pendingEditItem ở equipment). */
+  const [pendingEditCard, setPendingEditCard] = useState<AdventureCard | null>(null);
+  const formRef = useRef(form);
+  formRef.current = form;
+  const pendingEditCardRef = useRef<AdventureCard | null>(null);
+  useEffect(() => {
+    pendingEditCardRef.current = pendingEditCard;
+  }, [pendingEditCard]);
+
+  const setNameI18n = (lang: EditLang, val: string) => {
+    if (lang === 'en') setNameI18nEn(val);
+    else if (lang === 'vi') setNameI18nVi(val);
+    else setNameI18nJa(val);
+  };
+
+  const setDescI18n = (lang: EditLang, val: string) => {
+    if (lang === 'en') setDescI18nEn(val);
+    else if (lang === 'vi') setDescI18nVi(val);
+    else setDescI18nJa(val);
+  };
+
+  const getFormI18n = (lang: EditLang) => {
+    if (!i18nField) return '';
+    if (i18nField === 'name') {
+      return lang === 'en' ? nameI18nEn : lang === 'vi' ? nameI18nVi : nameI18nJa;
+    }
+    return lang === 'en' ? descI18nEn : lang === 'vi' ? descI18nVi : descI18nJa;
+  };
+
+  const setFormI18n = (lang: EditLang, val: string) => {
+    if (!i18nField) return;
+    if (i18nField === 'name') setNameI18n(lang, val);
+    else setDescI18n(lang, val);
+  };
+
+  const openI18nEditor = (field: 'name' | 'description') => {
+    setI18nField(field);
+    setI18nNameError(null);
+    setI18nDescError(null);
+    if (field === 'name') {
+      setI18nBaseline({ en: nameI18nEn, vi: nameI18nVi, ja: nameI18nJa });
+    } else {
+      setI18nBaseline({ en: descI18nEn, vi: descI18nVi, ja: descI18nJa });
+    }
+  };
+
+  /** Đóng popup i18n và xóa baseline (sau lưu / không lưu / không có thay đổi). */
+  const closeI18nEditor = () => {
+    setShowUnsavedConfirmI18n(false);
+    setI18nField(null);
+    clearI18nBaseline();
+    setI18nNameError(null);
+    setI18nDescError(null);
+  };
+
+  const requestCloseI18nEditor = () => {
+    if (!i18nField) return;
+    const snapshot =
+      i18nField === 'name'
+        ? { en: nameI18nEn, vi: nameI18nVi, ja: nameI18nJa }
+        : { en: descI18nEn, vi: descI18nVi, ja: descI18nJa };
+    if (isI18nSnapshotDirty(snapshot)) {
+      setShowUnsavedConfirmI18n(true);
+      return;
+    }
+    closeI18nEditor();
+  };
 
   useEffect(() => {
     if (!editCard) {
-      setNameTranslations(null);
-      setDescriptionTranslations(null);
+      setNameI18nEn('');
+      setNameI18nVi('');
+      setNameI18nJa('');
+      setDescI18nEn('');
+      setDescI18nVi('');
+      setDescI18nJa('');
       return;
     }
     const loadLoc = async () => {
+      const nameKey = `adventureCard.${editCard.nameId}.name`;
+      const descKey = `adventureCard.${editCard.nameId}.description`;
       try {
-        const nameKey = `adventureCard.${editCard.nameId}.name`;
-        const descKey = `adventureCard.${editCard.nameId}.description`;
-        try {
-          const nameLoc = await localizationService.getLocalizationByKey(nameKey);
-          setNameTranslations(nameLoc.translations ?? {});
-        } catch {
-          setNameTranslations(null);
-        }
-        try {
-          const descLoc = await localizationService.getLocalizationByKey(descKey);
-          setDescriptionTranslations(descLoc.translations ?? {});
-        } catch {
-          setDescriptionTranslations(null);
-        }
+        const nameLoc = await localizationService.getLocalizationByKey(nameKey);
+        const nt = nameLoc.translations ?? {};
+        setNameI18nEn(nt.en ?? editCard.name ?? '');
+        setNameI18nVi(nt.vi ?? '');
+        setNameI18nJa(nt.ja ?? '');
       } catch {
-        setNameTranslations(null);
-        setDescriptionTranslations(null);
+        setNameI18nEn(editCard.name ?? '');
+        setNameI18nVi('');
+        setNameI18nJa('');
+      }
+      try {
+        const descLoc = await localizationService.getLocalizationByKey(descKey);
+        const dt = descLoc.translations ?? {};
+        setDescI18nEn(dt.en ?? editCard.description ?? '');
+        setDescI18nVi(dt.vi ?? '');
+        setDescI18nJa(dt.ja ?? '');
+      } catch {
+        setDescI18nEn(editCard.description ?? '');
+        setDescI18nVi('');
+        setDescI18nJa('');
       }
     };
     loadLoc();
   }, [editCard]);
 
-  const getFormI18n = (lang: EditLang) =>
-    lang === 'en' ? formI18nEn : lang === 'vi' ? formI18nVi : formI18nJa;
-  const setFormI18n = (lang: EditLang, val: string) => {
-    if (lang === 'en') setFormI18nEn(val);
-    else if (lang === 'vi') setFormI18nVi(val);
-    else setFormI18nJa(val);
-  };
-
-  const openI18nEditor = async (field: 'name' | 'description') => {
+  const handleI18nTranslate = async (field: 'name' | 'description') => {
     if (!editCard) return;
-    setI18nField(field);
-    setI18nError(null);
-    const keyBase = `adventureCard.${editCard.nameId}.${field === 'name' ? 'name' : 'description'}`;
-    try {
-      const loc = await localizationService.getLocalizationByKey(keyBase);
-      const t = loc.translations ?? {};
-      setFormI18nEn(
-        t.en ?? (field === 'name' ? form.name ?? editCard.name : form.description ?? editCard.description ?? '')
-      );
-      setFormI18nVi(t.vi ?? '');
-      setFormI18nJa(t.ja ?? '');
-    } catch {
-      setFormI18nEn(
-        field === 'name' ? form.name ?? editCard.name ?? '' : form.description ?? editCard.description ?? ''
-      );
-      setFormI18nVi('');
-      setFormI18nJa('');
-    }
-  };
-
-  const handleI18nTranslate = async () => {
-    if (!i18nField) return;
-    const sourceText = getFormI18n(editLang).trim();
+    const setLoading = field === 'name' ? setTranslateNameLoading : setTranslateDescLoading;
+    const setErr = field === 'name' ? setI18nNameError : setI18nDescError;
+    const sourceText =
+      field === 'name'
+        ? (editLang === 'en' ? nameI18nEn : editLang === 'vi' ? nameI18nVi : nameI18nJa).trim()
+        : (editLang === 'en' ? descI18nEn : editLang === 'vi' ? descI18nVi : descI18nJa).trim();
     if (!sourceText) {
-      setI18nError('Vui lòng nhập nội dung gốc trước khi dịch');
+      setErr('Vui lòng nhập nội dung gốc trước khi dịch');
       return;
     }
-    setI18nError(null);
-    setTranslateLoading(true);
+    setErr(null);
+    setLoading(true);
     try {
       const promises: Promise<void>[] = [];
-      if (!formI18nVi.trim())
-        promises.push(localizationService.translate(sourceText, editLang, 'vi').then(setFormI18nVi));
-      if (!formI18nJa.trim())
-        promises.push(localizationService.translate(sourceText, editLang, 'ja').then(setFormI18nJa));
+      if (field === 'name') {
+        if (!nameI18nVi.trim())
+          promises.push(localizationService.translate(sourceText, editLang, 'vi').then(setNameI18nVi));
+        if (!nameI18nJa.trim())
+          promises.push(localizationService.translate(sourceText, editLang, 'ja').then(setNameI18nJa));
+      } else {
+        if (!descI18nVi.trim())
+          promises.push(localizationService.translate(sourceText, editLang, 'vi').then(setDescI18nVi));
+        if (!descI18nJa.trim())
+          promises.push(localizationService.translate(sourceText, editLang, 'ja').then(setDescI18nJa));
+      }
       await Promise.all(promises);
     } catch {
-      setI18nError('Lỗi gọi dịch máy, hãy thử lại');
+      setErr('Lỗi gọi dịch máy, hãy thử lại');
     } finally {
-      setTranslateLoading(false);
+      setLoading(false);
     }
-  };
-
-  const handleI18nSave = async () => {
-    if (!editCard || !i18nField) return;
-    const translations = { en: formI18nEn.trim(), vi: formI18nVi.trim(), ja: formI18nJa.trim() };
-    const keyBase = `adventureCard.${editCard.nameId}.${i18nField === 'name' ? 'name' : 'description'}`;
-    try {
-      await localizationService.updateLocalization(keyBase, translations);
-    } catch {
-      try {
-        await localizationService.createLocalization(keyBase, translations);
-      } catch {
-        setI18nError('Không lưu được bản dịch, hãy thử lại');
-        return;
-      }
-    }
-    if (i18nField === 'name') {
-      setForm((p) => ({ ...p, name: translations.en || p.name || editCard.name }));
-      setNameTranslations(translations);
-    } else {
-      setForm((p) => ({ ...p, description: translations.en || p.description || editCard.description }));
-      setDescriptionTranslations(translations);
-    }
-    onI18nSaved?.(editCard.nameId, i18nField, translations);
-    setI18nField(null);
-    setI18nError(null);
   };
 
   const openImageTree = async () => {
@@ -206,12 +249,123 @@ export function useAdventureCardEdit(
 
   const closeEdit = () => {
     setShowUnsavedConfirmEdit(false);
+    setShowUnsavedConfirmI18n(false);
+    setPendingEditCard(null);
     clearEditBaseline();
+    clearI18nBaseline();
     setEditOpen(false);
+    setEditCard(null);
+    setClassNamePickerOpen(false);
+    setI18nField(null);
+  };
+
+  const applyOpenEdit = (card: AdventureCard) => {
+    setPendingEditCard(null);
+    setEditCard(card);
+    const next = structuredClone(card);
+    setForm(next);
+    setEditBaseline(next);
+    setShowUnsavedConfirmEdit(false);
+    setShowUnsavedConfirmI18n(false);
+    clearI18nBaseline();
+    setEditOpen(true);
+    setError(null);
+    setImageTreeOpen(false);
+    setClassNamePickerOpen(false);
+    setI18nField(null);
+    setI18nNameError(null);
+    setI18nDescError(null);
+  };
+
+  const handleI18nSave = async (field: 'name' | 'description') => {
+    if (!editCard) return;
+    const setErr = field === 'name' ? setI18nNameError : setI18nDescError;
+    const translations =
+      field === 'name'
+        ? { en: nameI18nEn.trim(), vi: nameI18nVi.trim(), ja: nameI18nJa.trim() }
+        : { en: descI18nEn.trim(), vi: descI18nVi.trim(), ja: descI18nJa.trim() };
+    const keyBase = `adventureCard.${editCard.nameId}.${field === 'name' ? 'name' : 'description'}`;
+    setI18nSaveLoading(true);
+    try {
+      try {
+        await localizationService.updateLocalization(keyBase, translations);
+      } catch {
+        try {
+          await localizationService.createLocalization(keyBase, translations);
+        } catch {
+          setErr('Không lưu được bản dịch, hãy thử lại');
+          return;
+        }
+      }
+      if (field === 'name') {
+        setForm((p) => ({ ...p, name: translations.en || p.name || editCard.name }));
+      } else {
+        setForm((p) => ({ ...p, description: translations.en || p.description || editCard.description }));
+      }
+      onI18nSaved?.(editCard.nameId, field, translations);
+      setErr(null);
+      const pendingAfter = pendingEditCardRef.current;
+      closeI18nEditor();
+      if (pendingAfter) {
+        window.setTimeout(() => {
+          const f = formRef.current;
+          if (isEditFormDirty(f)) {
+            setShowUnsavedConfirmEdit(true);
+          } else {
+            applyOpenEdit(pendingAfter);
+          }
+        }, 0);
+      }
+    } finally {
+      setI18nSaveLoading(false);
+    }
+  };
+
+  const requestOpenEdit = (card: AdventureCard) => {
+    if (!editOpen || !editCard) {
+      applyOpenEdit(card);
+      return;
+    }
+    if (editCard._id === card._id) return;
+
+    if (i18nField) {
+      const snapshot =
+        i18nField === 'name'
+          ? { en: nameI18nEn, vi: nameI18nVi, ja: nameI18nJa }
+          : { en: descI18nEn, vi: descI18nVi, ja: descI18nJa };
+      if (isI18nSnapshotDirty(snapshot)) {
+        setPendingEditCard(card);
+        setShowUnsavedConfirmI18n(true);
+        return;
+      }
+      closeI18nEditor();
+      window.setTimeout(() => requestOpenEdit(card), 0);
+      return;
+    }
+
+    if (classNamePickerOpen) {
+      setClassNamePickerOpen(false);
+    }
+
+    if (isEditFormDirty(form)) {
+      setPendingEditCard(card);
+      setShowUnsavedConfirmEdit(true);
+    } else {
+      applyOpenEdit(card);
+    }
   };
 
   const requestCloseEdit = () => {
+    if (i18nField) {
+      requestCloseI18nEditor();
+      return;
+    }
+    if (classNamePickerOpen) {
+      setClassNamePickerOpen(false);
+      return;
+    }
     if (editOpen && isEditFormDirty(form)) {
+      setPendingEditCard(null);
       setShowUnsavedConfirmEdit(true);
     } else {
       closeEdit();
@@ -219,18 +373,39 @@ export function useAdventureCardEdit(
   };
 
   const confirmDiscardEdit = () => {
-    closeEdit();
+    const pending = pendingEditCard;
+    setShowUnsavedConfirmEdit(false);
+    setPendingEditCard(null);
+    if (pending) {
+      applyOpenEdit(pending);
+    } else {
+      closeEdit();
+    }
   };
 
-  const handleOpenEdit = (card: AdventureCard) => {
-    setEditCard(card);
-    const next = structuredClone(card);
-    setForm(next);
-    setEditBaseline(next);
-    setShowUnsavedConfirmEdit(false);
-    setEditOpen(true);
-    setError(null);
-    setImageTreeOpen(false);
+  const dismissUnsavedConfirmI18n = () => {
+    setShowUnsavedConfirmI18n(false);
+    setPendingEditCard(null);
+  };
+
+  const confirmDiscardI18n = () => {
+    const pending = pendingEditCardRef.current;
+    closeI18nEditor();
+    if (pending) {
+      window.setTimeout(() => {
+        const f = formRef.current;
+        if (isEditFormDirty(f)) {
+          setShowUnsavedConfirmEdit(true);
+        } else {
+          applyOpenEdit(pending);
+        }
+      }, 0);
+    }
+  };
+
+  const confirmSaveI18n = () => {
+    setShowUnsavedConfirmI18n(false);
+    if (i18nField) void handleI18nSave(i18nField);
   };
 
   const handleSaveCard = async () => {
@@ -252,8 +427,13 @@ export function useAdventureCardEdit(
       }
       const updated = await gameDataService.updateAdventureCard(editCard._id, payload);
       setCards((prev) => prev.map((c) => (c._id === updated._id ? { ...c, ...updated } : c)));
-      setEditCard(updated);
-      closeEdit();
+      const switchAfter = pendingEditCardRef.current;
+      setPendingEditCard(null);
+      if (switchAfter && switchAfter._id !== editCard._id) {
+        applyOpenEdit(switchAfter);
+      } else {
+        closeEdit();
+      }
     } catch (e: unknown) {
       setError(
         e && typeof e === 'object' && 'message' in e ? String((e as Error).message) : 'Failed to save card'
@@ -266,6 +446,24 @@ export function useAdventureCardEdit(
   const confirmSaveEdit = () => {
     setShowUnsavedConfirmEdit(false);
     void handleSaveCard();
+  };
+
+  const handleDeleteCard = async () => {
+    if (!editCard) return;
+    setDeleteLoading(true);
+    setError(null);
+    try {
+      await gameDataService.deleteAdventureCard(editCard._id);
+      setCards((prev) => prev.filter((c) => c._id !== editCard._id));
+      closeEdit();
+    } catch (e: unknown) {
+      setError(
+        e && typeof e === 'object' && 'message' in e ? String((e as Error).message) : 'Không xóa được thẻ'
+      );
+      throw e;
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const openClassNamePicker = () => setClassNamePickerOpen(true);
@@ -343,11 +541,6 @@ export function useAdventureCardEdit(
     void handleCreateCard();
   };
 
-  const nameDisplay =
-    (nameTranslations ?? undefined)?.[editLang] ?? form.name ?? editCard?.name ?? '';
-  const descriptionDisplay =
-    (descriptionTranslations ?? undefined)?.[editLang] ?? form.description ?? editCard?.description ?? '';
-
   return {
     editCard,
     editOpen,
@@ -357,37 +550,56 @@ export function useAdventureCardEdit(
     formCreate,
     setFormCreate,
     saveLoading,
+    deleteLoading,
     error,
     editLang,
     setEditLang,
     langDropdownOpen,
     setLangDropdownOpen,
+    nameI18nEn,
+    nameI18nVi,
+    nameI18nJa,
+    descI18nEn,
+    descI18nVi,
+    descI18nJa,
+    setNameI18n,
+    setDescI18n,
+    translateNameLoading,
+    translateDescLoading,
+    i18nNameError,
+    i18nDescError,
     i18nField,
-    setI18nField,
     getFormI18n,
     setFormI18n,
-    translateLoading,
-    i18nError,
-    setI18nError,
+    openI18nEditor,
+    requestCloseI18nEditor,
     imageTreeOpen,
     setImageTreeOpen,
     imageTree,
     imageTreeLoading,
     imageTreeExpanded,
-    openI18nEditor,
     handleI18nTranslate,
     handleI18nSave,
     openImageTree,
     toggleTreeExpanded,
     selectImage,
-    handleOpenEdit,
+    handleOpenEdit: requestOpenEdit,
     handleSaveCard,
+    handleDeleteCard,
     closeEdit,
     requestCloseEdit,
     showUnsavedConfirmEdit,
-    dismissUnsavedConfirmEdit: () => setShowUnsavedConfirmEdit(false),
+    dismissUnsavedConfirmEdit: () => {
+      setShowUnsavedConfirmEdit(false);
+      setPendingEditCard(null);
+    },
     confirmDiscardEdit,
     confirmSaveEdit,
+    showUnsavedConfirmI18n,
+    dismissUnsavedConfirmI18n,
+    confirmDiscardI18n,
+    confirmSaveI18n,
+    i18nSaveLoading,
     classNamePickerOpen,
     openClassNamePicker,
     closeClassNamePicker,
@@ -400,7 +612,5 @@ export function useAdventureCardEdit(
     confirmDiscardCreate,
     confirmSaveCreate,
     handleCreateCard,
-    nameDisplay,
-    descriptionDisplay,
   };
 }

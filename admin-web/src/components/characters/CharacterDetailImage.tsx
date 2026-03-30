@@ -1,11 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import Phaser from 'phaser';
 import { FileTreeNode } from '../FileTreeNode';
 import { ImageLightbox, type ImageLightboxOpen, type LightboxImage } from '../ui/ImageLightbox';
 import { cn } from '../../lib/utils';
 import {
   CARD_IMAGE_RATIO,
-  phaserSpritesheetTextureKey,
   SPRITESHEET_FRAME_HEIGHT,
   SPRITESHEET_FRAME_WIDTH,
 } from './characterDetailUtils';
@@ -44,8 +42,8 @@ export function CharacterDetailImage({
   onOpenPicker,
 }: CharacterDetailImageProps) {
   const [imageTab, setImageTab] = useState<ImageTab>('default');
-  const spriteContainerRef = useRef<HTMLDivElement | null>(null);
-  const spriteLightboxRef = useRef<HTMLDivElement | null>(null);
+  const spriteCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const spriteLightboxCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [spriteLoading, setSpriteLoading] = useState(true);
   const [spriteError, setSpriteError] = useState<string | null>(null);
   const [spriteLightboxOpen, setSpriteLightboxOpen] = useState(false);
@@ -71,184 +69,135 @@ export function CharacterDetailImage({
 
   useEffect(() => {
     if (imageTab !== 'animated') return;
-    const parent = spriteContainerRef.current;
-    if (!parent || !character.nameId) return;
+    const canvas = spriteCanvasRef.current;
+    if (!canvas || !character.nameId) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     setSpriteLoading(true);
     setSpriteError(null);
     const spritesheetUrl = resolvedSpritesheetUrl;
-    const textureKey = phaserSpritesheetTextureKey(character.nameId, spritesheetUrl);
-    const animKey = `${textureKey}-anim`;
-    let game: Phaser.Game | null = null;
-    let sprite: Phaser.GameObjects.Sprite | null = null;
+    const image = new Image();
+    let timer: number | null = null;
+    let frame = 0;
+    let cancelled = false;
 
-    const config: Phaser.Types.Core.GameConfig = {
-      type: Phaser.AUTO,
-      width: SPRITESHEET_FRAME_WIDTH,
-      height: SPRITESHEET_FRAME_HEIGHT,
-      transparent: true,
-      parent,
-      scene: {
-        preload(this: Phaser.Scene) {
-          this.load.crossOrigin = 'anonymous';
-          this.load.spritesheet(textureKey, spritesheetUrl, {
-            frameWidth: SPRITESHEET_FRAME_WIDTH,
-            frameHeight: SPRITESHEET_FRAME_HEIGHT,
-          });
-          this.load.once('loaderror', (file: { key: string }) => {
-            if (file.key === textureKey) {
-              setSpriteLoading(false);
-              setSpriteError('Không load được spritesheet.');
-            }
-          });
-        },
-        create(this: Phaser.Scene) {
-          const canvas = this.game.canvas as HTMLCanvasElement;
-          canvas.style.width = '210px';
-          canvas.style.height = 'auto';
+    canvas.width = SPRITESHEET_FRAME_WIDTH;
+    canvas.height = SPRITESHEET_FRAME_HEIGHT;
+    canvas.style.width = '210px';
+    canvas.style.height = 'auto';
 
-          if (!this.textures.exists(textureKey)) {
-            setSpriteLoading(false);
-            setSpriteError('Không load được spritesheet.');
-            return;
-          }
-
-          const texture = this.textures.get(textureKey);
-          const frames = texture.frames as Record<string, Phaser.Textures.Frame>;
-          const digitKeys = Object.keys(frames).filter((k) => /^\d+$/.test(k));
-          let endFrame = 0;
-          if (digitKeys.length > 0) {
-            endFrame = Math.max(...digitKeys.map((k) => parseInt(k, 10)));
-          } else if (texture.frameTotal > 1) {
-            const hasBase = frames.__BASE !== undefined;
-            endFrame = Math.max(0, texture.frameTotal - (hasBase ? 2 : 1));
-          }
-
-          sprite = this.add.sprite(
-            SPRITESHEET_FRAME_WIDTH / 2,
-            SPRITESHEET_FRAME_HEIGHT / 2,
-            textureKey,
-            0
-          );
-
-          if (endFrame >= 1) {
-            if (this.anims.exists(animKey)) {
-              this.anims.remove(animKey);
-            }
-            this.anims.create({
-              key: animKey,
-              frames: this.anims.generateFrameNumbers(textureKey, {
-                start: 0,
-                end: endFrame,
-              }),
-              frameRate: 12,
-              repeat: -1,
-            });
-            sprite.play(animKey);
-          }
-          setSpriteLoading(false);
-        },
-      },
+    const drawFrame = (index: number, totalColumns: number) => {
+      const row = Math.floor(index / totalColumns);
+      const col = index % totalColumns;
+      const sx = col * SPRITESHEET_FRAME_WIDTH;
+      const sy = row * SPRITESHEET_FRAME_HEIGHT;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        image,
+        sx,
+        sy,
+        SPRITESHEET_FRAME_WIDTH,
+        SPRITESHEET_FRAME_HEIGHT,
+        0,
+        0,
+        SPRITESHEET_FRAME_WIDTH,
+        SPRITESHEET_FRAME_HEIGHT
+      );
     };
 
-    game = new Phaser.Game(config);
+    image.onload = () => {
+      if (cancelled) return;
+      const totalColumns = Math.max(1, Math.floor(image.naturalWidth / SPRITESHEET_FRAME_WIDTH));
+      const totalRows = Math.max(1, Math.floor(image.naturalHeight / SPRITESHEET_FRAME_HEIGHT));
+      const totalFrames = Math.max(1, totalColumns * totalRows);
+      drawFrame(0, totalColumns);
+      setSpriteLoading(false);
+      if (totalFrames > 1) {
+        timer = window.setInterval(() => {
+          frame = (frame + 1) % totalFrames;
+          drawFrame(frame, totalColumns);
+        }, Math.floor(1000 / 12));
+      }
+    };
+    image.onerror = () => {
+      if (cancelled) return;
+      setSpriteLoading(false);
+      setSpriteError('Không load được spritesheet.');
+    };
+    image.crossOrigin = 'anonymous';
+    image.src = spritesheetUrl;
+
     return () => {
-      if (sprite && sprite.active) sprite.stop();
-      if (game) game.destroy(true);
+      cancelled = true;
+      if (timer !== null) window.clearInterval(timer);
     };
   }, [imageTab, character.nameId, resolvedSpritesheetUrl]);
 
   useLayoutEffect(() => {
     if (!spriteLightboxOpen) return;
-    const parent = spriteLightboxRef.current;
-    if (!parent || !character.nameId) return;
+    const canvas = spriteLightboxCanvasRef.current;
+    if (!canvas || !character.nameId) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     setSpriteLightboxLoading(true);
     setSpriteLightboxError(null);
     const spritesheetUrl = resolvedSpritesheetUrl;
-    const textureKey = phaserSpritesheetTextureKey(
-      character.nameId,
-      `${spritesheetUrl}#lightbox`
-    );
-    const animKey = `${textureKey}-anim`;
-    let game: Phaser.Game | null = null;
-    let sprite: Phaser.GameObjects.Sprite | null = null;
+    const image = new Image();
+    let timer: number | null = null;
+    let frame = 0;
+    let cancelled = false;
 
-    const config: Phaser.Types.Core.GameConfig = {
-      type: Phaser.AUTO,
-      width: SPRITESHEET_FRAME_WIDTH,
-      height: SPRITESHEET_FRAME_HEIGHT,
-      transparent: true,
-      parent,
-      scene: {
-        preload(this: Phaser.Scene) {
-          this.load.crossOrigin = 'anonymous';
-          this.load.spritesheet(textureKey, spritesheetUrl, {
-            frameWidth: SPRITESHEET_FRAME_WIDTH,
-            frameHeight: SPRITESHEET_FRAME_HEIGHT,
-          });
-          this.load.once('loaderror', (file: { key: string }) => {
-            if (file.key === textureKey) {
-              setSpriteLightboxLoading(false);
-              setSpriteLightboxError('Không load được spritesheet.');
-            }
-          });
-        },
-        create(this: Phaser.Scene) {
-          const canvas = this.game.canvas as HTMLCanvasElement;
-          canvas.style.width = 'auto';
-          canvas.style.height = 'auto';
-          canvas.style.maxWidth = 'min(90vw, 900px)';
-          canvas.style.maxHeight = 'min(85vh, 800px)';
+    canvas.width = SPRITESHEET_FRAME_WIDTH;
+    canvas.height = SPRITESHEET_FRAME_HEIGHT;
 
-          if (!this.textures.exists(textureKey)) {
-            setSpriteLightboxLoading(false);
-            setSpriteLightboxError('Không load được spritesheet.');
-            return;
-          }
-
-          const texture = this.textures.get(textureKey);
-          const frames = texture.frames as Record<string, Phaser.Textures.Frame>;
-          const digitKeys = Object.keys(frames).filter((k) => /^\d+$/.test(k));
-          let endFrame = 0;
-          if (digitKeys.length > 0) {
-            endFrame = Math.max(...digitKeys.map((k) => parseInt(k, 10)));
-          } else if (texture.frameTotal > 1) {
-            const hasBase = frames.__BASE !== undefined;
-            endFrame = Math.max(0, texture.frameTotal - (hasBase ? 2 : 1));
-          }
-
-          sprite = this.add.sprite(
-            SPRITESHEET_FRAME_WIDTH / 2,
-            SPRITESHEET_FRAME_HEIGHT / 2,
-            textureKey,
-            0
-          );
-
-          if (endFrame >= 1) {
-            if (this.anims.exists(animKey)) {
-              this.anims.remove(animKey);
-            }
-            this.anims.create({
-              key: animKey,
-              frames: this.anims.generateFrameNumbers(textureKey, {
-                start: 0,
-                end: endFrame,
-              }),
-              frameRate: 12,
-              repeat: -1,
-            });
-            sprite.play(animKey);
-          }
-          setSpriteLightboxLoading(false);
-        },
-      },
+    const drawFrame = (index: number, totalColumns: number) => {
+      const row = Math.floor(index / totalColumns);
+      const col = index % totalColumns;
+      const sx = col * SPRITESHEET_FRAME_WIDTH;
+      const sy = row * SPRITESHEET_FRAME_HEIGHT;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        image,
+        sx,
+        sy,
+        SPRITESHEET_FRAME_WIDTH,
+        SPRITESHEET_FRAME_HEIGHT,
+        0,
+        0,
+        SPRITESHEET_FRAME_WIDTH,
+        SPRITESHEET_FRAME_HEIGHT
+      );
     };
 
-    game = new Phaser.Game(config);
+    image.onload = () => {
+      if (cancelled) return;
+      const totalColumns = Math.max(1, Math.floor(image.naturalWidth / SPRITESHEET_FRAME_WIDTH));
+      const totalRows = Math.max(1, Math.floor(image.naturalHeight / SPRITESHEET_FRAME_HEIGHT));
+      const totalFrames = Math.max(1, totalColumns * totalRows);
+      drawFrame(0, totalColumns);
+      setSpriteLightboxLoading(false);
+      if (totalFrames > 1) {
+        timer = window.setInterval(() => {
+          frame = (frame + 1) % totalFrames;
+          drawFrame(frame, totalColumns);
+        }, Math.floor(1000 / 12));
+      }
+    };
+    image.onerror = () => {
+      if (cancelled) return;
+      setSpriteLightboxLoading(false);
+      setSpriteLightboxError('Không load được spritesheet.');
+    };
+    image.crossOrigin = 'anonymous';
+    image.src = spritesheetUrl;
+
     return () => {
-      if (sprite && sprite.active) sprite.stop();
-      if (game) game.destroy(true);
+      cancelled = true;
+      if (timer !== null) window.clearInterval(timer);
     };
   }, [spriteLightboxOpen, character.nameId, resolvedSpritesheetUrl]);
 
@@ -265,9 +214,9 @@ export function CharacterDetailImage({
           label: 'Ảnh động (spritesheet)',
           children: (
             <div className="relative inline-flex max-h-[min(85vh,800px)] max-w-[min(90vw,900px)] flex-col items-center justify-center">
-              <div
-                ref={spriteLightboxRef}
-                className="inline-flex items-center justify-center [&_canvas]:max-h-[min(85vh,800px)] [&_canvas]:w-auto [&_canvas]:max-w-[min(90vw,900px)]"
+              <canvas
+                ref={spriteLightboxCanvasRef}
+                className="max-h-[min(85vh,800px)] w-auto max-w-[min(90vw,900px)]"
               />
               {spriteLightboxLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-900/70">
@@ -455,9 +404,9 @@ export function CharacterDetailImage({
                     }}
                   >
                     <div className="pointer-events-none relative inline-flex max-h-full max-w-full items-center justify-center">
-                      <div
-                        ref={spriteContainerRef}
-                        className="inline-flex items-center justify-center [&_canvas]:max-h-full [&_canvas]:w-auto [&_canvas]:max-w-full"
+                      <canvas
+                        ref={spriteCanvasRef}
+                        className="max-h-full w-auto max-w-full"
                       />
                       {spriteLoading && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-900/60">

@@ -14,7 +14,7 @@ export function ElementIcon({ element, size = 'sm', className = '' }: ElementIco
   if (isNone) {
     return (
       <span
-        className={`${sizeClasses[size]} rounded-full border border-white/60 bg-black/40 flex items-center justify-center p-0.5 ${className}`}
+        className={`${sizeClasses[size]} rounded-full flex items-center justify-center p-0.5 ${className}`}
       >
         <svg className={`${iconSizes[size]} text-white/80`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="6" y1="6" x2="18" y2="18" />
@@ -28,7 +28,7 @@ export function ElementIcon({ element, size = 'sm', className = '' }: ElementIco
     <img
       src={`/assets/images/element/${element}.webp`}
       alt={element}
-      className={`${sizeClasses[size]} rounded-full border border-white/60 bg-black/40 p-0.5 ${className}`}
+      className={`${sizeClasses[size]} rounded-full p-0.5 ${className}`}
     />
   );
 }

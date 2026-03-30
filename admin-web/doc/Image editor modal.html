@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Editor Modal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141417;
+    --surface2: #1c1c21;
+    --surface3: #242429;
+    --border: #2e2e36;
+    --border-light: #3e3e4a;
+    --accent: #e8ff47;
+    --accent2: #47c8ff;
+    --accent3: #ff6b47;
+    --text: #f0f0f5;
+    --text-dim: #8888a0;
+    --text-muted: #555565;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: var(--mono);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: radial-gradient(circle at 20% 50%, rgba(232,255,71,0.04) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 20%, rgba(71,200,255,0.04) 0%, transparent 50%);
+  }
+
+  /* Trigger Button */
+  .open-btn {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    background: var(--accent);
+    color: #0d0d0f;
+    border: none;
+    padding: 14px 32px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .open-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(232,255,71,0.3);
+  }
+
+  /* Overlay */
+  .overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+  }
+  .overlay.active { display: flex; align-items: center; justify-content: center; padding: 20px; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* Modal */
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 920px;
+    max-height: 92vh;
+    overflow-y: auto;
+    animation: slideUp 0.25s ease;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-light) transparent;
+  }
+
+  /* Modal Header */
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: var(--surface);
+    z-index: 10;
+  }
+  .modal-title {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .modal-title .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 400;
+    background: rgba(232,255,71,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(232,255,71,0.25);
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+  }
+  .close-btn {
+    width: 30px; height: 30px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .close-btn:hover { background: var(--accent3); color: #fff; border-color: var(--accent3); }
+
+  /* Modal Body */
+  .modal-body {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Section */
+  .section {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+  }
+  .section-full { grid-column: 1 / -1; }
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* File Info */
+  .file-preview {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .thumb-box {
+    width: 72px; height: 72px;
+    background: var(--surface3);
+    border: 1px dashed var(--border-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .thumb-box:hover { border-color: var(--accent); }
+  .thumb-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .thumb-box .no-img { color: var(--text-muted); font-size: 10px; text-align: center; line-height: 1.4; }
+  .thumb-box input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  
+  .file-meta { flex: 1; }
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-key { color: var(--text-muted); }
+  .meta-val { color: var(--text); font-weight: 500; }
+  .meta-val.accent { color: var(--accent); }
+  .meta-val.dim { color: var(--text-dim); }
+
+  /* Rename */
+  .rename-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+  }
+  .input-field {
+    flex: 1;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-field:focus { border-color: var(--accent2); }
+  .input-field::placeholder { color: var(--text-muted); }
+
+  /* Suggest buttons */
+  .suggest-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .s-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .s-btn:hover { background: rgba(71,200,255,0.1); color: var(--accent2); border-color: rgba(71,200,255,0.3); }
+  .s-btn.active { background: rgba(232,255,71,0.12); color: var(--accent); border-color: rgba(232,255,71,0.35); }
+
+  /* Crop/Resize Input */
+  .dim-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .dim-input-wrap { position: relative; }
+  .dim-input-wrap label {
+    position: absolute;
+    top: 50%; left: 10px;
+    transform: translateY(-50%);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+  .dim-input {
+    width: 90px;
+    padding: 9px 10px 9px 26px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .dim-input:focus { border-color: var(--accent); }
+  .dim-sep { color: var(--text-muted); font-size: 14px; font-weight: 700; }
+
+  .fit-toggle {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .fit-opt {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 6px 4px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface3);
+    color: var(--text-muted);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.12s;
+  }
+  .fit-opt.active { background: rgba(232,255,71,0.1); color: var(--accent); border-color: rgba(232,255,71,0.3); }
+
+  /* Resize steps */
+  .resize-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .step-card {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .step-card:hover { border-color: var(--accent2); background: rgba(71,200,255,0.06); }
+  .step-card.selected { border-color: var(--accent); background: rgba(232,255,71,0.08); }
+  .step-card .pct {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .step-card.selected .pct { color: var(--accent); }
+  .step-card .dims {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+  .step-card input[type=checkbox] {
+    position: absolute;
+    top: 5px; right: 5px;
+    accent-color: var(--accent);
+    width: 11px; height: 11px;
+    cursor: pointer;
+  }
+
+  /* Lossy slider */
+  .quality-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .quality-row label { font-size: 11px; color: var(--text-dim); min-width: 60px; }
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    background: var(--surface3);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .quality-val {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 30px;
+    text-align: right;
+  }
+
+  /* Batch quality */
+  .batch-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .batch-card {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .batch-card:hover { border-color: var(--accent3); }
+  .batch-card.selected { border-color: var(--accent); background: rgba(232,255,71,0.08); }
+  .batch-card .q-val { font-size: 13px; font-weight: 700; color: var(--text-dim); }
+  .batch-card.selected .q-val { color: var(--accent); }
+  .batch-card .q-size { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+  .batch-card .q-badge {
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-top: 3px;
+    display: inline-block;
+  }
+  .q-good { background: rgba(71,200,255,0.15); color: var(--accent2); }
+  .q-best { background: rgba(232,255,71,0.15); color: var(--accent); }
+  .q-low { background: rgba(255,107,71,0.12); color: var(--accent3); }
+
+  /* Output Preview Panel */
+  .preview-panel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    grid-column: 1 / -1;
+  }
+  .preview-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-light) transparent;
+  }
+  .preview-item {
+    flex-shrink: 0;
+    width: 130px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .preview-item:hover { border-color: var(--accent2); transform: translateY(-2px); }
+  .preview-item.approved { border-color: var(--accent); }
+  .preview-item.approved::before {
+    content: '✓';
+    position: absolute;
+    top: 5px; right: 5px;
+    width: 18px; height: 18px;
+    background: var(--accent);
+    color: #0d0d0f;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .preview-thumb {
+    width: 100%;
+    height: 85px;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface3) 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    color: var(--text-muted);
+    overflow: hidden;
+    position: relative;
+  }
+  .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-thumb .pending-label {
+    position: absolute;
+    bottom: 4px; left: 4px;
+    font-size: 8px;
+    background: rgba(255,107,71,0.85);
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+  }
+  .preview-info {
+    padding: 7px 8px;
+    border-top: 1px solid var(--border);
+  }
+  .p-dims { font-size: 9px; color: var(--text-dim); margin-bottom: 2px; }
+  .p-size { font-size: 10px; font-weight: 700; color: var(--text); }
+  .p-quality { font-size: 9px; color: var(--text-muted); }
+  .preview-actions {
+    display: flex;
+    gap: 4px;
+    padding: 6px 8px;
+    border-top: 1px solid var(--border);
+  }
+  .p-action {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 4px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.12s;
+  }
+  .p-action.approve { color: var(--accent); border-color: rgba(232,255,71,0.25); }
+  .p-action.approve:hover { background: rgba(232,255,71,0.12); }
+  .p-action.reject { color: var(--accent3); border-color: rgba(255,107,71,0.25); }
+  .p-action.reject:hover { background: rgba(255,107,71,0.1); }
+  .p-name-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 4px 6px;
+    outline: none;
+    margin-bottom: 4px;
+  }
+  .p-name-input:focus { border-color: var(--accent2); }
+  .p-name-input::placeholder { color: var(--text-muted); }
+
+  /* Action Bar */
+  .action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    bottom: 0;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+  .action-left { display: flex; gap: 8px; }
+  .action-right { display: flex; gap: 8px; }
+
+  .btn {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0d0f;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,255,71,0.25); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+  .btn-secondary:hover { background: var(--surface2); color: var(--text); border-color: var(--border-light); }
+  .btn-danger {
+    background: transparent;
+    color: var(--accent3);
+    border-color: rgba(255,107,71,0.3);
+  }
+  .btn-danger:hover { background: rgba(255,107,71,0.1); }
+  .btn-run {
+    background: var(--surface2);
+    color: var(--accent2);
+    border-color: rgba(71,200,255,0.3);
+  }
+  .btn-run:hover { background: rgba(71,200,255,0.1); box-shadow: 0 0 16px rgba(71,200,255,0.15); }
+
+  /* Generate button */
+  .generate-row {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+  }
+
+  /* Toggle switch */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .toggle-label { font-size: 11px; color: var(--text-dim); }
+  .toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    left: 3px; top: 50%;
+    transform: translateY(-50%);
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+  .toggle input:checked + .toggle-slider { background: rgba(232,255,71,0.15); border-color: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { background: var(--accent); transform: translateY(-50%) translateX(16px); }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+  /* Status indicator */
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+    animation: pulse 2s infinite;
+    margin-right: 4px;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+  /* Tooltip */
+  [data-tip] { position: relative; cursor: help; }
+  [data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface3);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .output-name-preview {
+    font-size: 10px;
+    color: var(--accent2);
+    margin-top: 4px;
+    min-height: 14px;
+    letter-spacing: 0.02em;
+  }
+  .output-name-preview span { opacity: 0.6; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+
+  select.input-field {
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<button class="open-btn" onclick="document.getElementById('overlay').classList.add('active')">
+  ⚙ Mở Image Editor
+</button>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="modal-title">
+        <span class="status-dot"></span>
+        Image Processor
+        <span class="tag">WebP · Lossy · Crop</span>
+      </div>
+      <button class="close-btn" onclick="closeModal()" title="Đóng">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+
+      <!-- LEFT COL: File Info + Rename -->
+      <div class="section">
+        <div class="section-label">Tệp gốc</div>
+        <div class="file-preview">
+          <div class="thumb-box" id="thumbBox" title="Click để chọn ảnh">
+            <img id="thumbImg" alt="preview">
+            <div class="no-img" id="noImg">📂<br>Chọn ảnh</div>
+            <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp"
+              onchange="handleFile(this)">
+          </div>
+          <div class="file-meta">
+            <div class="meta-row">
+              <span class="meta-key">Tên</span>
+              <span class="meta-val dim" id="origName">—</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-key">Định dạng</span>
+              <span class="meta-val" id="origFormat">—</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-key">Kích thước</span>
+              <span class="meta-val accent" id="origDims">—</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-key">Dung lượng</span>
+              <span class="meta-val" id="origSize">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Đổi tên</div>
+
+        <div class="rename-row">
+          <input class="input-field" id="newName" placeholder="Nhập tên mới (không cần .ext)..."
+            oninput="updateOutputName()">
+        </div>
+        <div class="output-name-preview" id="namePreview">
+          <span>Tên xuất: </span>—
+        </div>
+
+        <div class="suggest-grid" style="margin-top:10px;">
+          <div class="section-label" style="width:100%;margin-bottom:4px;">Gợi ý nhanh</div>
+          <button class="s-btn" onclick="suggestName('banner')">banner</button>
+          <button class="s-btn" onclick="suggestName('thumbnail')">thumbnail</button>
+          <button class="s-btn" onclick="suggestName('cover')">cover</button>
+          <button class="s-btn" onclick="suggestName('avatar')">avatar</button>
+          <button class="s-btn" onclick="suggestName('hero')">hero</button>
+          <button class="s-btn" onclick="suggestName('icon')">icon</button>
+          <button class="s-btn" onclick="useOrigName()">← Dùng tên gốc</button>
+        </div>
+      </div>
+
+      <!-- RIGHT COL: Crop / Resize Target -->
+      <div class="section">
+        <div class="section-label">Kích thước xuất</div>
+
+        <div class="dim-inputs">
+          <div class="dim-input-wrap">
+            <label>W</label>
+            <input class="dim-input" id="cropW" type="number" placeholder="420"
+              min="1" max="8000" oninput="updateOutputName()">
+          </div>
+          <span class="dim-sep">×</span>
+          <div class="dim-input-wrap">
+            <label>H</label>
+            <input class="dim-input" id="cropH" type="number" placeholder="783"
+              min="1" max="8000" oninput="updateOutputName()">
+          </div>
+        </div>
+
+        <div class="fit-toggle">
+          <div class="fit-opt active" onclick="setFit('cover',this)" data-tip="Crop để fill vừa khung">Cover</div>
+          <div class="fit-opt" onclick="setFit('contain',this)" data-tip="Giữ tỉ lệ, thêm viền">Contain</div>
+          <div class="fit-opt" onclick="setFit('fill',this)" data-tip="Kéo dãn cho vừa">Fill</div>
+          <div class="fit-opt" onclick="setFit('none',this)" data-tip="Giữ nguyên kích thước">None</div>
+        </div>
+
+        <div class="suggest-grid">
+          <div class="section-label" style="width:100%;margin-bottom:4px;">Tỉ lệ gợi ý</div>
+          <button class="s-btn" onclick="setDims(420,783)">420×783</button>
+          <button class="s-btn" onclick="setDims(1080,1920)">1080×1920</button>
+          <button class="s-btn" onclick="setDims(1200,630)">1200×630</button>
+          <button class="s-btn" onclick="setDims(800,800)">800×800</button>
+          <button class="s-btn" onclick="setDims(1280,720)">1280×720</button>
+          <button class="s-btn" onclick="setDims(640,640)">640×640</button>
+          <button class="s-btn" onclick="setDims(360,360)">360×360</button>
+          <button class="s-btn" onclick="setDims(192,192)">192×192</button>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Resize theo % (bước)</div>
+
+        <div class="resize-steps" id="resizeSteps">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- LOSSY COMPRESSION -->
+      <div class="section">
+        <div class="section-label">Nén Lossy (WebP)</div>
+
+        <div class="toggle-row">
+          <span class="toggle-label">Kích hoạt nén mất dữ liệu</span>
+          <label class="toggle">
+            <input type="checkbox" id="lossyToggle" checked onchange="toggleLossy()">
+            <div class="toggle-slider"></div>
+          </label>
+        </div>
+
+        <div id="lossyPanel">
+          <div class="quality-row">
+            <label>Chất lượng</label>
+            <input type="range" id="qualitySlider" min="10" max="100" value="80"
+              oninput="document.getElementById('qualityNum').textContent=this.value+'%'">
+            <span class="quality-val" id="qualityNum">80%</span>
+          </div>
+
+          <div class="suggest-grid">
+            <button class="s-btn" onclick="setQuality(95)">95% · Max</button>
+            <button class="s-btn" onclick="setQuality(80)">80% · Cân bằng</button>
+            <button class="s-btn" onclick="setQuality(65)">65% · Web</button>
+            <button class="s-btn" onclick="setQuality(50)">50% · Nhỏ</button>
+            <button class="s-btn" onclick="setQuality(30)">30% · Mini</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BATCH QUALITY -->
+      <div class="section">
+        <div class="section-label">So sánh hàng loạt — chọn tỉ lệ nén</div>
+
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">
+          Tạo nhiều bản với tỉ lệ nén khác nhau để so sánh trực quan
+        </div>
+
+        <div class="batch-grid" id="batchGrid">
+          <div class="batch-card" onclick="toggleBatch(this,'30')">
+            <div class="q-val">30%</div>
+            <div class="q-size">~12KB</div>
+            <div class="q-badge q-low">nhỏ nhất</div>
+          </div>
+          <div class="batch-card" onclick="toggleBatch(this,'50')">
+            <div class="q-val">50%</div>
+            <div class="q-size">~22KB</div>
+            <div class="q-badge q-low">nhẹ</div>
+          </div>
+          <div class="batch-card selected" onclick="toggleBatch(this,'70')">
+            <div class="q-val">70%</div>
+            <div class="q-size">~38KB</div>
+            <div class="q-badge q-good">cân bằng</div>
+          </div>
+          <div class="batch-card selected" onclick="toggleBatch(this,'85')">
+            <div class="q-val">85%</div>
+            <div class="q-size">~58KB</div>
+            <div class="q-badge q-best">khuyên dùng</div>
+          </div>
+          <div class="batch-card" onclick="toggleBatch(this,'95')">
+            <div class="q-val">95%</div>
+            <div class="q-size">~90KB</div>
+            <div class="q-badge q-good">sắc nét nhất</div>
+          </div>
+        </div>
+
+        <div class="generate-row">
+          <button class="btn btn-run" style="flex:1;" onclick="generateBatch()">
+            ▶ Tạo loạt ảnh để so sánh
+          </button>
+        </div>
+      </div>
+
+      <!-- PREVIEW PANEL -->
+      <div class="preview-panel section-full">
+        <div class="section-label">Ảnh chờ duyệt <span style="color:var(--text-dim);margin-left:4px;" id="pendingCount">(0 ảnh)</span></div>
+
+        <div class="preview-scroll" id="previewScroll">
+          <div class="empty-state" id="emptyState" style="width:100%">
+            Chưa có ảnh nào. Nhấn <strong>Tạo loạt ảnh</strong> hoặc <strong>Xử lý ảnh</strong> để bắt đầu.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end modal-body -->
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="action-left">
+        <button class="btn btn-danger" onclick="deleteFile()">
+          🗑 Xóa file gốc
+        </button>
+        <button class="btn btn-secondary" onclick="clearAll()">
+          ↺ Làm mới
+        </button>
+      </div>
+      <div class="action-right">
+        <button class="btn btn-secondary" onclick="closeModal()">Đóng</button>
+        <button class="btn btn-run" onclick="processImage()">
+          ⚙ Xử lý ảnh
+        </button>
+        <button class="btn btn-primary" onclick="saveApproved()">
+          💾 Lưu đã duyệt
+        </button>
+      </div>
+    </div>
+
+  </div><!-- end modal -->
+</div><!-- end overlay -->
+
+<script>
+  // State
+  let state = {
+    origW: 420, origH: 720,
+    origName: 'example-image',
+    origExt: 'jpg',
+    origSizeKb: 148,
+    fitMode: 'cover',
+    qualityMode: true,
+    pendingItems: [],
+    approvedItems: []
+  };
+
+  // Close modal
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('active');
+  }
+
+  // Overlay click outside
+  document.getElementById('overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Handle file input (UI only simulation)
+  function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = document.getElementById('thumbImg');
+    img.src = url;
+    img.style.display = 'block';
+    document.getElementById('noImg').style.display = 'none';
+
+    // Get real dims
+    const tmp = new Image();
+    tmp.onload = function() {
+      state.origW = tmp.width;
+      state.origH = tmp.height;
+      document.getElementById('origDims').textContent = `${tmp.width}×${tmp.height}`;
+      updateResizeSteps();
+      updateOutputName();
+    };
+    tmp.src = url;
+
+    const ext = file.name.split('.').pop().toUpperCase();
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+    state.origName = baseName;
+    state.origExt = ext;
+    state.origSizeKb = Math.round(file.size / 1024);
+
+    document.getElementById('origName').textContent = file.name;
+    document.getElementById('origFormat').textContent = ext + ' → WebP';
+    document.getElementById('origSize').textContent = formatSize(file.size);
+    document.getElementById('newName').value = baseName;
+    updateOutputName();
+    updateResizeSteps();
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  // Suggest names
+  function suggestName(name) {
+    document.getElementById('newName').value = name;
+    updateOutputName();
+    document.querySelectorAll('.suggest-grid .s-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+  function useOrigName() {
+    document.getElementById('newName').value = state.origName;
+    updateOutputName();
+  }
+
+  // Set dims
+  function setDims(w, h) {
+    document.getElementById('cropW').value = w;
+    document.getElementById('cropH').value = h;
+    updateOutputName();
+    document.querySelectorAll('.suggest-grid .s-btn').forEach(b => {
+      b.classList.toggle('active', b.textContent === `${w}×${h}`);
+    });
+  }
+
+  // Fit mode
+  function setFit(mode, el) {
+    state.fitMode = mode;
+    document.querySelectorAll('.fit-opt').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // Update output name preview
+  function updateOutputName() {
+    const name = document.getElementById('newName').value.trim() || state.origName;
+    const w = document.getElementById('cropW').value;
+    const h = document.getElementById('cropH').value;
+    let preview = name;
+    if (w && h) preview = `${name}-${w}x${h}`;
+    preview += '.webp';
+    document.getElementById('namePreview').innerHTML =
+      `<span>Tên xuất: </span>${preview}`;
+  }
+
+  // Quality
+  function setQuality(val) {
+    document.getElementById('qualitySlider').value = val;
+    document.getElementById('qualityNum').textContent = val + '%';
+  }
+  function toggleLossy() {
+    const on = document.getElementById('lossyToggle').checked;
+    document.getElementById('lossyPanel').style.opacity = on ? '1' : '0.35';
+    document.getElementById('lossyPanel').style.pointerEvents = on ? '' : 'none';
+  }
+
+  // Batch toggle
+  function toggleBatch(el, q) {
+    el.classList.toggle('selected');
+  }
+
+  // Resize Steps
+  function updateResizeSteps() {
+    const w = state.origW, h = state.origH;
+    const steps = [
+      { pct: 50, label: '50%' },
+      { pct: 25, label: '25%' },
+      { pct: 12.5, label: '12.5%' },
+      { pct: 6.25, label: '6.25%' },
+    ];
+    const container = document.getElementById('resizeSteps');
+    container.innerHTML = steps.map((s, i) => {
+      const sw = Math.round(w * s.pct / 100);
+      const sh = Math.round(h * s.pct / 100);
+      return `<div class="step-card ${i===0?'selected':''}" onclick="selectStep(this,${sw},${sh})">
+        <input type="checkbox" ${i===0?'checked':''} onclick="event.stopPropagation()">
+        <span class="pct">${s.label}</span>
+        <div class="dims">${sw}×${sh}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function selectStep(el, w, h) {
+    el.classList.toggle('selected');
+    const cb = el.querySelector('input[type=checkbox]');
+    cb.checked = el.classList.contains('selected');
+    document.getElementById('cropW').value = w;
+    document.getElementById('cropH').value = h;
+    updateOutputName();
+  }
+
+  // Generate batch (UI simulation)
+  function generateBatch() {
+    const selected = [...document.querySelectorAll('.batch-card.selected')];
+    if (selected.length === 0) {
+      alert('Vui lòng chọn ít nhất 1 tỉ lệ nén trong bảng So sánh');
+      return;
+    }
+    const name = document.getElementById('newName').value.trim() || state.origName;
+    const w = parseInt(document.getElementById('cropW').value) || state.origW;
+    const h = parseInt(document.getElementById('cropH').value) || state.origH;
+
+    selected.forEach(card => {
+      const q = card.querySelector('.q-val').textContent.replace('%','');
+      const estimatedKb = Math.round((w * h * parseInt(q)) / 150000);
+      addPreviewItem({
+        name: `${name}-${w}x${h}`,
+        w, h,
+        quality: parseInt(q),
+        sizeKb: estimatedKb || 5,
+        approved: false
+      });
+    });
+    updatePendingCount();
+  }
+
+  // Process single
+  function processImage() {
+    const name = document.getElementById('newName').value.trim() || state.origName;
+    const w = parseInt(document.getElementById('cropW').value) || state.origW;
+    const h = parseInt(document.getElementById('cropH').value) || state.origH;
+    const q = parseInt(document.getElementById('qualitySlider').value);
+    const estimatedKb = Math.round((w * h * q) / 150000);
+
+    addPreviewItem({ name: `${name}-${w}x${h}`, w, h, quality: q, sizeKb: estimatedKb || 5, approved: false });
+    updatePendingCount();
+  }
+
+  let previewIdCounter = 0;
+  function addPreviewItem(data) {
+    const id = ++previewIdCounter;
+    const scroll = document.getElementById('previewScroll');
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+
+    const el = document.createElement('div');
+    el.className = 'preview-item';
+    el.id = `prev-${id}`;
+    el.innerHTML = `
+      <div class="preview-thumb">
+        <span>WebP preview</span>
+        <span class="pending-label">chờ duyệt</span>
+      </div>
+      <div class="preview-info">
+        <div class="p-dims">${data.w}×${data.h} · Q${data.quality}%</div>
+        <div class="p-size">~${data.sizeKb} KB</div>
+        <div class="p-quality">→ ${data.name}.webp</div>
+      </div>
+      <div style="padding:6px 8px 0;">
+        <input class="p-name-input" type="text" placeholder="Đặt tên lúc lưu..." value="${data.name}">
+      </div>
+      <div class="preview-actions">
+        <button class="p-action approve" onclick="approveItem(${id})">✓ Duyệt</button>
+        <button class="p-action reject" onclick="rejectItem(${id})">✕ Xóa</button>
+      </div>
+    `;
+    scroll.appendChild(el);
+  }
+
+  function approveItem(id) {
+    const el = document.getElementById(`prev-${id}`);
+    if (!el) return;
+    el.classList.toggle('approved');
+    const btn = el.querySelector('.p-action.approve');
+    const pendingLabel = el.querySelector('.pending-label');
+    if (el.classList.contains('approved')) {
+      btn.textContent = '★ Đã duyệt';
+      if (pendingLabel) {
+        pendingLabel.textContent = '✓ duyệt';
+        pendingLabel.style.background = 'rgba(232,255,71,0.8)';
+        pendingLabel.style.color = '#0d0d0f';
+      }
+    } else {
+      btn.textContent = '✓ Duyệt';
+      if (pendingLabel) {
+        pendingLabel.textContent = 'chờ duyệt';
+        pendingLabel.style.background = '';
+        pendingLabel.style.color = '';
+      }
+    }
+    updatePendingCount();
+  }
+
+  function rejectItem(id) {
+    const el = document.getElementById(`prev-${id}`);
+    if (el) {
+      el.style.transition = 'opacity 0.2s, transform 0.2s';
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.9)';
+      setTimeout(() => {
+        el.remove();
+        updatePendingCount();
+        checkEmpty();
+      }, 200);
+    }
+  }
+
+  function checkEmpty() {
+    const scroll = document.getElementById('previewScroll');
+    if (scroll.children.length === 0) {
+      const empty = document.createElement('div');
+      empty.id = 'emptyState';
+      empty.className = 'empty-state';
+      empty.style.width = '100%';
+      empty.innerHTML = 'Chưa có ảnh nào. Nhấn <strong>Tạo loạt ảnh</strong> hoặc <strong>Xử lý ảnh</strong> để bắt đầu.';
+      scroll.appendChild(empty);
+    }
+  }
+
+  function updatePendingCount() {
+    const total = document.querySelectorAll('.preview-item').length;
+    const approved = document.querySelectorAll('.preview-item.approved').length;
+    document.getElementById('pendingCount').textContent =
+      `(${total} ảnh · ${approved} đã duyệt)`;
+  }
+
+  function saveApproved() {
+    const approved = document.querySelectorAll('.preview-item.approved');
+    if (approved.length === 0) {
+      alert('Chưa có ảnh nào được duyệt. Nhấn ✓ Duyệt trên ảnh muốn lưu.');
+      return;
+    }
+    const names = [...approved].map(el => {
+      const input = el.querySelector('.p-name-input');
+      return (input?.value || 'unnamed') + '.webp';
+    });
+    alert(`Đã lưu ${approved.length} ảnh:\n${names.join('\n')}\n\n(Giao diện demo — backend sẽ xử lý thực tế)`);
+  }
+
+  function deleteFile() {
+    if (confirm('Xóa file gốc đang chọn?')) {
+      document.getElementById('thumbImg').style.display = 'none';
+      document.getElementById('noImg').style.display = '';
+      document.getElementById('origName').textContent = '—';
+      document.getElementById('origFormat').textContent = '—';
+      document.getElementById('origDims').textContent = '—';
+      document.getElementById('origSize').textContent = '—';
+      document.getElementById('newName').value = '';
+      document.getElementById('namePreview').innerHTML = '<span>Tên xuất: </span>—';
+      state.origW = 0; state.origH = 0;
+      updateResizeSteps();
+    }
+  }
+
+  function clearAll() {
+    if (confirm('Làm mới toàn bộ? Các ảnh chờ duyệt sẽ bị xóa.')) {
+      document.getElementById('previewScroll').innerHTML = '';
+      checkEmpty();
+      updatePendingCount();
+    }
+  }
+
+  // Init
+  updateResizeSteps();
+  updateOutputName();
+
+  // Simulate preloaded state
+  window.addEventListener('load', function() {
+    // Pre-fill demo data
+    document.getElementById('origName').textContent = 'example-photo.jpg';
+    document.getElementById('origFormat').textContent = 'JPG → WebP';
+    document.getElementById('origDims').textContent = '420×720';
+    document.getElementById('origSize').textContent = '148 KB';
+    document.getElementById('newName').value = 'example-photo';
+    state.origName = 'example-photo';
+    state.origW = 420; state.origH = 720;
+    updateResizeSteps();
+    updateOutputName();
+  });
+</script>
+</body>
+</html>

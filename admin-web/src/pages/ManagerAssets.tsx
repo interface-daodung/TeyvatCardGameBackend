@@ -10,6 +10,17 @@ import { filesService, type FileTreeItem, type FileMetadata, type FullImageMetad
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { ImageLightbox } from '../components/ui/ImageLightbox';
+import { SpriteFramePreviewPanel } from '../components/assets/SpriteFramePreviewPanel';
+import { JsonRawHighlight } from '../components/assets/JsonRawHighlight';
+import { TabPanelLoading } from '../components/assets/TabPanelLoading';
+import { SPRITESHEET_FRAME_HEIGHT, SPRITESHEET_FRAME_WIDTH } from '../components/characters/characterDetailUtils';
+import { cn } from '../lib/utils';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faUpload, faPenToSquare, faLightbulb as faLightbulbSolid, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faLightbulb as faLightbulbRegular } from '@fortawesome/free-regular-svg-icons';
+
+type PreviewAreaTab = 'preview' | 'animation' | 'metadata' | 'raw';
 
 function buildCombinedTree(cardsTree: FileTreeItem[], uploadedTree: FileTreeItem[]): FileTreeItem {
   return {
@@ -30,6 +41,32 @@ function basename(filePath: string): string {
 function dirname(filePath: string): string {
   const i = filePath.replace(/\\/g, '/').lastIndexOf('/');
   return i <= 0 ? filePath : filePath.slice(0, i);
+}
+
+/** Double-click fullscreen for animation canvas wrappers (Chrome + Safari). */
+function toggleFullscreenForElement(el: HTMLElement | null) {
+  if (!el) return;
+  const doc = document as Document & {
+    webkitFullscreenElement?: Element | null;
+    webkitExitFullscreen?: () => Promise<void>;
+  };
+  const fsEl = document.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+  const exit = () => document.exitFullscreen?.() ?? doc.webkitExitFullscreen?.();
+  const enter = () =>
+    el.requestFullscreen?.() ??
+    (el as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> }).webkitRequestFullscreen?.();
+
+  if (fsEl === el) {
+    void exit()?.catch(() => {});
+    return;
+  }
+  if (fsEl) {
+    void Promise.resolve(exit?.())
+      .then(() => enter())
+      .catch(() => void enter()?.catch(() => {}));
+    return;
+  }
+  void enter()?.catch(() => {});
 }
 
 export default function ManagerAssets() {
@@ -68,18 +105,32 @@ export default function ManagerAssets() {
   const [fullMetaPath, setFullMetaPath] = useState<string | null>(null);
   const [fullMetaLoading, setFullMetaLoading] = useState(false);
   const [fullMetaError, setFullMetaError] = useState<string | null>(null);
-  const [showFullMeta, setShowFullMeta] = useState(false);
   const [atlasBuilderOpen, setAtlasBuilderOpen] = useState(false);
-  const [previewBgMode, setPreviewBgMode] = useState<'dark' | 'light'>('dark');
+  const [previewBgMode, setPreviewBgMode] = useState<'dark' | 'light'>('light');
   const [animStartFrame, setAnimStartFrame] = useState(0);
   const [animEndFrame, setAnimEndFrame] = useState(8);
   const [animFrameRate, setAnimFrameRate] = useState(10);
   const [animCurrentFrame, setAnimCurrentFrame] = useState(0);
   const [animPlaying, setAnimPlaying] = useState(false);
   const [animTotalFrames, setAnimTotalFrames] = useState(0);
+  const [ssStartFrame, setSsStartFrame] = useState(0);
+  const [ssEndFrame, setSsEndFrame] = useState(8);
+  const [ssFrameRate, setSsFrameRate] = useState(10);
+  const [ssCurrentFrame, setSsCurrentFrame] = useState(0);
+  const [ssPlaying, setSsPlaying] = useState(false);
+  const [ssTotalFrames, setSsTotalFrames] = useState(0);
   const [previewLightbox, setPreviewLightbox] = useState<{ src: string; alt: string } | null>(null);
+  const [previewAreaTab, setPreviewAreaTab] = useState<PreviewAreaTab>('preview');
+  const [previewImageLoading, setPreviewImageLoading] = useState(false);
+  const [animSpriteReady, setAnimSpriteReady] = useState(false);
+  const [ssSpriteReady, setSsSpriteReady] = useState(false);
   const animCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const animImageRef = useRef<HTMLImageElement | null>(null);
+  const ssCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const ssImageRef = useRef<HTMLImageElement | null>(null);
+  const ssAnimFsWrapRef = useRef<HTMLDivElement | null>(null);
+  const animAnimFsWrapRef = useRef<HTMLDivElement | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchTrees = useCallback(async () => {
     try {
@@ -111,7 +162,6 @@ export default function ManagerAssets() {
       setFullMetaPath(null);
       setFullMetaError(null);
       setFullMetaLoading(false);
-      setShowFullMeta(false);
       return;
     }
 
@@ -131,8 +181,6 @@ export default function ManagerAssets() {
 
     setSelectedFileMeta(found);
     setImageMeta(null);
-    // Always collapse full metadata when user switches to another image.
-    setShowFullMeta(false);
   }, [combinedTree, selectedPath]);
 
   const handleToggle = (path: string) => {
@@ -187,11 +235,20 @@ export default function ManagerAssets() {
   const isAnimationSpriteSheet = (path: string) =>
     path.startsWith('/assets/images/animations/') && isImagePath(path);
 
+  /** Cùng thư mục character Spritesheet (cards/character/Spritesheet) — không phân biệt hoa thường. */
+  const isSpritesheetFolderImage = (path: string) => {
+    if (!isImagePath(path)) return false;
+    const parent = dirname(path).replace(/\\/g, '/');
+    const last = parent.split('/').pop()?.toLowerCase();
+    return last === 'spritesheet';
+  };
+
   const isUploadedFile = (p: string) =>
     p.startsWith('/uploads/') && /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(p);
 
   const handleImageLoaded = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
+    setPreviewImageLoading(false);
     if (img?.naturalWidth && img?.naturalHeight) {
       setImageMeta({
         width: img.naturalWidth,
@@ -352,6 +409,8 @@ export default function ManagerAssets() {
   const hasPendingUpload = !!pendingUpload && !!pendingUploadUrl;
   const selectedIsImage = selectedPath ? isImagePath(selectedPath) : false;
   const selectedIsAnimationSprite = selectedPath ? isAnimationSpriteSheet(selectedPath) : false;
+  const selectedIsSpritesheetFolder = selectedPath ? isSpritesheetFolderImage(selectedPath) : false;
+  const hasFramePreview = selectedIsAnimationSprite || selectedIsSpritesheetFolder;
   const selectedFileName = selectedPath ? basename(selectedPath) : '';
   const selectedFolder = selectedPath ? dirname(selectedPath) : '';
   const selectedExtension = selectedFileName.includes('.') ? selectedFileName.slice(selectedFileName.lastIndexOf('.') + 1) : '';
@@ -380,19 +439,15 @@ export default function ManagerAssets() {
     return `${(size / 1024 / 1024 / 1024).toFixed(1)} GB`;
   };
 
-  const handleLoadFullMetadata = async () => {
+  const fetchFullMetadataIfNeeded = useCallback(async () => {
     if (!selectedPath || fullMetaLoading) return;
-    if (fullMeta && fullMetaPath === selectedPath) {
-      setShowFullMeta((prev) => !prev);
-      return;
-    }
+    if (fullMeta && fullMetaPath === selectedPath) return;
     try {
       setFullMetaLoading(true);
       setFullMetaError(null);
       const data = await filesService.getFileMetadata(selectedPath);
       setFullMeta(data);
       setFullMetaPath(selectedPath);
-      setShowFullMeta(true);
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'response' in err
@@ -402,7 +457,26 @@ export default function ManagerAssets() {
     } finally {
       setFullMetaLoading(false);
     }
-  };
+  }, [selectedPath, fullMetaLoading, fullMeta, fullMetaPath]);
+
+  const canFetchRawMeta = Boolean(selectedIsImage && selectedPath && !hasPendingUpload);
+
+  useEffect(() => {
+    if (hasPendingUpload && pendingUploadUrl) {
+      setPreviewImageLoading(true);
+      return;
+    }
+    if (selectedIsImage && selectedPath) {
+      setPreviewImageLoading(true);
+      return;
+    }
+    setPreviewImageLoading(false);
+  }, [hasPendingUpload, pendingUploadUrl, selectedIsImage, selectedPath]);
+
+  useEffect(() => {
+    if (previewAreaTab !== 'raw' || !canFetchRawMeta) return;
+    void fetchFullMetadataIfNeeded();
+  }, [previewAreaTab, canFetchRawMeta, fetchFullMetadataIfNeeded]);
 
   const atlasImages = useMemo(
     () => {
@@ -437,6 +511,32 @@ export default function ManagerAssets() {
     setAtlasError(null);
   };
 
+  const drawSpritesheetFrame = useCallback((frame: number) => {
+    const canvas = ssCanvasRef.current;
+    const image = ssImageRef.current;
+    if (!canvas || !image) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const columns = Math.max(1, Math.floor(image.naturalWidth / SPRITESHEET_FRAME_WIDTH));
+    const row = Math.floor(frame / columns);
+    const col = frame % columns;
+    const sx = col * SPRITESHEET_FRAME_WIDTH;
+    const sy = row * SPRITESHEET_FRAME_HEIGHT;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      image,
+      sx,
+      sy,
+      SPRITESHEET_FRAME_WIDTH,
+      SPRITESHEET_FRAME_HEIGHT,
+      0,
+      0,
+      SPRITESHEET_FRAME_WIDTH,
+      SPRITESHEET_FRAME_HEIGHT
+    );
+  }, []);
+
   const drawAnimationFrame = useCallback((frame: number) => {
     const canvas = animCanvasRef.current;
     const image = animImageRef.current;
@@ -468,8 +568,10 @@ export default function ManagerAssets() {
       setAnimPlaying(false);
       animImageRef.current = null;
       setAnimTotalFrames(0);
+      setAnimSpriteReady(false);
       return;
     }
+    setAnimSpriteReady(false);
     const image = new Image();
     image.onload = () => {
       animImageRef.current = image;
@@ -482,6 +584,10 @@ export default function ManagerAssets() {
       setAnimEndFrame(defaultEnd);
       setAnimCurrentFrame(0);
       drawAnimationFrame(0);
+      setAnimSpriteReady(true);
+    };
+    image.onerror = () => {
+      setAnimSpriteReady(true);
     };
     image.src = selectedPath;
     return () => {
@@ -517,6 +623,88 @@ export default function ManagerAssets() {
     drawAnimationFrame(animCurrentFrame);
   }, [selectedIsAnimationSprite, animCurrentFrame, drawAnimationFrame]);
 
+  useEffect(() => {
+    if (!selectedIsSpritesheetFolder || !selectedPath) {
+      setSsPlaying(false);
+      ssImageRef.current = null;
+      setSsTotalFrames(0);
+      setSsSpriteReady(false);
+      return;
+    }
+    setSsSpriteReady(false);
+    const image = new Image();
+    image.onload = () => {
+      ssImageRef.current = image;
+      const cols = Math.max(1, Math.floor(image.naturalWidth / SPRITESHEET_FRAME_WIDTH));
+      const rows = Math.max(1, Math.floor(image.naturalHeight / SPRITESHEET_FRAME_HEIGHT));
+      const totalFrames = Math.max(1, cols * rows);
+      const defaultEnd = totalFrames - 1;
+      setSsTotalFrames(totalFrames);
+      setSsStartFrame(0);
+      setSsEndFrame(defaultEnd);
+      setSsCurrentFrame(0);
+      drawSpritesheetFrame(0);
+      setSsSpriteReady(true);
+    };
+    image.onerror = () => {
+      setSsSpriteReady(true);
+    };
+    image.crossOrigin = 'anonymous';
+    image.src = selectedPath;
+    return () => {
+      if (ssImageRef.current === image) {
+        ssImageRef.current = null;
+      }
+    };
+  }, [selectedIsSpritesheetFolder, selectedPath, drawSpritesheetFrame]);
+
+  useEffect(() => {
+    if (!selectedIsSpritesheetFolder) return;
+    const safeStart = Math.max(0, Math.floor(ssStartFrame));
+    const safeEnd = Math.max(safeStart, Math.floor(ssEndFrame));
+    setSsCurrentFrame((prev) => {
+      if (prev < safeStart || prev > safeEnd) return safeStart;
+      return prev;
+    });
+  }, [selectedIsSpritesheetFolder, ssStartFrame, ssEndFrame]);
+
+  useEffect(() => {
+    if (!selectedIsSpritesheetFolder || !ssPlaying) return;
+    const safeStart = Math.max(0, Math.floor(ssStartFrame));
+    const safeEnd = Math.max(safeStart, Math.floor(ssEndFrame));
+    const intervalMs = Math.max(20, Math.floor(1000 / Math.max(1, ssFrameRate)));
+    const timer = window.setInterval(() => {
+      setSsCurrentFrame((prev) => (prev >= safeEnd ? safeStart : prev + 1));
+    }, intervalMs);
+    return () => window.clearInterval(timer);
+  }, [selectedIsSpritesheetFolder, ssPlaying, ssStartFrame, ssEndFrame, ssFrameRate]);
+
+  useEffect(() => {
+    if (!selectedIsSpritesheetFolder) return;
+    drawSpritesheetFrame(ssCurrentFrame);
+  }, [selectedIsSpritesheetFolder, ssCurrentFrame, drawSpritesheetFrame]);
+
+  useEffect(() => {
+    setPreviewAreaTab('preview');
+    setFullMeta(null);
+    setFullMetaPath(null);
+    setFullMetaError(null);
+    setAnimSpriteReady(false);
+    setSsSpriteReady(false);
+  }, [selectedPath]);
+
+  useEffect(() => {
+    if (!hasFramePreview && previewAreaTab === 'animation') {
+      setPreviewAreaTab('preview');
+    }
+  }, [hasFramePreview, previewAreaTab]);
+
+  useEffect(() => {
+    if (!canFetchRawMeta && previewAreaTab === 'raw') {
+      setPreviewAreaTab('preview');
+    }
+  }, [canFetchRawMeta, previewAreaTab]);
+
   const isPreviewLight = previewBgMode === 'light';
   const previewFrameClass = isPreviewLight
     ? 'bg-white'
@@ -527,6 +715,12 @@ export default function ManagerAssets() {
   const previewHintClass = isPreviewLight
     ? 'text-slate-600'
     : 'text-slate-300';
+
+  const animationTabBusy =
+    hasFramePreview &&
+    previewAreaTab === 'animation' &&
+    ((selectedIsSpritesheetFolder && !ssSpriteReady) ||
+      (selectedIsAnimationSprite && !animSpriteReady));
 
   return (
     <div className="p-6 space-y-6">
@@ -541,193 +735,335 @@ export default function ManagerAssets() {
         initial="hidden"
         animate="visible"
       >
-        <Card className="lg:col-span-2 border bg-card shadow-xl">
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <div>
+        <Card className="flex w-full flex-col self-start lg:col-span-2 border bg-card shadow-xl">
+          <CardHeader className="flex flex-col gap-3 space-y-0 pb-2">
+            <div className="flex flex-row items-start justify-between gap-2">
               <CardTitle className="text-lg font-semibold tracking-tight">
-                Preview ảnh
+                Image preview
               </CardTitle>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Xem trước, chỉnh sửa metadata cơ bản và upload ảnh mới.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="px-2"
-                onClick={() => setPreviewBgMode((prev) => (prev === 'dark' ? 'light' : 'dark'))}
-                title={isPreviewLight ? 'Đổi nền tối' : 'Đổi nền sáng'}
-                aria-label={isPreviewLight ? 'Đổi nền tối' : 'Đổi nền sáng'}
-              >
-                💡
-              </Button>
-              {hasPendingUpload ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={clearPendingUpload}
-                >
-                  Bỏ chọn ảnh
-                </Button>
-              ) : selectedIsImage && selectedPath ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openEditModal(selectedPath)}
-                >
-                  Chỉnh sửa chi tiết
-                </Button>
-              ) : null}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)] items-start">
-              <div className={`relative flex min-h-[460px] items-center justify-center rounded-xl border border-dashed border-border p-3 ${previewFrameClass}`}>
-                {hasPendingUpload && pendingUploadUrl && pendingUpload ? (
-                  <img
-                    src={pendingUploadUrl}
-                    alt={pendingUpload.name}
-                    onLoad={handleImageLoaded}
-                    onClick={() => setPreviewLightbox({ src: pendingUploadUrl, alt: pendingUpload.name })}
-                    className={`max-h-[470px] h-auto w-auto max-w-full cursor-zoom-in rounded-lg border border-border object-contain shadow-md ${previewImageClass}`}
-                  />
-                ) : selectedIsImage && selectedPath ? (
-                  <img
-                    src={selectedPath}
-                    alt={selectedFileName || 'Preview'}
-                    onLoad={handleImageLoaded}
-                    onClick={() =>
-                      setPreviewLightbox({
-                        src: selectedPath,
-                        alt: selectedFileName || 'Preview',
-                      })
-                    }
-                    className={`max-h-[470px] h-auto w-auto max-w-full cursor-zoom-in rounded-lg border border-border object-contain shadow-md ${previewImageClass}`}
-                  />
+              <div className="flex shrink-0 items-center gap-2">
+                <input
+                  ref={uploadInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUploadSelect}
+                  disabled={uploading}
+                  className="hidden"
+                  aria-hidden
+                />
+                {hasPendingUpload ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      className="shrink-0"
+                      disabled={uploading}
+                      onClick={handleConfirmUpload}
+                      title="Upload this image to the uploaded folder"
+                    >
+                      {uploading ? 'Uploading…' : 'Upload this image'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
+                      onClick={clearPendingUpload}
+                      title="Clear pending image"
+                      aria-label="Clear pending image"
+                    >
+                      <FontAwesomeIcon icon={faXmark} className="h-4 w-4" />
+                    </Button>
+                  </>
                 ) : (
-                  <div className={`flex flex-col items-center justify-center text-center text-sm space-y-2 ${previewHintClass}`}>
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-full border border-border ${previewImageClass}`}>
-                      <span className="text-2xl leading-none">🖼️</span>
-                    </div>
-                    <p className="font-medium">
-                      Chưa có ảnh được chọn
-                    </p>
-                    <p className="max-w-xs text-xs">
-                      Chọn một file ở cây thư mục bên phải hoặc upload ảnh mới để xem preview tại đây.
-                    </p>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    disabled={uploading}
+                    onClick={() => uploadInputRef.current?.click()}
+                    title="Choose image to upload"
+                    aria-label="Choose image to upload"
+                  >
+                    <FontAwesomeIcon icon={faUpload} className="h-4 w-4" />
+                  </Button>
                 )}
-                <p className={`pointer-events-none absolute bottom-2 right-3 text-[11px] ${previewHintClass}`}>
-                  Nền {isPreviewLight ? 'sáng' : 'tối'}
-                </p>
+                {selectedIsImage && selectedPath && !hasPendingUpload ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => openEditModal(selectedPath)}
+                    title="Edit details"
+                    aria-label="Edit details"
+                  >
+                    <FontAwesomeIcon icon={faPenToSquare} className="h-4 w-4" />
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  onClick={() => setPreviewBgMode((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                  title={isPreviewLight ? 'Switch preview to dark background' : 'Switch preview to light background'}
+                  aria-label={isPreviewLight ? 'Switch preview to dark background' : 'Switch preview to light background'}
+                >
+                  <FontAwesomeIcon
+                    icon={(isPreviewLight ? faLightbulbRegular : faLightbulbSolid) as IconProp}
+                    className="h-4 w-4"
+                  />
+                </Button>
               </div>
-
-              {selectedIsAnimationSprite && (
-                <div className="mt-3 space-y-3 rounded-xl border border-border bg-muted p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setAnimCurrentFrame(Math.max(0, Math.floor(animStartFrame)));
-                        setAnimPlaying((prev) => !prev);
-                      }}
-                    >
-                      {animPlaying ? 'Pause' : 'Play'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setAnimPlaying(false);
-                        setAnimCurrentFrame(Math.max(0, Math.floor(animStartFrame)));
-                      }}
-                    >
-                      Reset
-                    </Button>
-                    <p className="text-[11px] text-muted-foreground">
-                      Frame hiện tại: <span className="font-semibold text-foreground">{animCurrentFrame}</span>
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Tổng frame: <span className="font-semibold text-foreground">{animTotalFrames || '—'}</span>
-                    </p>
-                  </div>
-
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    <label className="space-y-1 text-[11px] text-muted-foreground">
-                      <span>Start</span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={animStartFrame}
-                        onChange={(e) => setAnimStartFrame(Number(e.target.value))}
-                        className="block w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
-                      />
-                    </label>
-                    <label className="space-y-1 text-[11px] text-muted-foreground">
-                      <span>End</span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={animEndFrame}
-                        onChange={(e) => setAnimEndFrame(Number(e.target.value))}
-                        className="block w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
-                      />
-                    </label>
-                    <label className="space-y-1 text-[11px] text-muted-foreground">
-                      <span>FrameRate</span>
-                      <input
-                        type="number"
-                        min={1}
-                        value={animFrameRate}
-                        onChange={(e) => setAnimFrameRate(Number(e.target.value))}
-                        className="block w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
-                      />
-                    </label>
-                  </div>
-
-                  <div className="inline-flex rounded-lg border border-border bg-card p-2">
-                    <div className="flex h-[220px] w-[220px] items-center justify-center bg-black/80">
-                      <canvas
-                        ref={animCanvasRef}
-                        width={ANIMATION_FRAME_SIZE}
-                        height={ANIMATION_FRAME_SIZE}
-                        className="h-[192px] w-[192px] image-rendering-pixelated"
-                      />
+            </div>
+            {(uploading || uploadError) && (
+              <div className="flex flex-col items-end gap-1 text-xs">
+                {uploading && (
+                  <p className="font-medium text-amber-400">Uploading…</p>
+                )}
+                {uploadError && (
+                  <p className="font-medium text-red-400">{uploadError}</p>
+                )}
+              </div>
+            )}
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="mx-auto flex h-[clamp(460px,58vh,620px)] w-full min-h-[460px] max-h-[620px] flex-col overflow-hidden">
+            <div
+              className="flex w-full min-w-0 shrink-0 flex-wrap gap-0 border-b border-border"
+              role="tablist"
+              aria-label="Preview area tabs"
+            >
+              <button
+                type="button"
+                role="tab"
+                id="manager-assets-tab-preview"
+                aria-selected={previewAreaTab === 'preview'}
+                className={cn(
+                  '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                  previewAreaTab === 'preview'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+                onClick={() => setPreviewAreaTab('preview')}
+              >
+                Preview
+              </button>
+              {hasFramePreview && (
+                <button
+                  type="button"
+                  role="tab"
+                  id="manager-assets-tab-animation"
+                  aria-selected={previewAreaTab === 'animation'}
+                  className={cn(
+                    '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                    previewAreaTab === 'animation'
+                      ? 'border-primary text-foreground'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                  onClick={() => setPreviewAreaTab('animation')}
+                >
+                  Animation
+                </button>
+              )}
+              <button
+                type="button"
+                role="tab"
+                id="manager-assets-tab-metadata"
+                aria-selected={previewAreaTab === 'metadata'}
+                className={cn(
+                  '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                  previewAreaTab === 'metadata'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+                onClick={() => setPreviewAreaTab('metadata')}
+              >
+                Metadata
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="manager-assets-tab-raw"
+                aria-selected={previewAreaTab === 'raw'}
+                disabled={!canFetchRawMeta}
+                title={!canFetchRawMeta ? 'Select a saved image file (not a pending upload)' : undefined}
+                className={cn(
+                  '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                  !canFetchRawMeta && 'cursor-not-allowed opacity-50',
+                  previewAreaTab === 'raw'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+                onClick={() => {
+                  if (canFetchRawMeta) setPreviewAreaTab('raw');
+                }}
+              >
+                raw
+              </button>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pt-3">
+              {previewAreaTab === 'preview' && (
+                <div className="relative flex min-h-0 flex-1 flex-col">
+                  <div
+                    role="tabpanel"
+                    id="manager-assets-panel-preview"
+                    aria-labelledby="manager-assets-tab-preview"
+                    className={`relative flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-border p-3 ${previewFrameClass}`}
+                  >
+                  {hasPendingUpload && pendingUploadUrl && pendingUpload ? (
+                    <img
+                      src={pendingUploadUrl}
+                      alt={pendingUpload.name}
+                      onLoad={handleImageLoaded}
+                      onError={() => setPreviewImageLoading(false)}
+                      onClick={() => setPreviewLightbox({ src: pendingUploadUrl, alt: pendingUpload.name })}
+                      className={`max-h-[min(470px,100%)] h-auto w-auto max-w-full cursor-zoom-in rounded-lg border border-border object-contain object-center shadow-md ${previewImageClass}`}
+                    />
+                  ) : selectedIsImage && selectedPath ? (
+                    <img
+                      src={selectedPath}
+                      alt={selectedFileName || 'Preview'}
+                      onLoad={handleImageLoaded}
+                      onError={() => setPreviewImageLoading(false)}
+                      onClick={() =>
+                        setPreviewLightbox({
+                          src: selectedPath,
+                          alt: selectedFileName || 'Preview',
+                        })
+                      }
+                      className={`max-h-[min(470px,100%)] h-auto w-auto max-w-full cursor-zoom-in rounded-lg border border-border object-contain object-center shadow-md ${previewImageClass}`}
+                    />
+                  ) : (
+                    <div className={`flex flex-col items-center justify-center gap-2 py-6 text-center text-sm ${previewHintClass}`}>
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border ${previewImageClass}`}>
+                        <span className="text-2xl leading-none">🖼️</span>
+                      </div>
+                      <p className="font-medium">
+                        Chưa có ảnh được chọn
+                      </p>
+                      <p className="max-w-xs text-xs">
+                        Chọn một file ở cây thư mục bên phải hoặc upload ảnh mới để xem preview tại đây.
+                      </p>
                     </div>
+                  )}
                   </div>
+                  <TabPanelLoading
+                    show={
+                      previewImageLoading &&
+                      (Boolean(hasPendingUpload && pendingUploadUrl) || Boolean(selectedIsImage && selectedPath))
+                    }
+                    label="Đang tải ảnh..."
+                  />
                 </div>
               )}
 
-              <div className="space-y-3 rounded-xl border border-border bg-muted p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Metadata
-                  </p>
-                  {selectedIsImage && selectedPath && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2 text-[11px]"
-                      onClick={handleLoadFullMetadata}
-                      disabled={fullMetaLoading}
-                    >
-                      {fullMetaLoading
-                        ? 'Đang đọc...'
-                        : fullMeta && showFullMeta
-                          ? 'Ẩn metadata đầy đủ'
-                          : 'Xem metadata đầy đủ'}
-                    </Button>
+              {hasFramePreview && previewAreaTab === 'animation' && (
+                <div className="relative flex h-full min-h-0 w-full max-h-full flex-1 flex-col overflow-hidden">
+                  <div
+                    role="tabpanel"
+                    id="manager-assets-panel-animation"
+                    aria-labelledby="manager-assets-tab-animation"
+                    className="flex min-h-0 flex-1 flex-col overflow-hidden"
+                  >
+                  {selectedIsSpritesheetFolder && (
+                    <SpriteFramePreviewPanel
+                      className="mt-0 flex h-full min-h-0 w-full flex-1 flex-col"
+                      caption={
+                        <p className="text-[11px] text-muted-foreground">
+                          Spritesheet — frame {SPRITESHEET_FRAME_WIDTH}×{SPRITESHEET_FRAME_HEIGHT}px
+                        </p>
+                      }
+                      playing={ssPlaying}
+                      onTogglePlay={() => setSsPlaying((prev) => !prev)}
+                      onReset={() => {
+                        setSsPlaying(false);
+                        setSsCurrentFrame(Math.max(0, Math.floor(ssStartFrame)));
+                      }}
+                      currentFrame={ssCurrentFrame}
+                      totalFrames={ssTotalFrames}
+                      startFrame={ssStartFrame}
+                      endFrame={ssEndFrame}
+                      frameRate={ssFrameRate}
+                      onStartFrameChange={setSsStartFrame}
+                      onEndFrameChange={setSsEndFrame}
+                      onFrameRateChange={setSsFrameRate}
+                      canvas={
+                        <div
+                          ref={ssAnimFsWrapRef}
+                          role="presentation"
+                          className="flex h-full min-h-0 w-full min-w-0 cursor-pointer items-center justify-center bg-black/80 p-1 [:fullscreen]:min-h-screen [:fullscreen]:w-screen [:fullscreen]:bg-black [:fullscreen]:p-4"
+                          onDoubleClick={() => toggleFullscreenForElement(ssAnimFsWrapRef.current)}
+                          title="Double-click for fullscreen"
+                          aria-label="Animation preview: double-click for fullscreen"
+                        >
+                          <canvas
+                            ref={ssCanvasRef}
+                            width={SPRITESHEET_FRAME_WIDTH}
+                            height={SPRITESHEET_FRAME_HEIGHT}
+                            className="max-h-full max-w-full object-contain image-rendering-pixelated"
+                          />
+                        </div>
+                      }
+                    />
                   )}
+                  {selectedIsAnimationSprite && (
+                    <SpriteFramePreviewPanel
+                      className="mt-0 flex h-full min-h-0 w-full flex-1 flex-col"
+                      caption={
+                        <p className="text-[11px] text-muted-foreground">
+                          Spritesheet — frame {ANIMATION_FRAME_SIZE}×{ANIMATION_FRAME_SIZE}px
+                        </p>
+                      }
+                      playing={animPlaying}
+                      onTogglePlay={() => setAnimPlaying((prev) => !prev)}
+                      onReset={() => {
+                        setAnimPlaying(false);
+                        setAnimCurrentFrame(Math.max(0, Math.floor(animStartFrame)));
+                      }}
+                      currentFrame={animCurrentFrame}
+                      totalFrames={animTotalFrames}
+                      startFrame={animStartFrame}
+                      endFrame={animEndFrame}
+                      frameRate={animFrameRate}
+                      onStartFrameChange={setAnimStartFrame}
+                      onEndFrameChange={setAnimEndFrame}
+                      onFrameRateChange={setAnimFrameRate}
+                      canvas={
+                        <div
+                          ref={animAnimFsWrapRef}
+                          role="presentation"
+                          className="flex h-full min-h-0 w-full min-w-0 cursor-pointer items-center justify-center bg-black/80 p-1 [:fullscreen]:min-h-screen [:fullscreen]:w-screen [:fullscreen]:bg-black [:fullscreen]:p-4"
+                          onDoubleClick={() => toggleFullscreenForElement(animAnimFsWrapRef.current)}
+                          title="Double-click for fullscreen"
+                          aria-label="Animation preview: double-click for fullscreen"
+                        >
+                          <canvas
+                            ref={animCanvasRef}
+                            width={ANIMATION_FRAME_SIZE}
+                            height={ANIMATION_FRAME_SIZE}
+                            className="max-h-full max-w-full object-contain image-rendering-pixelated"
+                          />
+                        </div>
+                      }
+                    />
+                  )}
+                  </div>
+                  <TabPanelLoading show={animationTabBusy} label="Đang tải animation..." />
                 </div>
+              )}
 
+              {previewAreaTab === 'metadata' && (
+                <div
+                  role="tabpanel"
+                  id="manager-assets-panel-metadata"
+                  aria-labelledby="manager-assets-tab-metadata"
+                  className="relative min-h-0 w-full flex-1 space-y-3 rounded-xl border border-border bg-muted p-4"
+                >
+                <TabPanelLoading show={loading} label="Đang tải cây thư mục..." />
                 {hasPendingUpload && pendingUpload ? (
                   <div className="space-y-3 text-xs">
                     <div className="space-y-1">
@@ -755,7 +1091,7 @@ export default function ManagerAssets() {
                     </div>
 
                     <p className="pt-1 text-[11px] text-muted-foreground">
-                      Bấm nút <span className="font-semibold text-foreground">"Upload ảnh này"</span> bên dưới để upload ảnh này vào thư mục <strong>uploaded</strong>.
+                      Use <span className="font-semibold text-foreground">Upload this image</span> in the header to save to the <strong>uploaded</strong> folder.
                     </p>
                   </div>
                 ) : selectedIsImage && selectedPath ? (
@@ -829,85 +1165,45 @@ export default function ManagerAssets() {
                     </div>
 
                     <p className="pt-1 text-[11px] text-muted-foreground">
-                      Để đổi tên hoặc chỉnh sửa metadata nâng cao, bấm nút{' '}
-                      <span className="font-semibold text-foreground">"Chỉnh sửa chi tiết"</span>.
+                      Rename or advanced metadata: use the <span className="font-semibold text-foreground">Edit details</span> button in the header.
+                      Server JSON: <span className="font-semibold text-foreground">raw</span> tab.
                     </p>
-
-                    {fullMetaError && (
-                      <p className="text-[11px] font-medium text-destructive">
-                        {fullMetaError}
-                      </p>
-                    )}
-
-                    {fullMeta && showFullMeta && (
-                      <div className="mt-1 space-y-1">
-                        <p className="text-[11px] font-medium text-muted-foreground">
-                          Metadata chi tiết (raw)
-                        </p>
-                        <pre className="max-h-56 overflow-auto rounded-md border border-border bg-card px-2 py-2 text-[10px] font-mono text-muted-foreground">
-{JSON.stringify(fullMeta.image, null, 2)}
-                        </pre>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
                     Khi bạn chọn một ảnh, thông tin chi tiết sẽ hiển thị tại đây.
                   </p>
                 )}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 border-t border-border pt-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-1 text-xs">
-                <p className="font-medium text-foreground">Upload ảnh mới</p>
-                <p className="text-[11px] text-muted-foreground">
-                  Hỗ trợ các định dạng phổ biến: PNG, JPG, JPEG, WEBP, GIF, SVG, BMP.
-                </p>
-                {uploading && (
-                  <p className="text-[11px] font-medium text-amber-400">
-                    Đang upload...
-                  </p>
-                )}
-                {uploadError && (
-                  <p className="text-[11px] font-medium text-red-400">
-                    {uploadError}
-                  </p>
-                )}
-              </div>
-              {!pendingUpload ? (
-                <label className="inline-flex cursor-pointer items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleUploadSelect}
-                    disabled={uploading}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    disabled={uploading}
-                    className="shadow-md"
-                    onClick={(e) => {
-                      const input = (e.currentTarget.previousSibling as HTMLInputElement | null);
-                      input?.click();
-                    }}
-                  >
-                    {uploading ? 'Đang upload...' : 'Chọn ảnh để upload'}
-                  </Button>
-                </label>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    disabled={uploading}
-                    className="shadow-md"
-                    onClick={handleConfirmUpload}
-                  >
-                    {uploading ? 'Đang upload...' : 'Upload ảnh này'}
-                  </Button>
                 </div>
               )}
+
+              {previewAreaTab === 'raw' && (
+                <div
+                  role="tabpanel"
+                  id="manager-assets-panel-raw"
+                  aria-labelledby="manager-assets-tab-raw"
+                  className="relative min-h-0 w-full flex-1 space-y-2 rounded-xl border border-border bg-muted p-4"
+                >
+                  {!canFetchRawMeta ? (
+                    <p className="text-sm text-muted-foreground">
+                      Chọn một file ảnh đã lưu trên server (không dùng ảnh chờ upload) để xem JSON raw.
+                    </p>
+                  ) : (
+                    <>
+                      {fullMetaError && (
+                        <p className="text-sm font-medium text-destructive">{fullMetaError}</p>
+                      )}
+                      {fullMeta && fullMetaPath === selectedPath && fullMeta.image !== undefined ? (
+                        <JsonRawHighlight data={fullMeta.image} />
+                      ) : !fullMetaLoading && !fullMetaError ? (
+                        <p className="text-sm text-muted-foreground">Không có dữ liệu raw.</p>
+                      ) : null}
+                      <TabPanelLoading show={fullMetaLoading} label="Đang đọc metadata..." />
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             </div>
           </CardContent>
         </Card>

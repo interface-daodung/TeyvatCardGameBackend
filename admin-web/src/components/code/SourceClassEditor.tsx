@@ -22,6 +22,11 @@ interface SourceClassEditorProps {
   type?: string;
   /** Chế độ card: tên class / stem file */
   className?: string;
+  /**
+   * Chế độ card: đường dẫn đầy đủ từ gốc `models/cards` (vd `weapon/catalyst/CatalystForest.ts`).
+   * Khi có, bỏ qua ghép `type/className.ts` (cần khi thư mục sâu hơn một cấp, ví dụ weapon/catalyst).
+   */
+  modelsRelativeTsPath?: string;
   /** Chế độ item: đường dẫn file .ts tương đối trong models/items */
   itemRelativePath?: string;
 }
@@ -30,6 +35,7 @@ export function SourceClassEditor({
   editorMode = 'card',
   type = '',
   className = '',
+  modelsRelativeTsPath = '',
   itemRelativePath = '',
 }: SourceClassEditorProps) {
   const [editableClassCode, setEditableClassCode] = useState('');
@@ -52,22 +58,26 @@ export function SourceClassEditor({
 
   const isItemMode = editorMode === 'item';
   const apiScope = isItemMode ? 'items' : 'cards';
-  const relativePath = useMemo(
-    () => (isItemMode ? itemRelativePath.trim().replace(/^\/+/, '') : `${type}/${className}.ts`),
-    [isItemMode, itemRelativePath, type, className]
-  );
+  const relativePath = useMemo(() => {
+    if (isItemMode) return itemRelativePath.trim().replace(/^\/+/, '');
+    const full = modelsRelativeTsPath.trim().replace(/^\/+/, '');
+    if (full) return full.endsWith('.ts') ? full : `${full}.ts`;
+    return `${type}/${className}.ts`;
+  }, [isItemMode, itemRelativePath, modelsRelativeTsPath, type, className]);
   const displayPath = useMemo(
     () =>
       isItemMode
         ? `TeyvatCard/src/models/items/${relativePath}`
-        : `TeyvatCard/src/models/cards/${type}/${className}.ts`,
-    [isItemMode, relativePath, type, className]
+        : `TeyvatCard/src/models/cards/${relativePath}`,
+    [isItemMode, relativePath]
   );
   const classNameForApi = isItemMode ? undefined : className;
 
   useEffect(() => {
     if (isItemMode) {
       if (!itemRelativePath?.trim()) return;
+    } else if (modelsRelativeTsPath?.trim()) {
+      if (!className) return;
     } else if (!className || !type) {
       return;
     }
@@ -92,7 +102,7 @@ export function SourceClassEditor({
       }
     };
     loadClassCode();
-  }, [relativePath, classNameForApi, type, className, itemRelativePath, isItemMode, apiScope]);
+  }, [relativePath, classNameForApi, type, className, itemRelativePath, modelsRelativeTsPath, isItemMode, apiScope]);
 
   const insertCommentAtLine = (lineIndex: number) => {
     const lines = editableClassCode.split('\n');
@@ -166,6 +176,8 @@ export function SourceClassEditor({
   const generateTsDoc = async () => {
     if (isItemMode) {
       if (!itemRelativePath?.trim()) return;
+    } else if (modelsRelativeTsPath?.trim()) {
+      if (!className) return;
     } else if (!className || !type) {
       return;
     }

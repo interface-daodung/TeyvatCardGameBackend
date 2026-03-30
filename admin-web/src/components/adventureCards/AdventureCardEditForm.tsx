@@ -1,46 +1,23 @@
-import { Badge } from '../ui/badge';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSquarePen } from '@fortawesome/free-solid-svg-icons';
 import type { AdventureCard } from '../../services/gameDataService';
 import { DualRangeSlider } from '../ui/DualRangeSlider';
-import {
-  StatusCyclePillButton,
-  adventureCardStatusPillClass,
-} from '../share';
+import { StatusCyclePillButton, adventureCardStatusPillClass } from '../share';
+import { ElementReactionPicker } from '../characters/ElementReactionPicker';
+import { ClanReactionPicker } from './ClanReactionPicker';
+import { WeaponCategoryReactionPicker } from './WeaponCategoryReactionPicker';
 
 const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled', 'hidden'];
-
-const CLANS = [
-  'abyss',
-  'Automatons',
-  'boss',
-  'eremite',
-  'fatui',
-  'hilichurl',
-  'kairagi',
-  'shroom',
-  'slime',
-];
-
-const ELEMENTS = [
-  'anemo',
-  'cryo',
-  'dendro',
-  'electro',
-  'geo',
-  'hydro',
-  'pyro',
-  'none',
-];
-
-const WEAPON_CATEGORIES = ['bow', 'catalyst', 'claymore', 'polearm', 'sword'] as const;
 
 interface AdventureCardEditFormProps {
   card: AdventureCard;
   form: Partial<AdventureCard>;
   setForm: React.Dispatch<React.SetStateAction<Partial<AdventureCard>>>;
-  editLang: string;
-  nameDisplay: string;
-  descriptionDisplay: string;
-  onOpenI18n: (field: 'name' | 'description') => void;
+  /** Theo ngôn ngữ toolbar — hiển thị một dòng trước khi mở popup I18nEditor. */
+  namePreview: string;
+  descriptionPreview: string;
+  onOpenI18nName: () => void;
+  onOpenI18nDesc: () => void;
   onOpenClassNamePicker?: () => void;
 }
 
@@ -48,79 +25,70 @@ export function AdventureCardEditForm({
   card,
   form,
   setForm,
-  nameDisplay,
-  descriptionDisplay,
-  onOpenI18n,
+  namePreview,
+  descriptionPreview,
+  onOpenI18nName,
+  onOpenI18nDesc,
   onOpenClassNamePicker,
 }: AdventureCardEditFormProps) {
   const currentStatus = (form.status ?? card.status) as AdventureCard['status'];
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <span className="font-mono">ID: {card.nameId}</span>
-          {card.rarity != null && (
-            <span className="inline-flex items-center gap-1 text-amber-600 font-semibold">
-              ⭐ {card.rarity}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge>{card.type}</Badge>
-          {card.category && <Badge variant="outline">{card.category}</Badge>}
-          {card.element && <Badge variant="outline">{card.element}</Badge>}
-          {card.clan && <Badge variant="outline">{card.clan}</Badge>}
-        </div>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span className="font-mono">ID: {card.nameId}</span>
+        {card.rarity != null && (
+          <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
+            ⭐ {card.rarity}
+          </span>
+        )}
       </div>
 
-      <div>
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <label className="block text-xs font-medium text-muted-foreground">Name</label>
-          <button
-            type="button"
-            onClick={() => onOpenI18n('name')}
-            className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+      <div className="flex items-center gap-2.5 flex-wrap">
+        <span className="font-medium text-muted-foreground">Name:</span>
+        <span className="min-w-0 text-sm text-foreground">{namePreview || '—'}</span>
+        <button
+          type="button"
+          onClick={onOpenI18nName}
+          className="text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Edit name i18n"
+          title="Sửa i18n tên (EN / VI / JA)"
+        >
+          <FontAwesomeIcon icon={faSquarePen} className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Mô tả (i18n)</span>
+        <div className="relative rounded-md border border-border bg-muted/30">
+          <span
+            className="pointer-events-none absolute right-2 top-2 z-10 text-muted-foreground"
+            aria-hidden
           >
-            Edit i18n
-          </button>
+            <FontAwesomeIcon icon={faSquarePen} className="h-4 w-4" />
+          </span>
+          <textarea
+            readOnly
+            rows={4}
+            value={descriptionPreview}
+            placeholder="—"
+            onClick={onOpenI18nDesc}
+            aria-label="Mô tả (i18n), nhấn để chỉnh sửa bản dịch"
+            className="min-h-[5rem] w-full cursor-pointer resize-none rounded-md border-0 bg-transparent px-3 py-2.5 pr-10 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
+          />
         </div>
-        <input
-          type="text"
-          className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-          readOnly
-          value={nameDisplay}
-        />
       </div>
 
       <div>
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <label className="block text-xs font-medium text-muted-foreground">Description</label>
-          <button
-            type="button"
-            onClick={() => onOpenI18n('description')}
-            className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-          >
-            Edit i18n
-          </button>
-        </div>
-        <textarea
-          className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background min-h-[80px]"
-          readOnly
-          value={descriptionDisplay}
-        />
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="mb-1 flex items-center justify-between gap-2">
           <label className="block text-xs font-medium text-muted-foreground">Class name</label>
           {onOpenClassNamePicker && (
             <button
               type="button"
               onClick={onOpenClassNamePicker}
-              className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+              className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
             >
-              Chọn từ cây thư mục
+              Chọn từ cây thư mục (modal)
             </button>
           )}
         </div>
@@ -128,7 +96,7 @@ export function AdventureCardEditForm({
           type="text"
           placeholder="Chọn từ cây thư mục"
           readOnly
-          className="w-full px-3 py-2 text-sm border border-input rounded-md bg-muted/50 cursor-pointer focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          className="w-full cursor-pointer rounded-md border border-input bg-muted/50 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
           value={form.className ?? card.className ?? ''}
           onClick={onOpenClassNamePicker}
         />
@@ -178,36 +146,31 @@ export function AdventureCardEditForm({
       {/* Conditional Fields based on Type */}
       {card.type === 'enemy' && (
         <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Element</label>
-              <select
-                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-primary-500 transition-all shadow-sm capitalize"
-                value={form.element ?? card.element ?? ''}
-                onChange={(e) => setForm((p) => ({ ...p, element: e.target.value }))}
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 rounded-lg bg-slate-100 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="shrink-0 text-sm font-medium text-muted-foreground">⚡ Element</span>
+              <div
+                className="min-w-0 w-full flex justify-center sm:w-auto sm:justify-end sm:pl-2"
+                onPointerDown={(e) => e.stopPropagation()}
               >
-                <option value="">Chọn Element</option>
-                {ELEMENTS.map((el) => (
-                  <option key={el} value={el} className="capitalize">
-                    {el}
-                  </option>
-                ))}
-              </select>
+                <ElementReactionPicker
+                  selectedElement={form.element ?? card.element ?? ''}
+                  onSelect={(e) => setForm((p) => ({ ...p, element: e }))}
+                  includeNoneInRail
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Clan</label>
-              <select
-                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-primary-500 transition-all shadow-sm capitalize"
-                value={form.clan ?? card.clan ?? ''}
-                onChange={(e) => setForm((p) => ({ ...p, clan: e.target.value }))}
+            <div className="flex flex-col gap-3 rounded-lg bg-slate-100 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="shrink-0 text-sm font-medium text-muted-foreground">🏴 Clan</span>
+              <div
+                className="min-w-0 w-full flex justify-center sm:w-auto sm:justify-end sm:pl-2"
+                onPointerDown={(e) => e.stopPropagation()}
               >
-                <option value="">Chọn Clan</option>
-                {CLANS.map((clan) => (
-                  <option key={clan} value={clan} className="capitalize">
-                    {clan}
-                  </option>
-                ))}
-              </select>
+                <ClanReactionPicker
+                  selectedClan={form.clan ?? card.clan ?? ''}
+                  onSelect={(c) => setForm((p) => ({ ...p, clan: c }))}
+                />
+              </div>
             </div>
           </div>
           <DualRangeSlider
@@ -254,26 +217,16 @@ export function AdventureCardEditForm({
 
       {card.type === 'weapon' && (
         <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Weapon category</label>
-            <div className="relative">
-              <select
-                className="w-full appearance-none pl-3 pr-9 py-2.5 text-sm font-medium border border-input rounded-lg bg-background shadow-sm capitalize focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all cursor-pointer hover:border-muted-foreground/30"
-                value={form.category ?? card.category ?? ''}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, category: e.target.value || undefined }))
-                }
-              >
-                <option value="">Chọn loại vũ khí</option>
-                {WEAPON_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat} className="capitalize">
-                    {cat}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-[10px]">
-                ▼
-              </span>
+          <div className="flex flex-col gap-3 rounded-lg bg-slate-100 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="shrink-0 text-sm font-medium text-muted-foreground">⚔️ Weapon category</span>
+            <div
+              className="min-w-0 w-full flex justify-center sm:w-auto sm:justify-end sm:pl-2"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <WeaponCategoryReactionPicker
+                selectedCategory={form.category ?? card.category ?? ''}
+                onSelect={(id) => setForm((p) => ({ ...p, category: id }))}
+              />
             </div>
           </div>
           <DualRangeSlider

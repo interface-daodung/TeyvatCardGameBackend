@@ -2,9 +2,13 @@
  * Layout & styles cho thanh FAB neo đáy (drawer / portal), nút “peek” dọc cạnh màn hình.
  */
 
-/** Vỏ fixed: canh với sidebar md+, safe-area bottom */
+/**
+ * Vỏ fixed: canh với sidebar md+, safe-area bottom.
+ * `z-[40]` — thấp hơn lớp popup thường (`z-50`+, ConfirmDanger `z-[10050]`, …) để không đè modal;
+ * vẫn cùng mức header để FAB không bị kẹt dưới chrome không cần thiết.
+ */
 export const bottomDockFabShellClassName =
-  'pointer-events-none fixed inset-x-0 bottom-0 z-[95] flex items-end justify-start pl-11 pr-4 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] pt-0 md:pl-[calc(16rem+2.5rem)] md:pr-8';
+  'pointer-events-none fixed inset-x-0 bottom-0 z-40 flex items-end justify-start pl-11 pr-4 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] pt-0 md:pl-[calc(16rem+2.5rem)] md:pr-8';
 
 export const dockFabButtonRowClassName =
   'inline-flex flex-row items-start gap-2.5';
