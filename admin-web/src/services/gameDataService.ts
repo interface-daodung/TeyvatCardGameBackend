@@ -14,7 +14,7 @@ export interface Character {
   image?: string;
   /** Spritesheet Phaser; rỗng/undefined = mặc định theo nameId. */
   spritesheetImage?: string;
-  /** Ảnh unlock (`cards/character/unlock`). Rỗng → empty.webp. */
+  /** Ảnh unlock (`assets/images/cards/unlock`). Rỗng → empty.webp. */
   imageUnlock?: string;
   element?: string; // anemo | cryo | dendro | electro | geo | hydro | pyro | none
   HP: number;

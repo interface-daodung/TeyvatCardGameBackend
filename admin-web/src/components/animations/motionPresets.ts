@@ -209,3 +209,30 @@ export const equipmentDockFabTransition: Transition = {
   ease: equipmentLayoutEase,
 };
 
+const managerAssetsEase: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+const managerAssetsPreviewDuration = 0.4;
+const managerAssetsPreviewExitDuration = 0.36;
+
+/**
+ * Image preview (Manager Assets): thu hẹp maxWidth → 0 rồi unmount;
+ * khi hiện lại: maxWidth mở dần (AnimatePresence enter).
+ */
+export const managerAssetsPreviewPanel: Variants = {
+  hidden: { maxWidth: 0, opacity: 0 },
+  visible: {
+    maxWidth: 4800,
+    opacity: 1,
+    transition: { duration: managerAssetsPreviewDuration, ease: managerAssetsEase },
+  },
+  exit: {
+    maxWidth: 0,
+    opacity: 0,
+    transition: { duration: managerAssetsPreviewExitDuration, ease: 'easeIn' },
+  },
+};
+
+/** Layout flex row (preview + cây): co giãn cột không giật (Manager Assets). */
+export const managerAssetsTreeRowLayoutTransition: Transition = {
+  layout: { duration: 0.38, ease: managerAssetsEase },
+};
+

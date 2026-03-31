@@ -238,8 +238,8 @@ export function CharacterDetailImage({
         Ảnh
       </h2>
       <p className="sr-only">
-        Tab Mặc định: chọn ảnh trong cards/character. Tab Động: spritesheet trong Spritesheet.
-        Tab Unlock: ảnh trong cards/character/unlock. Ctrl hoặc Cmd click để mở chọn file.
+        Tab Mặc định: chọn ảnh trong cards/character. Tab Động: spritesheet trong assets/images/Spritesheet.
+        Tab Unlock: ảnh trong assets/images/cards/unlock. Ctrl hoặc Cmd click để mở chọn file.
         Double-click để xem toàn màn hình (ảnh tĩnh hoặc spritesheet động).
       </p>
 
@@ -256,7 +256,10 @@ export function CharacterDetailImage({
                 ? 'bg-card text-foreground after:absolute after:bottom-[-4px] after:left-0 after:z-[1] after:h-[6px] after:w-full after:bg-card after:content-[""]'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
             )}
-            onClick={() => setImageTab('default')}
+            onClick={() => {
+              setImageTab('default');
+              if (isPickerOpen) onClosePicker();
+            }}
           >
             Mặc định
           </button>
@@ -271,7 +274,10 @@ export function CharacterDetailImage({
                 ? 'bg-card text-foreground after:absolute after:bottom-[-4px] after:left-0 after:z-[1] after:h-[6px] after:w-full after:bg-card after:content-[""]'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
             )}
-            onClick={() => setImageTab('animated')}
+            onClick={() => {
+              setImageTab('animated');
+              if (isPickerOpen) onClosePicker();
+            }}
           >
             Động
           </button>
@@ -286,7 +292,10 @@ export function CharacterDetailImage({
                 ? 'bg-card text-foreground after:absolute after:bottom-[-4px] after:left-0 after:z-[1] after:h-[6px] after:w-full after:bg-card after:content-[""]'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
             )}
-            onClick={() => setImageTab('unlock')}
+            onClick={() => {
+              setImageTab('unlock');
+              if (isPickerOpen) onClosePicker();
+            }}
           >
             Unlock
           </button>
@@ -310,9 +319,9 @@ export function CharacterDetailImage({
                 <div className="flex shrink-0 items-center justify-between border-b border-border bg-muted px-2 py-1 text-xs font-medium">
                   <span className="truncate pr-2">
                     {imagePickerRoot === 'character-spritesheet'
-                      ? 'Chọn file (cards/character/Spritesheet)'
+                      ? 'Chọn file (assets/images/Spritesheet)'
                       : imagePickerRoot === 'character-unlock'
-                        ? 'Chọn ảnh (cards/character/unlock)'
+                        ? 'Chọn ảnh (assets/images/cards/unlock)'
                         : 'Chọn ảnh tham khảo (cards/character)'}
                   </span>
                   <button
@@ -385,7 +394,7 @@ export function CharacterDetailImage({
                     className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-muted/40 p-1"
                     role="button"
                     tabIndex={0}
-                    title="Ctrl+click: chọn file (Spritesheet). Double-click: xem toàn màn hình."
+                    title="Ctrl+click: chọn file (assets/images/Spritesheet). Double-click: xem toàn màn hình."
                     onDoubleClick={(e) => {
                       e.preventDefault();
                       setSpriteLightboxOpen(true);
@@ -428,7 +437,7 @@ export function CharacterDetailImage({
                     className="relative h-full w-full cursor-default"
                     role="button"
                     tabIndex={0}
-                    title="Ctrl+click: chọn ảnh (unlock). Double-click: xem toàn màn hình."
+                    title="Ctrl+click: chọn ảnh (assets/images/cards/unlock). Double-click: xem toàn màn hình."
                     onDoubleClick={(e) => {
                       e.preventDefault();
                       setImageLightbox({ src: unlockDisplaySrc, alt: `${character.name} unlock` });

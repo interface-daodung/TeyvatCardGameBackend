@@ -15,6 +15,8 @@ interface TreeNodeProps {
   expanded: Set<string>;
   onToggle: (path: string) => void;
   onSelect: (path: string) => void;
+  /** Khi có (vd. cây mở rộng): double-click file để xác nhận và thoát chế độ mở rộng. */
+  onFileDoubleClick?: (path: string) => void;
   depth?: number;
   onEdit?: (path: string) => void;
   showEditFor?: (item: FileTreeItem) => boolean;
@@ -27,6 +29,7 @@ export function FileTreeNode({
   expanded,
   onToggle,
   onSelect,
+  onFileDoubleClick,
   depth = 0,
   onEdit,
   showEditFor,
@@ -52,9 +55,17 @@ export function FileTreeNode({
         <button
           type="button"
           onClick={() => onSelect(item.path)}
+          onDoubleClick={
+            onFileDoubleClick
+              ? (e) => {
+                  e.preventDefault();
+                  onFileDoubleClick(item.path);
+                }
+              : undefined
+          }
           className="flex-1 min-w-0 text-left px-2 py-1 flex items-center gap-1 truncate"
         >
-          <span className="text-blue-600 truncate">📄 {item.name}</span>
+          <span className="text-blue-600 truncate">🖼️ {item.name}</span>
         </button>
         {showEdit && (
           <button
@@ -122,6 +133,7 @@ export function FileTreeNode({
               expanded={expanded}
               onToggle={onToggle}
               onSelect={onSelect}
+              onFileDoubleClick={onFileDoubleClick}
               depth={depth + 1}
               onEdit={onEdit}
               showEditFor={showEditFor}

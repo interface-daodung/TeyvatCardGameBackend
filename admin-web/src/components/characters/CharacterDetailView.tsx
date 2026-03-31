@@ -22,6 +22,12 @@ function toPascalCase(input: string): string {
     .replace(/^(.)/, (s) => s.toUpperCase());
 }
 
+function findDirChild(items: FileTreeItem[] | undefined, name: string): FileTreeItem | undefined {
+  if (!items?.length) return undefined;
+  const lower = name.toLowerCase();
+  return items.find((n) => n.type === 'dir' && n.name.toLowerCase() === lower);
+}
+
 export interface CharacterDetailViewProps {
   nameId: string | undefined;
   onNavigateBack: () => void;
@@ -110,21 +116,19 @@ export function CharacterDetailView({
 
   const characterImageTree = useMemo(() => {
     if (!imageTree) return null;
-    const node = imageTree.find((n) => n.type === 'dir' && n.name === 'character');
-    if (!node?.children) return [];
-    if (imagePickerRoot === 'character') {
-      return node.children;
+    if (imagePickerRoot === 'character-spritesheet') {
+      const spritesheetDir = findDirChild(imageTree, 'Spritesheet');
+      return spritesheetDir?.children ?? [];
     }
     if (imagePickerRoot === 'character-unlock') {
-      const unlockDir = node.children.find(
-        (n) => n.type === 'dir' && n.name.toLowerCase() === 'unlock'
-      );
+      const cardsDir = findDirChild(imageTree, 'cards');
+      const unlockDir = findDirChild(cardsDir?.children, 'unlock');
       return unlockDir?.children ?? [];
     }
-    const spritesheetDir = node.children.find(
-      (n) => n.type === 'dir' && n.name.toLowerCase() === 'spritesheet'
-    );
-    return spritesheetDir?.children ?? [];
+    const cardsDir = findDirChild(imageTree, 'cards');
+    const characterDir = findDirChild(cardsDir?.children, 'character');
+    if (!characterDir?.children) return [];
+    return characterDir.children;
   }, [imageTree, imagePickerRoot]);
 
   const openCharacterImagePicker = async (
@@ -135,7 +139,7 @@ export function CharacterDetailView({
     if (imageTree === null && !imageTreeLoading) {
       setImageTreeLoading(true);
       try {
-        const tree = await filesService.getImageTree();
+        const tree = await filesService.getImageTree('manager-assets');
         setImageTree(tree);
       } catch {
         setImageTree([]);

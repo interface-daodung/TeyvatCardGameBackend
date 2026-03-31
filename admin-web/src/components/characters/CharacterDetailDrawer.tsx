@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useDragControls, usePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCode, faCodeCommit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faCodeBranch, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { equipmentDockFabTransition, slideInCharacterDrawer } from '../animations/motionPresets';
 import { CharacterDetailView } from './CharacterDetailView';
 import type { UseCharacterDetailLangControl } from './useCharacterDetail';
@@ -146,7 +146,7 @@ export function CharacterDetailDrawer({
                   aria-pressed={astFlowOpen}
                 >
                   <FontAwesomeIcon
-                    icon={faCodeCommit}
+                    icon={faCodeBranch}
                     className={dockPeekFabIconClassName}
                     aria-hidden
                   />

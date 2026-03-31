@@ -52,6 +52,15 @@ export interface CharacterClassAstMapResult {
   methodMap: Record<string, ClassMethodAstNode[]>;
 }
 
+export interface AtlasFileEntry {
+  name: string;
+  imageUrl: string;
+  jsonUrl: string;
+  imageMeta: FileMetadata;
+  jsonMeta: FileMetadata;
+  hasAnimation: boolean;
+}
+
 export const filesService = {
   getImageTree: async (scope?: string): Promise<FileTreeItem[]> => {
     const response = await api.get<{ tree: FileTreeItem[] }>('/files/image-tree', {
@@ -124,6 +133,15 @@ export const filesService = {
     return response.data.tree;
   },
 
+  getAtlasList: async (): Promise<AtlasFileEntry[]> => {
+    const response = await api.get<{ items: AtlasFileEntry[] }>('/files/atlas-list');
+    return response.data.items;
+  },
+
+  deleteAtlas: async (name: string): Promise<void> => {
+    await api.delete('/files/atlas', { data: { name } });
+  },
+
   uploadImage: async (file: File): Promise<{ imageUrl: string }> => {
     const formData = new FormData();
     formData.append('image', file);
@@ -147,6 +165,14 @@ export const filesService = {
 
   renameCardFile: async (filePath: string, newName: string): Promise<{ imageUrl: string }> => {
     const response = await api.patch<{ imageUrl: string }>('/files/cards/rename', {
+      filePath,
+      newName,
+    });
+    return response.data;
+  },
+
+  renameAssetsFile: async (filePath: string, newName: string): Promise<{ imageUrl: string }> => {
+    const response = await api.patch<{ imageUrl: string }>('/files/assets/rename', {
       filePath,
       newName,
     });
@@ -179,6 +205,39 @@ export const filesService = {
       targetFolderPath,
     });
     return response.data;
+  },
+
+  /**
+   * Di chuyển file trong cây Manager Assets (assets images hoặc uploads).
+   * Server: `/files/assets/move`, `/files/uploaded/move`, `/files/uploaded/to-assets`.
+   */
+  moveTreeFile: async (filePath: string, targetFolderPath: string): Promise<{ imageUrl: string }> => {
+    const src = filePath.replace(/\\/g, '/');
+    const tgt = targetFolderPath.replace(/\/+$/, '');
+    if (src.startsWith('/assets/images/')) {
+      const response = await api.patch<{ imageUrl: string }>('/files/assets/move', {
+        filePath: src,
+        targetFolderPath,
+      });
+      return response.data;
+    }
+    if (src.startsWith('/uploads/')) {
+      if (tgt === '/uploads' || tgt.startsWith('/uploads/')) {
+        const response = await api.patch<{ imageUrl: string }>('/files/uploaded/move', {
+          filePath: src,
+          targetFolderPath,
+        });
+        return response.data;
+      }
+      if (tgt === '/assets/images' || tgt.startsWith('/assets/images/')) {
+        const response = await api.patch<{ imageUrl: string }>('/files/uploaded/to-assets', {
+          filePath: src,
+          targetFolderPath,
+        });
+        return response.data;
+      }
+    }
+    throw new Error('Không thể di chuyển file tới thư mục đích');
   },
 
   convertToWebp: async (filename: string, quality: number): Promise<{ imageUrl: string }> => {
@@ -229,6 +288,67 @@ export const filesService = {
       count: number;
       sheetSize: { w: number; h: number };
     }>('/files/generate-atlas', { images, name });
+    return response.data;
+  },
+
+  generateAnimationAtlas: async (
+    animations: Array<{ path: string; name?: string }>,
+    name: string
+  ): Promise<{
+    imageUrl: string;
+    jsonUrl: string;
+    count: number;
+    sheetSize: { w: number; h: number };
+  }> => {
+    const response = await api.post<{
+      imageUrl: string;
+      jsonUrl: string;
+      count: number;
+      sheetSize: { w: number; h: number };
+    }>('/files/generate-animation-atlas', { animations, name });
+    return response.data;
+  },
+
+  /** Xuất spritesheet đã cắt frame 350×590 và ghép bestGrid → `{name}-bestGrid.webp` trong Spritesheet. */
+  exportSpritesheetBestGrid: async (
+    path: string
+  ): Promise<{
+    imageUrl: string;
+    sheetSize: { w: number; h: number };
+    frameCount: number;
+  }> => {
+    const response = await api.post<{
+      imageUrl: string;
+      sheetSize: { w: number; h: number };
+      frameCount: number;
+    }>('/files/spritesheet-best-grid', { path });
+    return response.data;
+  },
+
+  /** Lưu spritesheet animation (192×… frame) vào public/assets/images/animations. */
+  saveAnimationSpritesheet: async (
+    blob: Blob,
+    filename: string
+  ): Promise<{ imageUrl: string }> => {
+    const form = new FormData();
+    form.append('image', blob, filename);
+    form.append('filename', filename);
+    const response = await api.post<{ imageUrl: string }>(
+      '/files/animation-spritesheet-save',
+      form
+    );
+    return response.data;
+  },
+
+  composeAnimationSpritesheet: async (
+    path: string,
+    frames: number[],
+    filename: string
+  ): Promise<{ imageUrl: string; frameCount: number; sheetSize: { w: number; h: number } }> => {
+    const response = await api.post<{ imageUrl: string; frameCount: number; sheetSize: { w: number; h: number } }>(
+      '/files/animation-spritesheet-compose',
+      { path, frames, filename }
+    );
     return response.data;
   },
 

@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { cn } from '../../lib/utils';
 
 export type LightboxImage = {
   src: string;
@@ -25,11 +26,14 @@ export function ImageLightbox({
   dialogLabel = 'Ảnh phóng to',
   /** Ảnh nhỏ (vd. icon item): phóng to gần full viewport; không dùng cho ảnh lớn (card/character) vì dễ tràn màn hình. */
   smallAssetLightbox = false,
+  /** Gộp vào lớp overlay (vd. `z-[10000]` khi mở từ modal z cao). */
+  className,
 }: {
   open: ImageLightboxOpen | null;
   onClose: () => void;
   dialogLabel?: string;
   smallAssetLightbox?: boolean;
+  className?: string;
 }) {
   const openKey = open
     ? isLightboxCustom(open)
@@ -57,7 +61,10 @@ export function ImageLightbox({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4"
+      className={cn(
+        'fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4',
+        className
+      )}
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}

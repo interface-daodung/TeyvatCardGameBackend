@@ -7,6 +7,7 @@ import { filesService } from '../../services/filesService';
 import { scaleInModal, fadeInOverlay } from '../animations/motionPresets';
 
 const SUPPORTED_EXT = /\.(png|jpg|jpeg|gif|webp|bmp|tiff|tif)$/i;
+const FILE_NAME_REGEX = /^[a-zA-Z0-9._-]+$/;
 function basename(filePath: string): string {
   return filePath.replace(/^.*[/\\]/, '');
 }
@@ -51,10 +52,27 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
     }));
   }, [sourceSize]);
 
-  const handleRename = async () => {
+  const normalizedRenameTarget = useMemo(() => {
     const current = fileName;
     const ext = current.includes('.') ? current.slice(current.lastIndexOf('.')) : '';
-    const newName = editName.trim().includes('.') ? editName.trim() : editName.trim() + ext;
+    const trimmed = editName.trim();
+    if (!trimmed) return null;
+    const candidate = trimmed.includes('.') ? trimmed : `${trimmed}${ext}`;
+    return FILE_NAME_REGEX.test(candidate) ? candidate : null;
+  }, [editName, fileName]);
+
+  const renameNameError =
+    editName.trim().length > 0 && !normalizedRenameTarget
+      ? 'Tên file chỉ được chứa chữ, số, dấu chấm, gạch ngang, gạch dưới.'
+      : null;
+
+  const handleRename = async () => {
+    const current = fileName;
+    const newName = normalizedRenameTarget;
+    if (!newName) {
+      setError('Tên file mới không hợp lệ');
+      return;
+    }
     if (newName === current) {
       onClose();
       return;
@@ -340,10 +358,11 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
                     </div>
                   )}
 
+                  {renameNameError && !error && <p className="text-sm text-red-600">{renameNameError}</p>}
                   {error && <p className="text-sm text-red-600">{error}</p>}
 
                   <div className="flex flex-wrap gap-2 border-t pt-4">
-                    <Button onClick={handleRename} disabled={editSaving}>
+                    <Button onClick={handleRename} disabled={editSaving || !!renameNameError}>
                       Lưu tên
                     </Button>
                     <Button type="button" variant="outline" onClick={handleDeleteClick} disabled={editSaving}>

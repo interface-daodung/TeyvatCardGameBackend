@@ -18,7 +18,7 @@ export function DockFabMotionGroup({
     <motion.div
       role="group"
       aria-label={ariaLabel}
-      className={cn('pointer-events-auto', className)}
+      className={cn('pointer-events-auto flex h-[80px] max-h-[80px] items-end', className)}
       {...rest}
     >
       {children}

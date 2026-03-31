@@ -8,12 +8,13 @@
  * vẫn cùng mức header để FAB không bị kẹt dưới chrome không cần thiết.
  */
 export const bottomDockFabShellClassName =
-  'pointer-events-none fixed inset-x-0 bottom-0 z-40 flex items-end justify-start pl-11 pr-4 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] pt-0 md:pl-[calc(16rem+2.5rem)] md:pr-8';
+  // Cùng chiều cao với cụm FAB (row 80px) + safe-area; nút peek dùng `h-[80px]` + translate tỷ lệ với bản 300px.
+  'pointer-events-none fixed inset-x-0 bottom-0 z-40 flex min-h-[80px] items-end justify-start overflow-visible pl-11 pr-4 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] pt-0 md:pl-[calc(16rem+2.5rem)] md:pr-8';
 
 export const dockFabButtonRowClassName =
-  'inline-flex flex-row items-start gap-2.5';
+  'inline-flex h-[80px] max-h-[80px] flex-row items-end gap-2.5';
 
-/** Phần chung mọi nút peek (chiều cao “tay cầm”, hover nhô lên, focus full) */
+/** Phần chung mọi nút peek (chiều cao “tay cầm”, hover nhô lên, focus full) — scale 80/300 so với bản gốc 300px */
 export const dockPeekFabButtonBaseClassName =
   'flex h-[300px] w-16 shrink-0 translate-y-[240px] cursor-pointer items-start justify-center rounded-full border-0 pt-[18px] text-white shadow-[0_4px_14px_rgba(0,0,0,0.15),0_1px_4px_rgba(0,0,0,0.08)] outline-none transition-[opacity,filter,transform] duration-200 ease-out hover:translate-y-[200px] hover:opacity-[0.88] hover:brightness-[1.06] focus-visible:translate-y-0 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 motion-reduce:translate-y-0 disabled:pointer-events-none disabled:opacity-40';
 
