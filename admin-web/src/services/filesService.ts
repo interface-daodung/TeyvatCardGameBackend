@@ -59,6 +59,7 @@ export interface AtlasFileEntry {
   imageMeta: FileMetadata;
   jsonMeta: FileMetadata;
   hasAnimation: boolean;
+  scope: 'default' | 'desktop' | 'mobile';
 }
 
 export const filesService = {
@@ -133,13 +134,15 @@ export const filesService = {
     return response.data.tree;
   },
 
-  getAtlasList: async (): Promise<AtlasFileEntry[]> => {
-    const response = await api.get<{ items: AtlasFileEntry[] }>('/files/atlas-list');
+  getAtlasList: async (scope: 'default' | 'desktop' | 'mobile'): Promise<AtlasFileEntry[]> => {
+    const response = await api.get<{ items: AtlasFileEntry[] }>('/files/atlas-list', {
+      params: { scope },
+    });
     return response.data.items;
   },
 
-  deleteAtlas: async (name: string): Promise<void> => {
-    await api.delete('/files/atlas', { data: { name } });
+  deleteAtlas: async (name: string, scope: 'default' | 'desktop' | 'mobile'): Promise<void> => {
+    await api.delete('/files/atlas', { data: { name, scope } });
   },
 
   uploadImage: async (file: File): Promise<{ imageUrl: string }> => {

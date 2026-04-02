@@ -8,6 +8,7 @@ import { ImageLightbox } from '../ui/ImageLightbox';
 import { cn } from '../../lib/utils';
 import { JsonRawHighlight } from './JsonRawHighlight';
 import { TabPanelLoading } from './TabPanelLoading';
+import { AssetLoadingOverlay } from './AssetLoadingOverlay';
 import { SpritesheetFolderTree, type SpritesheetFileOption } from './SpritesheetFolderTree';
 import { bestGrid, buildSimulatedAtlasMetadata, drawImageCover } from './atlasPreviewUtils';
 import {
@@ -487,21 +488,12 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
         </CardContent>
         </div>
 
-        {saving && (
-          <div
-            className="absolute inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-card/95 backdrop-blur-sm"
-            role="status"
-            aria-live="polite"
-            aria-busy="true"
-          >
-            <div
-              className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent"
-              aria-hidden
-            />
-            <p className="text-sm font-medium text-foreground">Đang lưu và xử lý ảnh trên server…</p>
-            <p className="text-xs text-muted-foreground">Vui lòng chờ phản hồi.</p>
-          </div>
-        )}
+        <AssetLoadingOverlay
+          show={saving}
+          variant="modal"
+          label="Đang lưu và xử lý ảnh trên server…"
+          subLabel="Vui lòng chờ phản hồi."
+        />
       </Card>
     </div>
 

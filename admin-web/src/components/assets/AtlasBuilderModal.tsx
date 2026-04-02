@@ -8,6 +8,7 @@ import {
   type AtlasImageKind,
 } from './atlasImageKind';
 import { JsonRawHighlight } from './JsonRawHighlight';
+import { AssetLoadingOverlay } from './AssetLoadingOverlay';
 import { buildSimulatedAtlasMetadata, drawImageCover } from './atlasPreviewUtils';
 
 interface AtlasImageItem {
@@ -452,19 +453,23 @@ export function AtlasBuilderModal({ images, onClose, onCreated }: AtlasBuilderMo
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
-      onClick={onClose}
+      onClick={() => {
+        if (!submitting) onClose();
+      }}
     >
       <Card
-        className="w-full max-w-5xl border bg-card shadow-2xl"
+        className="relative w-full max-w-5xl border bg-card shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        aria-busy={submitting}
       >
+        <div aria-hidden={submitting}>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
             <CardTitle className="text-lg font-semibold tracking-tight">
               Tạo Atlas tùy chỉnh
             </CardTitle>
           </div>
-          <Button variant="ghost" size="sm" type="button" onClick={onClose}>
+          <Button variant="ghost" size="sm" type="button" disabled={submitting} onClick={onClose}>
             ✕
           </Button>
         </CardHeader>
@@ -833,6 +838,13 @@ export function AtlasBuilderModal({ images, onClose, onCreated }: AtlasBuilderMo
             )}
           </div>
         </CardContent>
+        </div>
+        <AssetLoadingOverlay
+          show={submitting}
+          variant="modal"
+          label="Đang build atlas trên server…"
+          subLabel="Vui lòng chờ phản hồi."
+        />
       </Card>
     </div>
   );

@@ -36,6 +36,7 @@ import { faUpload, faPenToSquare, faLightbulb as faLightbulbSolid, faXmark, faEx
 import { faLightbulb as faLightbulbRegular } from '@fortawesome/free-regular-svg-icons';
 
 type PreviewAreaTab = 'preview' | 'animation' | 'metadata' | 'raw';
+type AtlasListScopeTab = 'default' | 'desktop' | 'mobile';
 
 function buildCombinedTree(cardsTree: FileTreeItem[], uploadedTree: FileTreeItem[]): FileTreeItem {
   return {
@@ -117,6 +118,7 @@ export default function ManagerAssets() {
 
   const [atlasError, setAtlasError] = useState<string | null>(null);
   const [atlasList, setAtlasList] = useState<AtlasFileEntry[]>([]);
+  const [atlasListScope, setAtlasListScope] = useState<AtlasListScopeTab>('default');
   const [deletingAtlasNames, setDeletingAtlasNames] = useState<Set<string>>(new Set());
   const [atlasListLoading, setAtlasListLoading] = useState(true);
   const [atlasListError, setAtlasListError] = useState<string | null>(null);
@@ -199,7 +201,7 @@ export default function ManagerAssets() {
     setAtlasListLoading(true);
     setAtlasListError(null);
     try {
-      const items = await filesService.getAtlasList();
+      const items = await filesService.getAtlasList(atlasListScope);
       setAtlasList(items);
     } catch (err: unknown) {
       const msg =
@@ -211,7 +213,7 @@ export default function ManagerAssets() {
     } finally {
       setAtlasListLoading(false);
     }
-  }, []);
+  }, [atlasListScope]);
 
   useEffect(() => {
     void fetchAtlasList();
@@ -1451,11 +1453,37 @@ export default function ManagerAssets() {
               <div className="min-h-[140px] space-y-3 rounded-lg border border-dashed border-border bg-muted/40 p-4 lg:col-span-2">
       {atlasError && <p className="text-sm text-red-400">{atlasError}</p>}
                 {atlasListError && <p className="text-sm text-red-400">{atlasListError}</p>}
+                <div
+                  className="mb-1 flex min-w-0 flex-wrap gap-0 border-b border-border"
+                  role="tablist"
+                  aria-label="Atlas scope"
+                >
+                  {(['default', 'desktop', 'mobile'] as const).map((scope) => (
+                    <button
+                      key={scope}
+                      type="button"
+                      role="tab"
+                      aria-selected={atlasListScope === scope}
+                      className={cn(
+                        '-mb-px border-b-2 px-2 py-1.5 text-xs font-medium transition-colors',
+                        atlasListScope === scope
+                          ? 'border-primary text-foreground'
+                          : 'border-transparent text-muted-foreground hover:text-foreground'
+                      )}
+                      onClick={() => setAtlasListScope(scope)}
+                    >
+                      {scope === 'default' ? 'root' : scope}
+                    </button>
+                  ))}
+                </div>
                 {atlasListLoading ? (
                   <p className="text-sm text-muted-foreground">Đang tải danh sách atlas…</p>
                 ) : atlasList.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Chưa có cặp file .webp + .json trong <span className="font-mono text-xs">server/atlas</span>. Dùng
+                    Chưa có cặp file .webp + .json trong{' '}
+                    <span className="font-mono text-xs">
+                      {atlasListScope === 'default' ? 'server/atlas' : `server/atlas/${atlasListScope}`}
+                    </span>. Dùng
                     Atlas Builder hoặc (sau này) các nút animation / spritesheet.
                   </p>
                 ) : (

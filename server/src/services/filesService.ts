@@ -132,10 +132,15 @@ export interface AtlasFileEntry {
   imageMeta: FileMetadata;
   jsonMeta: FileMetadata;
   hasAnimation: boolean;
+  scope: 'default' | 'desktop' | 'mobile';
 }
 
-export function listAtlasFiles(): AtlasFileEntry[] {
-  const dir = getAtlasTempDir();
+export function listAtlasFiles(scope: 'default' | 'desktop' | 'mobile'): AtlasFileEntry[] {
+  const dir =
+    scope === 'default'
+      ? getAtlasTempDir()
+      : path.join(getAtlasTempDir(), scope);
+  const atlasWebPrefix = scope === 'default' ? '/atlas' : `/atlas/${scope}`;
   if (!fs.existsSync(dir)) return [];
   let names: string[];
   try {
@@ -170,8 +175,8 @@ export function listAtlasFiles(): AtlasFileEntry[] {
 
       result.push({
         name: stem,
-        imageUrl: `/atlas/${encodeURIComponent(webpName)}`,
-        jsonUrl: `/atlas/${encodeURIComponent(jsonActual)}`,
+        imageUrl: `${atlasWebPrefix}/${encodeURIComponent(webpName)}`,
+        jsonUrl: `${atlasWebPrefix}/${encodeURIComponent(jsonActual)}`,
         imageMeta: {
           size: imageSt.size,
           mtimeMs: imageSt.mtimeMs,
@@ -183,6 +188,7 @@ export function listAtlasFiles(): AtlasFileEntry[] {
           ctimeMs: jsonSt.ctimeMs,
         },
         hasAnimation,
+        scope,
       });
     } catch {
       continue;
@@ -192,14 +198,18 @@ export function listAtlasFiles(): AtlasFileEntry[] {
 }
 
 export function deleteAtlasByName(
-  name: string
+  name: string,
+  scope: 'default' | 'desktop' | 'mobile'
 ): { ok: true } | { error: string } {
   const trimmed = name.trim();
   if (!trimmed) return { error: 'Thiếu tên atlas' };
   const safe = safeBasename(`${trimmed}.webp`);
   if (!safe) return { error: 'Tên atlas không hợp lệ' };
 
-  const dir = getAtlasTempDir();
+  const dir =
+    scope === 'default'
+      ? getAtlasTempDir()
+      : path.join(getAtlasTempDir(), scope);
   if (!fs.existsSync(dir)) {
     return { error: 'Atlas không tồn tại' };
   }
@@ -665,6 +675,135 @@ function bestGrid(
   return best;
 }
 
+type AtlasResolvedSource = {
+  webPath: string;
+  fullPath: string;
+  frameKey: string;
+  cacheRelativePath: string;
+};
+
+function toAtlasCacheRelativePath(webPath: string): string | null {
+  const normalized = webPath.replace(/\\/g, '/').trim();
+  if (normalized.startsWith('/assets/')) {
+    const rel = normalized.slice('/assets/'.length);
+    if (!rel || rel.includes('..') || path.isAbsolute(rel)) return null;
+    return rel;
+  }
+  if (normalized.startsWith('/uploads/')) {
+    const rel = normalized.slice('/uploads/'.length);
+    if (!rel || rel.includes('..') || path.isAbsolute(rel)) return null;
+    return `uploads/${rel}`;
+  }
+  return null;
+}
+
+async function ensureAtlasVariantCachedImage(
+  sourcePath: string,
+  cachePath: string,
+  resizeWidth: number
+): Promise<{ cachedPath: string; width: number; height: number }> {
+  if (!fs.existsSync(cachePath)) {
+    const outDir = path.dirname(cachePath);
+    if (!fs.existsSync(outDir)) {
+      fs.mkdirSync(outDir, { recursive: true });
+    }
+    await sharp(sourcePath)
+      .resize({
+        width: resizeWidth,
+        withoutEnlargement: true,
+        kernel: sharp.kernel.lanczos3,
+      })
+      .webp({ quality: 80 })
+      .toFile(cachePath);
+  }
+  const meta = await sharp(cachePath).metadata();
+  const width = meta.width ?? 0;
+  const height = meta.height ?? 0;
+  if (width < 1 || height < 1) {
+    throw new Error('Invalid cached image dimension');
+  }
+  return { cachedPath: cachePath, width, height };
+}
+
+async function buildAtlasBuffers(
+  sourceFiles: string[],
+  quality = 90
+): Promise<
+  | {
+      webpBuffer: Buffer;
+      spriteWidth: number;
+      spriteHeight: number;
+      grid: { columns: number; rows: number; sheetWidth: number; sheetHeight: number };
+    }
+  | { error: string }
+> {
+  if (sourceFiles.length === 0) return { error: 'Danh sách ảnh trống.' };
+  const firstMeta = await sharp(sourceFiles[0]).metadata();
+  const spriteWidth = firstMeta.width ?? 0;
+  const spriteHeight = firstMeta.height ?? 0;
+  if (spriteWidth < 1 || spriteHeight < 1) {
+    return { error: 'Không đọc được kích thước ảnh đầu vào để tạo atlas.' };
+  }
+  const grid = bestGrid(sourceFiles.length, spriteWidth, spriteHeight);
+  const canvas = sharp({
+    create: { width: grid.sheetWidth, height: grid.sheetHeight, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  });
+
+  const compositeOperations: { input: Buffer | string; top: number; left: number }[] = [];
+  for (let index = 0; index < sourceFiles.length; index++) {
+    const imagePath = sourceFiles[index];
+    if (!fs.existsSync(imagePath)) continue;
+    const row = Math.floor(index / grid.columns);
+    const col = index % grid.columns;
+    const x = col * spriteWidth;
+    const y = row * spriteHeight;
+    const meta = await sharp(imagePath).metadata();
+    const needResize = meta.width !== spriteWidth || meta.height !== spriteHeight;
+    const input = needResize
+      ? await sharp(imagePath).resize(spriteWidth, spriteHeight, { fit: 'cover', position: 'center' }).toBuffer()
+      : imagePath;
+    compositeOperations.push({ input, top: y, left: x });
+  }
+  if (compositeOperations.length === 0) {
+    return { error: 'Không thể xử lý ảnh để tạo atlas.' };
+  }
+  const webpBuffer = await canvas.composite(compositeOperations).webp({ quality }).toBuffer();
+  return { webpBuffer, spriteWidth, spriteHeight, grid };
+}
+
+function buildAtlasMetadata(
+  frameKeys: string[],
+  spriteWidth: number,
+  spriteHeight: number,
+  grid: { columns: number; rows: number; sheetWidth: number; sheetHeight: number },
+  webpName: string,
+  metaPath: string
+): {
+  frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
+  meta: { image: string; size: { w: number; h: number }; scale: string; path: string };
+} {
+  const metadata: {
+    frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
+    meta: { image: string; size: { w: number; h: number }; scale: string; path: string };
+  } = {
+    frames: {},
+    meta: {
+      image: webpName,
+      size: { w: grid.sheetWidth, h: grid.sheetHeight },
+      scale: '1',
+      path: metaPath,
+    },
+  };
+  frameKeys.forEach((key, index) => {
+    const row = Math.floor(index / grid.columns);
+    const col = index % grid.columns;
+    metadata.frames[key] = {
+      frame: { x: col * spriteWidth, y: row * spriteHeight, w: spriteWidth, h: spriteHeight },
+    };
+  });
+  return metadata;
+}
+
 export async function generateAllCardsAtlas(): Promise<
   { imageUrl: string; jsonUrl: string; count: number; sheetSize: { w: number; h: number } } | { error: string }
 > {
@@ -774,9 +913,7 @@ export async function generateCustomAtlas(
   if (uniquePaths.length === 0) return { error: 'Danh sách ảnh trống.' };
 
   const imagesRoot = getImagesRootPath();
-  const uploadsDir = getUploadsDir();
-
-  const resolvedFiles: string[] = [];
+  const resolvedSources: AtlasResolvedSource[] = [];
 
   for (const webPath of uniquePaths) {
     let fullPath: string | null = null;
@@ -794,47 +931,21 @@ export async function generateCustomAtlas(
     const ext = path.extname(normalized).toLowerCase();
     if (!IMAGE_EXT.includes(ext)) continue;
     if (!fs.existsSync(normalized) || !fs.statSync(normalized).isFile()) continue;
-
-    resolvedFiles.push(normalized);
+    const cacheRelativePath = toAtlasCacheRelativePath(webPath);
+    if (!cacheRelativePath) continue;
+    const frameKey = path
+      .basename(normalized)
+      .replace(/\.[^.]+$/, '')
+      .replace(/[/\\]/g, '_');
+    resolvedSources.push({
+      webPath,
+      fullPath: normalized,
+      frameKey,
+      cacheRelativePath,
+    });
   }
 
-  if (resolvedFiles.length === 0) return { error: 'Không tìm thấy ảnh hợp lệ để tạo atlas.' };
-
-  const firstFullPath = resolvedFiles[0];
-  const firstMeta = await sharp(firstFullPath).metadata();
-  const spriteWidth = firstMeta.width ?? 420;
-  const spriteHeight = firstMeta.height ?? 720;
-  const grid = bestGrid(resolvedFiles.length, spriteWidth, spriteHeight);
-
-  const canvas = sharp({
-    create: { width: grid.sheetWidth, height: grid.sheetHeight, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-  });
-
-  const compositeOperations: { input: Buffer | string; top: number; left: number }[] = [];
-
-  for (let index = 0; index < resolvedFiles.length; index++) {
-    const imagePath = resolvedFiles[index];
-    if (!fs.existsSync(imagePath)) continue;
-
-    const row = Math.floor(index / grid.columns);
-    const col = index % grid.columns;
-    const x = col * spriteWidth;
-    const y = row * spriteHeight;
-
-    const img = sharp(imagePath);
-    const meta = await img.metadata();
-    const needResize = meta.width !== spriteWidth || meta.height !== spriteHeight;
-    const input = needResize
-      ? await sharp(imagePath).resize(spriteWidth, spriteHeight, { fit: 'cover', position: 'center' }).toBuffer()
-      : imagePath;
-
-    compositeOperations.push({ input, top: y, left: x });
-  }
-
-  if (compositeOperations.length === 0) return { error: 'Không thể xử lý ảnh để tạo atlas.' };
-
-  const spriteSheet = await canvas.composite(compositeOperations).webp({ quality: 90 });
-  const webpBuffer = await spriteSheet.toBuffer();
+  if (resolvedSources.length === 0) return { error: 'Không tìm thấy ảnh hợp lệ để tạo atlas.' };
 
   const atlasBaseName = name;
   const webpName = `${atlasBaseName}.webp`;
@@ -842,52 +953,85 @@ export async function generateCustomAtlas(
 
   const teyvatCardsPublicPath = getTeyvatCardsPublicPath();
   const atlasTempDir = getAtlasTempDir();
+  const atlasDesktopDir = path.join(atlasTempDir, 'desktop');
+  const atlasMobileDir = path.join(atlasTempDir, 'mobile');
 
   if (!fs.existsSync(teyvatCardsPublicPath)) fs.mkdirSync(teyvatCardsPublicPath, { recursive: true });
-  const teyvatWebpPath = path.join(teyvatCardsPublicPath, webpName);
-  const teyvatJsonPath = path.join(teyvatCardsPublicPath, jsonName);
-
-  const metadata: {
-    frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
-    meta: { image: string; size: { w: number; h: number }; scale: string; path: string };
-  } = {
-    frames: {},
-    meta: {
-      image: webpName,
-      size: { w: grid.sheetWidth, h: grid.sheetHeight },
-      scale: '1',
-      path: `assets/images/cards/${webpName}`,
-    },
-  };
-
-  resolvedFiles.forEach((filePath, index) => {
-    const row = Math.floor(index / grid.columns);
-    const col = index % grid.columns;
-    const baseKey = path
-      .basename(filePath)
-      .replace(/\.[^.]+$/, '')
-      .replace(/[/\\]/g, '_');
-    metadata.frames[baseKey] = {
-      frame: { x: col * spriteWidth, y: row * spriteHeight, w: spriteWidth, h: spriteHeight },
-    };
-  });
-
-  await fs.promises.writeFile(teyvatWebpPath, webpBuffer);
-  await fs.promises.writeFile(teyvatJsonPath, JSON.stringify(metadata, null, 2));
-
   if (!fs.existsSync(atlasTempDir)) fs.mkdirSync(atlasTempDir, { recursive: true });
-  await fs.promises.writeFile(path.join(atlasTempDir, webpName), webpBuffer);
-  await fs.promises.writeFile(path.join(atlasTempDir, jsonName), JSON.stringify(metadata, null, 2));
+
+  const originalFiles = resolvedSources.map((s) => s.fullPath);
+  const frameKeys = resolvedSources.map((s) => s.frameKey);
+  const rootBuild = await buildAtlasBuffers(originalFiles, 90);
+  if ('error' in rootBuild) return rootBuild;
+  // AtlasBuilderModal đã lọc chỉ 1 loại/lần: nếu frame đầu là vuông thì xem như item atlas.
+  const isItemAtlas = rootBuild.spriteWidth === rootBuild.spriteHeight;
+  const desktopResizeWidth = isItemAtlas ? 128 : 210;
+  const mobileResizeWidth = isItemAtlas ? 64 : 105;
+  const rootMetadata = buildAtlasMetadata(
+    frameKeys,
+    rootBuild.spriteWidth,
+    rootBuild.spriteHeight,
+    rootBuild.grid,
+    webpName,
+    `assets/images/cards/${webpName}`
+  );
+
+  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, webpName), rootBuild.webpBuffer);
+  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, jsonName), JSON.stringify(rootMetadata, null, 2));
+  await fs.promises.writeFile(path.join(atlasTempDir, webpName), rootBuild.webpBuffer);
+  await fs.promises.writeFile(path.join(atlasTempDir, jsonName), JSON.stringify(rootMetadata, null, 2));
+
+  if (!fs.existsSync(atlasDesktopDir)) fs.mkdirSync(atlasDesktopDir, { recursive: true });
+  if (!fs.existsSync(atlasMobileDir)) fs.mkdirSync(atlasMobileDir, { recursive: true });
+
+  const desktopCachedFiles: string[] = [];
+  const mobileCachedFiles: string[] = [];
+  for (const source of resolvedSources) {
+    const desktopCachePath = path.join(atlasDesktopDir, source.cacheRelativePath);
+    const mobileCachePath = path.join(atlasMobileDir, source.cacheRelativePath);
+    const desktopCached = await ensureAtlasVariantCachedImage(source.fullPath, desktopCachePath, desktopResizeWidth);
+    const mobileCached = await ensureAtlasVariantCachedImage(source.fullPath, mobileCachePath, mobileResizeWidth);
+    desktopCachedFiles.push(desktopCached.cachedPath);
+    mobileCachedFiles.push(mobileCached.cachedPath);
+  }
+
+  const desktopBuild = await buildAtlasBuffers(desktopCachedFiles, 90);
+  if ('error' in desktopBuild) return desktopBuild;
+  const desktopMetadata = buildAtlasMetadata(
+    frameKeys,
+    desktopBuild.spriteWidth,
+    desktopBuild.spriteHeight,
+    desktopBuild.grid,
+    webpName,
+    `atlas/desktop/${webpName}`
+  );
+  await fs.promises.writeFile(path.join(atlasDesktopDir, webpName), desktopBuild.webpBuffer);
+  await fs.promises.writeFile(path.join(atlasDesktopDir, jsonName), JSON.stringify(desktopMetadata, null, 2));
+
+  const mobileBuild = await buildAtlasBuffers(mobileCachedFiles, 90);
+  if ('error' in mobileBuild) return mobileBuild;
+  const mobileMetadata = buildAtlasMetadata(
+    frameKeys,
+    mobileBuild.spriteWidth,
+    mobileBuild.spriteHeight,
+    mobileBuild.grid,
+    webpName,
+    `atlas/mobile/${webpName}`
+  );
+  await fs.promises.writeFile(path.join(atlasMobileDir, webpName), mobileBuild.webpBuffer);
+  await fs.promises.writeFile(path.join(atlasMobileDir, jsonName), JSON.stringify(mobileMetadata, null, 2));
 
   return {
     imageUrl: `/atlas/${webpName}`,
     jsonUrl: `/atlas/${jsonName}`,
-    count: resolvedFiles.length,
-    sheetSize: { w: grid.sheetWidth, h: grid.sheetHeight },
+    count: resolvedSources.length,
+    sheetSize: { w: rootBuild.grid.sheetWidth, h: rootBuild.grid.sheetHeight },
   };
 }
 
 const ANIMATION_FRAME_SIZE = 192;
+const ANIMATION_FRAME_SIZE_DESKTOP = 96;
+const ANIMATION_FRAME_SIZE_MOBILE = 64;
 const ANIMATION_NAME_RE = /^[a-zA-Z0-9_-]{1,50}$/;
 
 export type AnimationAtlasSource = {
@@ -975,55 +1119,122 @@ export async function generateAnimationAtlas(
 
   if (extractedFrames.length === 0) return { error: 'Không có frame animation nào khác rỗng để tạo atlas.' };
 
-  const grid = bestGrid(extractedFrames.length, ANIMATION_FRAME_SIZE, ANIMATION_FRAME_SIZE);
-  const canvas = sharp({
-    create: { width: grid.sheetWidth, height: grid.sheetHeight, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-  });
-  const compositeOperations = extractedFrames.map((f, index) => {
-    const row = Math.floor(index / grid.columns);
-    const col = index % grid.columns;
-    return { input: f.input, left: col * ANIMATION_FRAME_SIZE, top: row * ANIMATION_FRAME_SIZE };
-  });
-  const webpBuffer = await canvas.composite(compositeOperations).webp({ quality: 90 }).toBuffer();
+  const buildAnimationAtlasVariant = async (
+    frames: { input: Buffer; key: string }[],
+    frameSize: number,
+    metaPath: string
+  ): Promise<{
+    webpBuffer: Buffer;
+    metadata: {
+      frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
+      meta: { image: string; size: { w: number; h: number }; scale: string; path: string; hasAnimation: boolean };
+    };
+    grid: { columns: number; rows: number; sheetWidth: number; sheetHeight: number };
+  }> => {
+    const grid = bestGrid(frames.length, frameSize, frameSize);
+    const canvas = sharp({
+      create: { width: grid.sheetWidth, height: grid.sheetHeight, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+    });
+    const compositeOperations = frames.map((f, index) => {
+      const row = Math.floor(index / grid.columns);
+      const col = index % grid.columns;
+      return { input: f.input, left: col * frameSize, top: row * frameSize };
+    });
+    const webpBuffer = await canvas.composite(compositeOperations).webp({ quality: 90 }).toBuffer();
+    const metadata: {
+      frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
+      meta: { image: string; size: { w: number; h: number }; scale: string; path: string; hasAnimation: boolean };
+    } = {
+      frames: {},
+      meta: {
+        image: webpName,
+        size: { w: grid.sheetWidth, h: grid.sheetHeight },
+        scale: '1',
+        path: metaPath,
+        hasAnimation: true,
+      },
+    };
+    frames.forEach((f, index) => {
+      const row = Math.floor(index / grid.columns);
+      const col = index % grid.columns;
+      metadata.frames[f.key] = {
+        frame: { x: col * frameSize, y: row * frameSize, w: frameSize, h: frameSize },
+      };
+    });
+    return { webpBuffer, metadata, grid };
+  };
 
   const webpName = `${name}.webp`;
   const jsonName = `${name}.json`;
   const teyvatCardsPublicPath = getTeyvatCardsPublicPath();
   const atlasTempDir = getAtlasTempDir();
+  const atlasDesktopDir = path.join(atlasTempDir, 'desktop');
+  const atlasMobileDir = path.join(atlasTempDir, 'mobile');
   if (!fs.existsSync(teyvatCardsPublicPath)) fs.mkdirSync(teyvatCardsPublicPath, { recursive: true });
   if (!fs.existsSync(atlasTempDir)) fs.mkdirSync(atlasTempDir, { recursive: true });
+  if (!fs.existsSync(atlasDesktopDir)) fs.mkdirSync(atlasDesktopDir, { recursive: true });
+  if (!fs.existsSync(atlasMobileDir)) fs.mkdirSync(atlasMobileDir, { recursive: true });
 
-  const metadata: {
-    frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
-    meta: { image: string; size: { w: number; h: number }; scale: string; path: string; hasAnimation: boolean };
-  } = {
-    frames: {},
-    meta: {
-      image: webpName,
-      size: { w: grid.sheetWidth, h: grid.sheetHeight },
-      scale: '1',
-      path: `assets/images/animations/${webpName}`,
-      hasAnimation: true,
-    },
-  };
-  extractedFrames.forEach((f, index) => {
-    const row = Math.floor(index / grid.columns);
-    const col = index % grid.columns;
-    metadata.frames[f.key] = {
-      frame: { x: col * ANIMATION_FRAME_SIZE, y: row * ANIMATION_FRAME_SIZE, w: ANIMATION_FRAME_SIZE, h: ANIMATION_FRAME_SIZE },
-    };
-  });
+  const rootVariant = await buildAnimationAtlasVariant(
+    extractedFrames,
+    ANIMATION_FRAME_SIZE,
+    `assets/images/animations/${webpName}`
+  );
 
-  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, webpName), webpBuffer);
-  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, jsonName), JSON.stringify(metadata, null, 2));
-  await fs.promises.writeFile(path.join(atlasTempDir, webpName), webpBuffer);
-  await fs.promises.writeFile(path.join(atlasTempDir, jsonName), JSON.stringify(metadata, null, 2));
+  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, webpName), rootVariant.webpBuffer);
+  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, jsonName), JSON.stringify(rootVariant.metadata, null, 2));
+  await fs.promises.writeFile(path.join(atlasTempDir, webpName), rootVariant.webpBuffer);
+  await fs.promises.writeFile(path.join(atlasTempDir, jsonName), JSON.stringify(rootVariant.metadata, null, 2));
+
+  const desktopFrames = await Promise.all(
+    extractedFrames.map(async (f) => ({
+      key: f.key,
+      input: await sharp(f.input)
+        .resize({
+          width: ANIMATION_FRAME_SIZE_DESKTOP,
+          height: ANIMATION_FRAME_SIZE_DESKTOP,
+          withoutEnlargement: true,
+          kernel: sharp.kernel.lanczos3,
+        })
+        .png()
+        .toBuffer(),
+    }))
+  );
+  const desktopVariant = await buildAnimationAtlasVariant(
+    desktopFrames,
+    ANIMATION_FRAME_SIZE_DESKTOP,
+    `atlas/desktop/${webpName}`
+  );
+  await fs.promises.writeFile(path.join(atlasDesktopDir, webpName), desktopVariant.webpBuffer);
+  await fs.promises.writeFile(path.join(atlasDesktopDir, jsonName), JSON.stringify(desktopVariant.metadata, null, 2));
+
+  const mobileFrames = await Promise.all(
+    extractedFrames.map(async (f) => ({
+      key: f.key,
+      input: await sharp(f.input)
+        .resize({
+          width: ANIMATION_FRAME_SIZE_MOBILE,
+          height: ANIMATION_FRAME_SIZE_MOBILE,
+          withoutEnlargement: true,
+          kernel: sharp.kernel.lanczos3,
+        })
+        .png()
+        .toBuffer(),
+    }))
+  );
+  const mobileVariant = await buildAnimationAtlasVariant(
+    mobileFrames,
+    ANIMATION_FRAME_SIZE_MOBILE,
+    `atlas/mobile/${webpName}`
+  );
+  await fs.promises.writeFile(path.join(atlasMobileDir, webpName), mobileVariant.webpBuffer);
+  await fs.promises.writeFile(path.join(atlasMobileDir, jsonName), JSON.stringify(mobileVariant.metadata, null, 2));
 
   return {
     imageUrl: `/atlas/${webpName}`,
     jsonUrl: `/atlas/${jsonName}`,
     count: extractedFrames.length,
-    sheetSize: { w: grid.sheetWidth, h: grid.sheetHeight },
+    sheetSize: { w: rootVariant.grid.sheetWidth, h: rootVariant.grid.sheetHeight },
   };
 }
 

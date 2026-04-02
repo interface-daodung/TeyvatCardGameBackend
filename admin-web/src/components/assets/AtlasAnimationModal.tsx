@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { JsonRawHighlight } from './JsonRawHighlight';
 import { bestGrid } from './atlasPreviewUtils';
+import { AssetLoadingOverlay } from './AssetLoadingOverlay';
 
 type AnimationFileItem = { path: string; name: string };
 type AtlasPanelTab = 'collection' | 'preview' | 'json';
@@ -213,11 +214,21 @@ export function AtlasAnimationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <Card className="w-full max-w-6xl border bg-card shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+      onClick={() => {
+        if (!submitting) onClose();
+      }}
+    >
+      <Card
+        className="relative w-full max-w-6xl border bg-card shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        aria-busy={submitting}
+      >
+        <div aria-hidden={submitting}>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-lg font-semibold tracking-tight">Atlas Animation</CardTitle>
-          <Button variant="ghost" size="sm" type="button" onClick={onClose}>✕</Button>
+          <Button variant="ghost" size="sm" type="button" disabled={submitting} onClick={onClose}>✕</Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-4 lg:flex-row">
@@ -249,7 +260,17 @@ export function AtlasAnimationModal({
                 </button>
               </div>
 
-              <div className={cn('h-[340px] overflow-hidden rounded-lg border', panelTab === 'collection' ? 'border-dashed border-border bg-muted' : 'border-border bg-muted/50')}>
+              <div
+                className={cn(
+                  'relative h-[340px] overflow-hidden rounded-lg border',
+                  panelTab === 'collection' ? 'border-dashed border-border bg-muted' : 'border-border bg-muted/50'
+                )}
+              >
+                <AssetLoadingOverlay
+                  show={decoding}
+                  variant="panel"
+                  label="Đang cắt frame 192×192 và lọc frame rỗng…"
+                />
                 {panelTab === 'collection' && (
                   <div className="flex h-full min-h-0 flex-wrap content-start gap-2 overflow-y-auto p-3" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
                     {selected.length === 0 && <p className="text-xs text-muted-foreground">Kéo thả file từ danh sách animations bên phải vào đây.</p>}
@@ -360,6 +381,13 @@ export function AtlasAnimationModal({
             {error && <p className="text-xs font-medium text-destructive">{error}</p>}
           </div>
         </CardContent>
+        </div>
+        <AssetLoadingOverlay
+          show={submitting}
+          variant="modal"
+          label="Đang build atlas trên server…"
+          subLabel="Vui lòng chờ phản hồi."
+        />
       </Card>
     </div>
   );

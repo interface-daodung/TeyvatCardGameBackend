@@ -93,9 +93,14 @@ export async function getUploadedTreeHandler(_req: Request, res: Response) {
   }
 }
 
-export async function getAtlasListHandler(_req: Request, res: Response) {
+export async function getAtlasListHandler(req: Request, res: Response) {
   try {
-    const items = filesService.listAtlasFiles();
+    const scopeRaw = req.query.scope;
+    const scope =
+      scopeRaw === 'mobile' || scopeRaw === 'desktop' || scopeRaw === 'default'
+        ? scopeRaw
+        : 'default';
+    const items = filesService.listAtlasFiles(scope);
     res.json({ items });
   } catch (err) {
     console.error('Failed to list atlas files:', err);
@@ -105,12 +110,14 @@ export async function getAtlasListHandler(_req: Request, res: Response) {
 
 export async function deleteAtlasHandler(req: Request, res: Response) {
   try {
-    const { name } = req.body as { name?: string };
+    const { name, scope } = req.body as { name?: string; scope?: string };
     if (!name || typeof name !== 'string') {
       res.status(400).json({ error: 'Thiếu name' });
       return;
     }
-    const result = filesService.deleteAtlasByName(name);
+    const normalizedScope: 'default' | 'desktop' | 'mobile' =
+      scope === 'mobile' || scope === 'desktop' ? scope : 'default';
+    const result = filesService.deleteAtlasByName(name, normalizedScope);
     if ('error' in result) {
       const status =
         result.error === 'Atlas không tồn tại' ? 404 : 400;

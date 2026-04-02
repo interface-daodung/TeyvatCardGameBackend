@@ -21,6 +21,15 @@ type AtlasViewModalProps = {
   onDeleteFailed?: (name: string) => void;
 };
 
+function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const exp = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / 1024 ** exp;
+  const fractionDigits = value >= 100 || exp === 0 ? 0 : value >= 10 ? 1 : 2;
+  return `${value.toFixed(fractionDigits)} ${units[exp]}`;
+}
+
 export function AtlasViewModal({
   entry,
   onClose,
@@ -245,6 +254,10 @@ export function AtlasViewModal({
   if (!open || !entry) return null;
 
   const isCanvasLight = canvasBgMode === 'light';
+  const imageFileSizeLabel = useMemo(
+    () => `Dung lượng file: ${formatFileSize(entry.imageMeta?.size ?? 0)}`,
+    [entry.imageMeta?.size]
+  );
 
   const handleDeleteConfirm = async () => {
     if (!entry) return;
@@ -257,7 +270,7 @@ export function AtlasViewModal({
     try {
       setDeleteLoading(true);
       console.log('[AtlasDelete] calling API deleteAtlas', { deletingName });
-      await filesService.deleteAtlas(deletingName);
+      await filesService.deleteAtlas(deletingName, entry.scope);
       console.log('[AtlasDelete] API success', { deletingName });
       onDeleteSucceeded?.(deletingName);
     } catch (err) {
@@ -335,6 +348,9 @@ export function AtlasViewModal({
               className="block max-h-full max-w-full"
               aria-label={`Atlas ${entry.name}: bấm dòng key trong JSON để highlight frame`}
             />
+            <div className="pointer-events-none absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-[11px] font-medium text-white shadow-sm">
+              {imageFileSizeLabel}
+            </div>
           </div>
           <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-t border-border lg:border-l lg:border-t-0">
             {jsonLoading && (

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { TabPanelLoading } from './TabPanelLoading';
+import { AssetLoadingOverlay } from './AssetLoadingOverlay';
 import { SpritesheetFolderTree, type SpritesheetFileOption } from './SpritesheetFolderTree';
 import { bestGrid, buildSimulatedAtlasMetadata } from './atlasPreviewUtils';
 import { SpriteFramePreviewPanel } from './SpriteFramePreviewPanel';
@@ -711,20 +712,12 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
           </CardContent>
         </div>
 
-        {saving && (
-          <div
-            className="absolute inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-card/95 backdrop-blur-sm"
-            role="status"
-            aria-live="polite"
-            aria-busy="true"
-          >
-            <div
-              className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent"
-              aria-hidden
-            />
-            <p className="text-sm font-medium text-foreground">Đang lưu…</p>
-          </div>
-        )}
+        <AssetLoadingOverlay
+          show={saving}
+          variant="modal"
+          label="Đang lưu và xử lý ảnh trên server…"
+          subLabel="Vui lòng chờ phản hồi."
+        />
       </Card>
     </div>
   );
