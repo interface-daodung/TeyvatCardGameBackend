@@ -19,6 +19,8 @@ import { UnsavedChangesDialog, useUnsavedBaseline } from '../unsavedChanges';
 
 const LANG_OPTIONS: EditLang[] = ['en', 'vi', 'ja'];
 
+type I18nNameSnapshot = { en: string; vi: string; ja: string };
+
 interface MapFormModalProps {
     open: boolean;
     editingMap: MapType | null;
@@ -65,7 +67,14 @@ export function MapFormModal({
     });
 
     const { setBaseline, clearBaseline, isDirty: checkDirty } = useUnsavedBaseline<FormState>();
+    const {
+        setBaseline: setI18nBaseline,
+        clearBaseline: clearI18nBaseline,
+        isDirty: checkI18nDirty,
+    } = useUnsavedBaseline<I18nNameSnapshot>();
     const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+    const [showI18nUnsavedConfirm, setShowI18nUnsavedConfirm] = useState(false);
+    const [i18nSaveSubmitting, setI18nSaveSubmitting] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
 
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -121,10 +130,20 @@ export function MapFormModal({
     }, [open, editingMap, clearBaseline, setBaseline]);
 
     useEffect(() => {
-        if (!open) setShowUnsavedConfirm(false);
+        if (!open) {
+            setShowUnsavedConfirm(false);
+            setShowI18nUnsavedConfirm(false);
+        }
     }, [open]);
 
     const isDirty = open && checkDirty(form);
+
+    const i18nSnapshot: I18nNameSnapshot = {
+        en: formI18nEn,
+        vi: formI18nVi,
+        ja: formI18nJa,
+    };
+    const i18nDirty = i18nField === 'name' && checkI18nDirty(i18nSnapshot);
 
     // ── Load name translations when editing ──
     useEffect(() => {
@@ -148,21 +167,53 @@ export function MapFormModal({
         else setFormI18nJa(val);
     };
 
+    const closeI18nPanel = () => {
+        setI18nField(null);
+        setI18nError(null);
+        clearI18nBaseline();
+    };
+
+    const requestCloseI18n = () => {
+        if (i18nDirty) {
+            setShowI18nUnsavedConfirm(true);
+        } else {
+            closeI18nPanel();
+        }
+    };
+
     const openI18nNameEditor = async () => {
         if (!editingMap) return;
+        if (i18nField === 'name') {
+            requestCloseI18n();
+            return;
+        }
         setI18nField('name');
         setI18nError(null);
+        const fallback: I18nNameSnapshot = {
+            en: form.name ?? editingMap.name ?? '',
+            vi: '',
+            ja: '',
+        };
+        setFormI18nEn(fallback.en);
+        setFormI18nVi(fallback.vi);
+        setFormI18nJa(fallback.ja);
+        setI18nBaseline(fallback);
+
         const key = `map.${editingMap.nameId}.name`;
         try {
             const loc = await localizationService.getLocalizationByKey(key);
             const t = loc.translations ?? {};
-            setFormI18nEn(t.en ?? form.name ?? editingMap.name);
-            setFormI18nVi(t.vi ?? '');
-            setFormI18nJa(t.ja ?? '');
+            const snapshot: I18nNameSnapshot = {
+                en: t.en ?? form.name ?? editingMap.name,
+                vi: t.vi ?? '',
+                ja: t.ja ?? '',
+            };
+            setFormI18nEn(snapshot.en);
+            setFormI18nVi(snapshot.vi);
+            setFormI18nJa(snapshot.ja);
+            setI18nBaseline(snapshot);
         } catch {
-            setFormI18nEn(form.name ?? editingMap.name ?? '');
-            setFormI18nVi('');
-            setFormI18nJa('');
+            /* giữ fallback đã baseline */
         }
     };
 
@@ -188,8 +239,10 @@ export function MapFormModal({
         }
     };
 
-    const handleI18nSave = async () => {
-        if (!editingMap || i18nField !== 'name') return;
+    const handleI18nSave = async (): Promise<boolean> => {
+        if (!editingMap || i18nField !== 'name') return false;
+        setI18nSaveSubmitting(true);
+        setI18nError(null);
         const translations = {
             en: formI18nEn.trim(),
             vi: formI18nVi.trim(),
@@ -197,18 +250,34 @@ export function MapFormModal({
         };
         const key = `map.${editingMap.nameId}.name`;
         try {
-            await localizationService.updateLocalization(key, translations);
-        } catch {
             try {
-                await localizationService.createLocalization(key, translations);
+                await localizationService.updateLocalization(key, translations);
             } catch {
-                setI18nError('Không lưu được bản dịch, hãy thử lại');
-                return;
+                try {
+                    await localizationService.createLocalization(key, translations);
+                } catch {
+                    setI18nError('Không lưu được bản dịch, hãy thử lại');
+                    return false;
+                }
             }
+            setNameTranslations(translations);
+            setI18nField(null);
+            setI18nError(null);
+            setShowI18nUnsavedConfirm(false);
+            clearI18nBaseline();
+            return true;
+        } finally {
+            setI18nSaveSubmitting(false);
         }
-        setNameTranslations(translations);
-        setI18nField(null);
-        setI18nError(null);
+    };
+
+    const confirmI18nDiscard = () => {
+        setShowI18nUnsavedConfirm(false);
+        closeI18nPanel();
+    };
+
+    const confirmI18nSaveFromDialog = () => {
+        void handleI18nSave();
     };
 
     // ── Type ratio handler ──
@@ -277,8 +346,10 @@ export function MapFormModal({
 
     const performClose = () => {
         setShowUnsavedConfirm(false);
+        setShowI18nUnsavedConfirm(false);
         setI18nField(null);
         setI18nError(null);
+        clearI18nBaseline();
         setNameTranslations(null);
         setError(null);
         setMapBackgroundTreeOpen(false);
@@ -287,6 +358,14 @@ export function MapFormModal({
     };
 
     const requestClose = () => {
+        if (showI18nUnsavedConfirm) {
+            setShowI18nUnsavedConfirm(false);
+            return;
+        }
+        if (i18nDirty) {
+            setShowI18nUnsavedConfirm(true);
+            return;
+        }
         if (isDirty) {
             setShowUnsavedConfirm(true);
         } else {
@@ -310,7 +389,8 @@ export function MapFormModal({
             <div
                 className="absolute inset-0 min-h-full w-full bg-black/50"
                 onClick={() => {
-                    if (showUnsavedConfirm) setShowUnsavedConfirm(false);
+                    if (showI18nUnsavedConfirm) setShowI18nUnsavedConfirm(false);
+                    else if (showUnsavedConfirm) setShowUnsavedConfirm(false);
                     else requestClose();
                 }}
                 aria-hidden
@@ -331,12 +411,11 @@ export function MapFormModal({
                     </button>
                 </div>
 
-                <div className="flex flex-1 min-h-0 overflow-hidden">
-                    {/* Form */}
+                <div className="flex-1 min-h-0 overflow-y-auto">
                     <form
                         ref={formRef}
                         onSubmit={handleSubmit}
-                        className="space-y-4 p-6 flex-1 overflow-y-auto min-w-0"
+                        className="space-y-4 p-6"
                     >
                         {error && (
                             <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-2 text-destructive text-sm">
@@ -404,7 +483,7 @@ export function MapFormModal({
                                                 onClick={openI18nNameEditor}
                                                 className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
                                             >
-                                                Sửa i18n
+                                                {i18nField === 'name' ? 'Thu gọn i18n' : 'Sửa i18n'}
                                             </button>
                                         </div>
                                     </>
@@ -423,6 +502,24 @@ export function MapFormModal({
                                 className="w-full rounded border border-slate-200 px-3 py-2 text-sm bg-background disabled:bg-muted/50 read-only:bg-muted/50"
                                 placeholder="vd: Ice Palace"
                             />
+                            {i18nField === 'name' && (
+                                <div className="mt-3">
+                                    <I18nEditorPanel
+                                        variant="inline"
+                                        title="Sửa Tên hiển thị (i18n)"
+                                        fieldType="name"
+                                        editLang={editLang}
+                                        getValue={getFormI18n}
+                                        onChange={setFormI18n}
+                                        onTranslate={handleI18nTranslate}
+                                        onSave={() => void handleI18nSave()}
+                                        onClose={requestCloseI18n}
+                                        translateLoading={translateLoading}
+                                        saveLoading={i18nSaveSubmitting}
+                                        error={i18nError}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* description */}
@@ -601,25 +698,6 @@ export function MapFormModal({
                             </div>
                         </div>
                     </form>
-
-                    {/* i18n side panel */}
-                    {i18nField === 'name' && (
-                        <I18nEditorPanel
-                            title="Sửa Tên hiển thị (i18n)"
-                            fieldType="name"
-                            editLang={editLang}
-                            getValue={getFormI18n}
-                            onChange={setFormI18n}
-                            onTranslate={handleI18nTranslate}
-                            onSave={handleI18nSave}
-                            onClose={() => {
-                                setI18nField(null);
-                                setI18nError(null);
-                            }}
-                            translateLoading={translateLoading}
-                            error={i18nError}
-                        />
-                    )}
                 </div>
             </div>
 
@@ -632,6 +710,17 @@ export function MapFormModal({
                 saveDisabled={!canSaveRatios}
                 title="Lưu thay đổi?"
                 description="Bạn đã chỉnh sửa map. Bạn có muốn lưu trước khi đóng không?"
+            />
+
+            <UnsavedChangesDialog
+                open={showI18nUnsavedConfirm}
+                onStay={() => setShowI18nUnsavedConfirm(false)}
+                onDiscard={confirmI18nDiscard}
+                onSave={confirmI18nSaveFromDialog}
+                saveLoading={i18nSaveSubmitting}
+                overlayClassName="z-[10001]"
+                title="Lưu bản dịch?"
+                description="Bạn đã chỉnh sửa i18n tên map chưa lưu. Bạn có muốn lưu trước khi đóng không?"
             />
         </div>,
         document.body

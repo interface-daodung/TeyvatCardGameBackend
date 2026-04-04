@@ -314,7 +314,11 @@ export default function ManagerAssets() {
   };
 
   const isUploadedFile = (p: string) =>
-    p.startsWith('/uploads/') && /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(p);
+    p.startsWith('/uploads/') &&
+    !p.startsWith('/uploads/tmp/') &&
+    !p.startsWith('/uploads/resize/') &&
+    !p.startsWith('/uploads/lossy/') &&
+    /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(p);
   const isAssetsImageFile = (p: string) => p.startsWith('/assets/images/');
 
   const getNormalizedRenameTarget = useCallback((currentPath: string, rawName: string): string | null => {
@@ -342,7 +346,7 @@ export default function ManagerAssets() {
     setEditPath(filePath);
     setEditName(basename(filePath));
     setEditError(null);
-    if (isUploadedFile(filePath)) {
+    if (isUploadedFile(filePath) || (isAssetsImageFile(filePath) && isImagePath(filePath))) {
       setUploadedDetailOpen(true);
     } else {
       setEditModalOpen(true);
@@ -384,9 +388,9 @@ export default function ManagerAssets() {
     setEditError(null);
     try {
       if (isUploadedFile(editPath)) {
-        await filesService.renameUploaded(current, newName);
+        const res = await filesService.renameUploaded(current, newName, editPath);
         await fetchTrees();
-        if (selectedPath === editPath) setSelectedPath(`/uploads/${newName}`);
+        if (selectedPath === editPath) setSelectedPath(res.imageUrl);
       } else if (isAssetsImageFile(editPath)) {
         const res = await filesService.renameAssetsFile(editPath, newName);
         await fetchTrees();
@@ -439,7 +443,11 @@ export default function ManagerAssets() {
     }
   };
 
-  const showEditFor = (item: FileTreeItem) => item.type === 'file';
+  const showEditFor = (item: FileTreeItem) =>
+    item.type === 'file' &&
+    !item.path.startsWith('/uploads/tmp/') &&
+    !item.path.startsWith('/uploads/resize/') &&
+    !item.path.startsWith('/uploads/lossy/');
 
   const normalizeFolderPath = (p: string) => p.replace(/\/+$/, '') || p;
 
@@ -936,7 +944,10 @@ export default function ManagerAssets() {
                     <FontAwesomeIcon icon={faUpload} className="h-4 w-4" />
                   </Button>
                 )}
-                {selectedIsImage && selectedPath && !hasPendingUpload ? (
+                {selectedIsImage &&
+                selectedPath &&
+                !hasPendingUpload &&
+                (isUploadedFile(selectedPath) || isAssetsImageFile(selectedPath)) ? (
                   <Button
                     type="button"
                     variant="outline"
@@ -1731,13 +1742,11 @@ export default function ManagerAssets() {
         document.body
       )}
 
-      {uploadedDetailOpen && editPath && isUploadedFile(editPath) && (
-        <UploadedImageEditModal
-          filePath={editPath}
-          onClose={closeEditModal}
-          onSuccess={fetchTrees}
-        />
-      )}
+      {uploadedDetailOpen &&
+        editPath &&
+        (isUploadedFile(editPath) || (isAssetsImageFile(editPath) && isImagePath(editPath))) && (
+          <UploadedImageEditModal filePath={editPath} onClose={closeEditModal} onSuccess={fetchTrees} />
+        )}
 
       {atlasBuilderOpen && createPortal(
         <AtlasBuilderModal

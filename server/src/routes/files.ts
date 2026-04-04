@@ -9,6 +9,7 @@ import {
   uploadImageHandler,
   renameUploadedHandler,
   deleteUploadedHandler,
+  deleteAssetsImageHandler,
   renameCardFileHandler,
   renameAssetsImageFileHandler,
   moveCardFileHandler,
@@ -19,6 +20,11 @@ import {
   moveUploadedToAssetsImageHandler,
   convertToWebpHandler,
   resizeUploadedHandler,
+  stageConvertToWebpLossyHandler,
+  stageResizeUploadedHandler,
+  stageResizeUploadedToWebpLossyHandler,
+  commitStagedPreviewHandler,
+  deleteStagedPreviewHandler,
   generateAllCardsAtlasHandler,
   getFileMetadataHandler,
   generateCustomAtlasHandler,
@@ -57,6 +63,7 @@ filesRoutes.post('/generate-atlas', generateCustomAtlasHandler);
 filesRoutes.post('/generate-animation-atlas', generateAnimationAtlasHandler);
 filesRoutes.patch('/uploaded/rename', renameUploadedHandler);
 filesRoutes.delete('/uploaded', deleteUploadedHandler);
+filesRoutes.delete('/assets', deleteAssetsImageHandler);
 filesRoutes.patch('/cards/rename', renameCardFileHandler);
 filesRoutes.patch('/assets/rename', renameAssetsImageFileHandler);
 filesRoutes.patch('/cards/move', moveCardFileHandler);
@@ -67,6 +74,11 @@ filesRoutes.patch('/uploaded/to-assets', moveUploadedToAssetsImageHandler);
 filesRoutes.patch('/uploaded/to-cards', moveUploadedToCardsHandler);
 filesRoutes.post('/uploaded/convert-webp', convertToWebpHandler);
 filesRoutes.post('/uploaded/resize', resizeUploadedHandler);
+filesRoutes.post('/uploaded/stage/convert-webp-lossy', stageConvertToWebpLossyHandler);
+filesRoutes.post('/uploaded/stage/resize', stageResizeUploadedHandler);
+filesRoutes.post('/uploaded/stage/resize-webp-lossy', stageResizeUploadedToWebpLossyHandler);
+filesRoutes.post('/uploaded/stage/commit', commitStagedPreviewHandler);
+filesRoutes.post('/uploaded/stage/discard', deleteStagedPreviewHandler);
 filesRoutes.post('/generate-all-cards-atlas', generateAllCardsAtlasHandler);
 filesRoutes.post('/spritesheet-best-grid', exportSpritesheetBestGridHandler);
 

@@ -14,6 +14,18 @@ export interface FileTreeItem {
   meta?: FileMetadata;
 }
 
+export type StagedPreviewKind = 'resize' | 'lossy';
+
+export interface StagedPreviewInfo {
+  kind: StagedPreviewKind;
+  previewUrl: string;
+  targetFilename: string;
+  stagedFilename: string;
+}
+
+/** Chất lượng WebP tối đa (100) cho nút sticky “Convert to WebP” trong modal chỉnh ảnh upload. Truyền vào `stageConvertToWebpLossy`. */
+export const STICKY_BAR_CONVERT_WEBP_QUALITY = 100;
+
 export interface FullImageMetadata {
   file: FileMetadata;
   image: Record<string, unknown>;
@@ -154,16 +166,25 @@ export const filesService = {
     return response.data;
   },
 
-  renameUploaded: async (currentName: string, newName: string): Promise<{ imageUrl: string }> => {
+  renameUploaded: async (
+    currentName: string,
+    newName: string,
+    currentWebPath?: string
+  ): Promise<{ imageUrl: string }> => {
     const response = await api.patch<{ imageUrl: string }>('/files/uploaded/rename', {
       currentName,
       newName,
+      ...(currentWebPath ? { currentWebPath } : {}),
     });
     return response.data;
   },
 
   deleteUploaded: async (filename: string): Promise<void> => {
     await api.delete('/files/uploaded', { data: { filename } });
+  },
+
+  deleteAssetsImage: async (filePath: string): Promise<void> => {
+    await api.delete('/files/assets', { data: { filePath } });
   },
 
   renameCardFile: async (filePath: string, newName: string): Promise<{ imageUrl: string }> => {
@@ -241,6 +262,60 @@ export const filesService = {
       }
     }
     throw new Error('Không thể di chuyển file tới thư mục đích');
+  },
+
+  stageConvertToWebpLossy: async (
+    filename: string,
+    quality: number,
+    sourceWebPath?: string
+  ): Promise<StagedPreviewInfo> => {
+    const response = await api.post<StagedPreviewInfo>('/files/uploaded/stage/convert-webp-lossy', {
+      quality,
+      ...(sourceWebPath ? { sourceWebPath } : { filename }),
+    });
+    return response.data;
+  },
+
+  stageResizeUploaded: async (
+    filename: string,
+    width: number,
+    height: number,
+    sourceWebPath?: string
+  ): Promise<StagedPreviewInfo> => {
+    const response = await api.post<StagedPreviewInfo>('/files/uploaded/stage/resize', {
+      width,
+      height,
+      ...(sourceWebPath ? { sourceWebPath } : { filename }),
+    });
+    return response.data;
+  },
+
+  stageResizeUploadedToWebpLossy: async (
+    filename: string,
+    width: number,
+    height: number,
+    quality: number,
+    sourceWebPath?: string
+  ): Promise<StagedPreviewInfo> => {
+    const response = await api.post<StagedPreviewInfo>('/files/uploaded/stage/resize-webp-lossy', {
+      width,
+      height,
+      quality,
+      ...(sourceWebPath ? { sourceWebPath } : { filename }),
+    });
+    return response.data;
+  },
+
+  commitStagedPreview: async (
+    payload: Pick<StagedPreviewInfo, 'kind' | 'stagedFilename' | 'targetFilename'>
+  ): Promise<{ imageUrl: string }> => {
+    const response = await api.post<{ imageUrl: string }>('/files/uploaded/stage/commit', payload);
+    return response.data;
+  },
+
+  deleteStagedPreview: async (payload: Pick<StagedPreviewInfo, 'kind' | 'stagedFilename'>): Promise<{ success: true }> => {
+    const response = await api.post<{ success: true }>('/files/uploaded/stage/discard', payload);
+    return response.data;
   },
 
   convertToWebp: async (filename: string, quality: number): Promise<{ imageUrl: string }> => {

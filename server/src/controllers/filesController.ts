@@ -145,14 +145,28 @@ export async function uploadImageHandler(req: Request, res: Response) {
 
 export async function renameUploadedHandler(req: Request, res: Response) {
   try {
-    const { currentName, newName } = req.body as { currentName?: string; newName?: string };
+    const { currentName, newName, currentWebPath } = req.body as {
+      currentName?: string;
+      newName?: string;
+      currentWebPath?: string;
+    };
     if (!currentName || !newName || typeof currentName !== 'string' || typeof newName !== 'string') {
       res.status(400).json({ error: 'Thiếu currentName hoặc newName' });
       return;
     }
-    const result = filesService.renameUploaded(currentName, newName);
+    const result = await filesService.renameUploaded(
+      currentName,
+      newName,
+      typeof currentWebPath === 'string' ? currentWebPath : undefined
+    );
     if ('error' in result) {
-      const status = result.error === 'File không tồn tại' ? 404 : 400;
+      let status: number;
+      if (result.error === 'File không tồn tại') status = 404;
+      else if (result.error === filesService.RENAME_UPLOADED_IO_ERROR) status = 423;
+      else status = 400;
+      if (status === 400 || status === 423) {
+        console.warn('[files] PATCH /uploaded/rename', result.error, { currentName, newName });
+      }
       return res.status(status).json({ error: result.error });
     }
     res.json(result);
@@ -177,6 +191,26 @@ export async function deleteUploadedHandler(req: Request, res: Response) {
     res.json(result);
   } catch (err) {
     console.error('Delete uploaded failed:', err);
+    res.status(500).json({ error: 'Xóa file thất bại' });
+  }
+}
+
+export async function deleteAssetsImageHandler(req: Request, res: Response) {
+  try {
+    const { filePath } = req.body as { filePath?: string };
+    if (!filePath || typeof filePath !== 'string') {
+      res.status(400).json({ error: 'Thiếu filePath' });
+      return;
+    }
+    const result = filesService.deleteAssetsImageFile(filePath);
+    if ('error' in result) {
+      const status =
+        result.error === 'File không tồn tại' ? 404 : result.error.includes('hợp lệ') ? 400 : 400;
+      return res.status(status).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Delete assets image failed:', err);
     res.status(500).json({ error: 'Xóa file thất bại' });
   }
 }
@@ -362,6 +396,141 @@ export async function resizeUploadedHandler(req: Request, res: Response) {
   } catch (err) {
     console.error('Resize uploaded failed:', err);
     res.status(500).json({ error: 'Resize thất bại' });
+  }
+}
+
+export async function stageConvertToWebpLossyHandler(req: Request, res: Response) {
+  try {
+    const { filename, quality, sourceWebPath } = req.body as {
+      filename?: string;
+      quality?: number;
+      sourceWebPath?: string;
+    };
+    const sw = typeof sourceWebPath === 'string' ? sourceWebPath.trim() : '';
+    if (!sw && (!filename || typeof filename !== 'string')) {
+      res.status(400).json({ error: 'Thiếu filename hoặc sourceWebPath' });
+      return;
+    }
+    const result = await filesService.stageConvertToWebpLossy(
+      typeof filename === 'string' ? filename : undefined,
+      quality,
+      sw || undefined
+    );
+    if ('error' in result) {
+      const status = result.error === 'File không tồn tại' ? 404 : 400;
+      return res.status(status).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Stage convert to webp lossy failed:', err);
+    res.status(500).json({ error: 'Stage convert webp thất bại' });
+  }
+}
+
+export async function stageResizeUploadedHandler(req: Request, res: Response) {
+  try {
+    const { filename, width: w, height: h, sourceWebPath } = req.body as {
+      filename?: string;
+      width?: number;
+      height?: number;
+      sourceWebPath?: string;
+    };
+    const sw = typeof sourceWebPath === 'string' ? sourceWebPath.trim() : '';
+    if (!sw && (!filename || typeof filename !== 'string')) {
+      res.status(400).json({ error: 'Thiếu filename hoặc sourceWebPath' });
+      return;
+    }
+    const result = await filesService.stageResizeUploaded(
+      typeof filename === 'string' ? filename : undefined,
+      w,
+      h,
+      sw || undefined
+    );
+    if ('error' in result) {
+      const status = result.error === 'File không tồn tại' ? 404 : 400;
+      return res.status(status).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Stage resize uploaded failed:', err);
+    res.status(500).json({ error: 'Stage resize thất bại' });
+  }
+}
+
+export async function stageResizeUploadedToWebpLossyHandler(req: Request, res: Response) {
+  try {
+    const { filename, width: w, height: h, quality, sourceWebPath } = req.body as {
+      filename?: string;
+      width?: number;
+      height?: number;
+      quality?: number;
+      sourceWebPath?: string;
+    };
+    const sw = typeof sourceWebPath === 'string' ? sourceWebPath.trim() : '';
+    if (!sw && (!filename || typeof filename !== 'string')) {
+      res.status(400).json({ error: 'Thiếu filename hoặc sourceWebPath' });
+      return;
+    }
+    const result = await filesService.stageResizeUploadedToWebpLossy(
+      typeof filename === 'string' ? filename : undefined,
+      w,
+      h,
+      quality,
+      sw || undefined
+    );
+    if ('error' in result) {
+      const status = result.error === 'File không tồn tại' ? 404 : 400;
+      return res.status(status).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Stage resize uploaded to webp lossy failed:', err);
+    res.status(500).json({ error: 'Stage resize webp lossy thất bại' });
+  }
+}
+
+export async function commitStagedPreviewHandler(req: Request, res: Response) {
+  try {
+    const { kind, stagedFilename, targetFilename } = req.body as {
+      kind?: string;
+      stagedFilename?: string;
+      targetFilename?: string;
+    };
+    if (!kind || (kind !== 'resize' && kind !== 'lossy') || !stagedFilename || !targetFilename) {
+      res.status(400).json({ error: 'Thiếu kind/stagedFilename/targetFilename' });
+      return;
+    }
+    const result = await filesService.commitStagedPreview(kind, stagedFilename, targetFilename);
+    if ('error' in result) {
+      let status: number;
+      if (result.error.includes('không tồn tại')) status = 404;
+      else if (result.error === filesService.RENAME_UPLOADED_IO_ERROR) status = 423;
+      else status = 400;
+      return res.status(status).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Commit staged preview failed:', err);
+    res.status(500).json({ error: 'Commit staged preview thất bại' });
+  }
+}
+
+export async function deleteStagedPreviewHandler(req: Request, res: Response) {
+  try {
+    const { kind, stagedFilename } = req.body as { kind?: string; stagedFilename?: string };
+    if (!kind || (kind !== 'resize' && kind !== 'lossy') || !stagedFilename) {
+      res.status(400).json({ error: 'Thiếu kind/stagedFilename' });
+      return;
+    }
+    const result = filesService.deleteStagedPreview(kind, stagedFilename);
+    if ('error' in result) {
+      const status = result.error.includes('không tồn tại') ? 404 : 400;
+      return res.status(status).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Delete staged preview failed:', err);
+    res.status(500).json({ error: 'Xóa staged preview thất bại' });
   }
 }
 

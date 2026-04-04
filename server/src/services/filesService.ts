@@ -1,12 +1,19 @@
+import { execFileSync } from 'child_process';
+import { randomBytes } from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import sharp from 'sharp';
+import { convertToWebpLossyFile, resizeImageCoverFitFile, resizeToWebpLossyFile } from './files/imageTransforms.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '../..');
 
 export const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'];
+
+/** Lỗi IO khi đổi tên (Windows/OneDrive/EPERM); dùng để map HTTP 423 ở controller. */
+export const RENAME_UPLOADED_IO_ERROR =
+  'Không thể đổi tên file (file đang được dùng hoặc không có quyền)';
 const CONVERTIBLE_EXT = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tiff', '.tif'];
 const CARDS_WEB_PREFIX = '/assets/images/cards/';
 const CARDS_WEB_PREFIX_ROOT = '/assets/images/cards';
@@ -41,6 +48,44 @@ export function getMapBackgroundImageTree(): FileTreeItem[] {
 
 export function getUploadsDir(): string {
   return path.join(rootDir, 'uploads');
+}
+
+export type StagedPreviewKind = 'resize' | 'lossy';
+
+export function getUploadsTmpDir(): string {
+  return path.join(getUploadsDir(), 'tmp');
+}
+
+export function getUploadsTmpResizeDir(): string {
+  return path.join(getUploadsTmpDir(), 'resize');
+}
+
+export function getUploadsTmpLossyDir(): string {
+  return path.join(getUploadsTmpDir(), 'lossy');
+}
+
+export function ensureUploadsTmpDirs(): void {
+  ensureUploadsDir();
+  const dirs = [getUploadsTmpResizeDir(), getUploadsTmpLossyDir()];
+  for (const dir of dirs) {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+export function getUploadsResizeDir(): string {
+  return path.join(getUploadsDir(), 'resize');
+}
+
+export function getUploadsLossyDir(): string {
+  return path.join(getUploadsDir(), 'lossy');
+}
+
+export function ensureUploadsFinalDirs(): void {
+  ensureUploadsDir();
+  const dirs = [getUploadsResizeDir(), getUploadsLossyDir()];
+  for (const dir of dirs) {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  }
 }
 
 export function getAtlasTempDir(): string {
@@ -237,9 +282,14 @@ export function deleteAtlasByName(
   return { ok: true };
 }
 
+/** Tên file an toàn (không path traversal). Chấp nhận cả `foo.webp` lẫn `/uploads/foo.webp` — chỉ lấy basename. */
 export function safeBasename(filename: string): string | null {
-  const base = path.basename(filename);
-  if (base !== filename || base.includes('..') || path.isAbsolute(base)) return null;
+  const s = String(filename ?? '')
+    .replace(/\\/g, '/')
+    .trim();
+  if (!s || s.includes('..')) return null;
+  const base = path.basename(s);
+  if (!base || base.includes('..')) return null;
   return base;
 }
 
@@ -340,20 +390,227 @@ export function resolveAssetsImageFolderPath(webPath: string): string | null {
   return normalized;
 }
 
-export function renameUploaded(currentName: string, newName: string): { imageUrl: string } | { error: string } {
+const fsp = fs.promises;
+
+/** Best-effort xóa file (rollback khi copy xong mà không xóa được nguồn). */
+function tryUnlinkQuiet(p: string): void {
+  try {
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Cho event loop chạy (đóng handle đọc ảnh / OneDrive) trước khi thử unlink lại. */
+function yieldEventLoop(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
+/** Windows/OneDrive: thử unlink lặp sau vài lần yield — tránh EPERM khi file vừa được đọc. */
+async function unlinkSourceWithRetries(from: string, maxAttempts = 120): Promise<void> {
+  let last: unknown;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      await fsp.unlink(from);
+      return;
+    } catch (e) {
+      last = e;
+      await yieldEventLoop();
+    }
+  }
+  throw last;
+}
+
+/** Thử rename trực tiếp nhiều lần (trước khi copy+unlink) — tránh fallback tốn kém khi EPERM tạm thời. */
+async function renameWithRetries(from: string, to: string, maxAttempts = 40): Promise<void> {
+  let last: unknown;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      await fsp.rename(from, to);
+      return;
+    } catch (e) {
+      last = e;
+      await yieldEventLoop();
+    }
+  }
+  throw last;
+}
+
+async function copyFileWithRetries(from: string, to: string, maxAttempts = 40): Promise<void> {
+  let last: unknown;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      await fsp.copyFile(from, to);
+      return;
+    } catch (e) {
+      last = e;
+      await yieldEventLoop();
+    }
+  }
+  throw last;
+}
+
+async function readWriteCopyWithRetries(from: string, to: string, maxAttempts = 40): Promise<void> {
+  let last: unknown;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      const buf = await fsp.readFile(from);
+      await fsp.writeFile(to, buf);
+      return;
+    } catch (e) {
+      last = e;
+      await yieldEventLoop();
+    }
+  }
+  throw last;
+}
+
+/** Windows: `move` của cmd đôi khi thành công khi `fs.rename`/`unlink` bị EPERM (OneDrive, preview). */
+function tryWindowsCmdMoveSync(from: string, to: string): void {
+  execFileSync('cmd.exe', ['/d', '/s', '/c', 'move', '/Y', from, to], {
+    windowsHide: true,
+    stdio: 'pipe',
+  });
+}
+
+async function windowsCmdMoveWithRetries(from: string, to: string, maxAttempts = 30): Promise<void> {
+  let last: unknown;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      tryWindowsCmdMoveSync(from, to);
+      return;
+    } catch (e) {
+      last = e;
+      await yieldEventLoop();
+    }
+  }
+  throw last;
+}
+
+/**
+ * Windows/OneDrive: rename thất bại (EBUSY/EPERM) → copy + unlink nguồn (có retry async).
+ * Nếu unlink nguồn lỗi sau khi đã ghi `to`, xóa `to` để không để file đích sót lại.
+ */
+async function tryMoveFileAsync(from: string, to: string): Promise<void> {
+  try {
+    await renameWithRetries(from, to);
+    return;
+  } catch (e1) {
+    if (process.platform === 'win32') {
+      try {
+        await windowsCmdMoveWithRetries(from, to);
+        return;
+      } catch {
+        /* fall through */
+      }
+    }
+    let wroteDest = false;
+    try {
+      await copyFileWithRetries(from, to);
+      wroteDest = true;
+    } catch {
+      try {
+        await readWriteCopyWithRetries(from, to);
+        wroteDest = true;
+      } catch (e3) {
+        if (process.platform === 'win32') {
+          try {
+            await windowsCmdMoveWithRetries(from, to);
+            return;
+          } catch (eCmd) {
+            console.error('tryMoveFileAsync', { from, to, e1, e3, eCmd });
+            throw e3;
+          }
+        }
+        console.error('tryMoveFileAsync', { from, to, e1, e3 });
+        throw e3;
+      }
+    }
+    try {
+      await unlinkSourceWithRetries(from);
+    } catch (unlinkErr) {
+      if (wroteDest) tryUnlinkQuiet(to);
+      if (process.platform === 'win32') {
+        try {
+          await windowsCmdMoveWithRetries(from, to);
+          return;
+        } catch (eCmd) {
+          console.error('tryMoveFileAsync', { from, to, e1, unlinkErr, eCmd });
+          throw unlinkErr;
+        }
+      }
+      console.error('tryMoveFileAsync', { from, to, e1, unlinkErr });
+      throw unlinkErr;
+    }
+  }
+}
+
+export async function renameUploaded(
+  currentName: string,
+  newName: string,
+  currentWebPath?: string
+): Promise<{ imageUrl: string } | { error: string }> {
   const uploadsDir = getUploadsDir();
-  const current = safeBasename(currentName);
+  const currentBase = safeBasename(currentName);
   const next = safeBasename(newName);
-  if (!current || !next) return { error: 'Tên file không hợp lệ' };
+  if (!currentBase || !next) {
+    return { error: 'Tên file không hợp lệ' };
+  }
   if (!isValidNewFileName(next)) return { error: 'Tên file mới chỉ được chứa chữ, số, dấu chấm, gạch ngang, gạch dưới' };
-  const ext = path.extname(current).toLowerCase();
-  if (!IMAGE_EXT.includes(ext) || path.extname(next).toLowerCase() !== ext) return { error: 'Chỉ đổi tên file, giữ nguyên phần mở rộng' };
-  const currentPath = path.join(uploadsDir, current);
-  const nextPath = path.join(uploadsDir, next);
+
+  let currentPath: string;
+  if (currentWebPath && typeof currentWebPath === 'string' && currentWebPath.trim()) {
+    const resolved = resolveUploadedFilePath(currentWebPath.trim());
+    if (!resolved) {
+      return { error: 'Đường dẫn không hợp lệ' };
+    }
+    if (path.basename(resolved).toLowerCase() !== currentBase.toLowerCase()) {
+      return { error: 'Tên file không khớp đường dẫn' };
+    }
+    currentPath = resolved;
+  } else {
+    currentPath = path.join(uploadsDir, currentBase);
+  }
+
+  const ext = path.extname(currentPath).toLowerCase();
+  if (!IMAGE_EXT.includes(ext) || path.extname(next).toLowerCase() !== ext) {
+    return { error: 'Chỉ đổi tên file, giữ nguyên phần mở rộng' };
+  }
   if (!fs.existsSync(currentPath)) return { error: 'File không tồn tại' };
-  if (fs.existsSync(nextPath)) return { error: 'Tên mới đã tồn tại' };
-  fs.renameSync(currentPath, nextPath);
-  return { imageUrl: `/uploads/${next}` };
+
+  const dir = path.dirname(currentPath);
+  const nextPath = path.join(dir, next);
+  const normalizedNext = path.normalize(nextPath);
+  if (!normalizedNext.startsWith(path.normalize(uploadsDir))) {
+    return { error: 'Tên mới không hợp lệ' };
+  }
+
+  const baseNow = path.basename(currentPath);
+  const onlyCaseChange =
+    process.platform === 'win32' &&
+    baseNow !== next &&
+    baseNow.toLowerCase() === next.toLowerCase() &&
+    ext !== '.';
+
+  if (!onlyCaseChange && fs.existsSync(nextPath)) {
+    return { error: 'Tên mới đã tồn tại' };
+  }
+
+  try {
+    if (onlyCaseChange) {
+      const tmpBase = `.___rename_${randomBytes(8).toString('hex')}___`;
+      const tmpPath = path.join(dir, tmpBase);
+      await tryMoveFileAsync(currentPath, tmpPath);
+      await tryMoveFileAsync(tmpPath, nextPath);
+    } else {
+      await tryMoveFileAsync(currentPath, nextPath);
+    }
+    const rel = path.relative(uploadsDir, nextPath).replace(/\\/g, '/');
+    return { imageUrl: `/uploads/${rel}` };
+  } catch (err) {
+    console.error('renameUploaded:', err, { currentPath, nextPath });
+    return { error: RENAME_UPLOADED_IO_ERROR };
+  }
 }
 
 export function deleteUploaded(filename: string): { success: true } | { error: string } {
@@ -405,6 +662,20 @@ export function renameAssetsImageFile(
   fs.renameSync(currentPath, nextPath);
   const relative = path.relative(imagesRoot, nextPath).replace(/\\/g, '/');
   return { imageUrl: `${ASSETS_IMAGES_WEB_ROOT}/${relative}` };
+}
+
+export function deleteAssetsImageFile(webPath: string): { success: true } | { error: string } {
+  const currentPath = resolveAssetsImageFilePath(webPath);
+  if (!currentPath) return { error: 'Đường dẫn không hợp lệ (phải thuộc thư mục assets/images)' };
+  if (!fs.existsSync(currentPath)) return { error: 'File không tồn tại' };
+  if (!fs.statSync(currentPath).isFile()) return { error: 'Chỉ được xóa file' };
+  try {
+    fs.unlinkSync(currentPath);
+    return { success: true };
+  } catch (err) {
+    console.error('deleteAssetsImageFile:', err, { webPath });
+    return { error: 'Không thể xóa file' };
+  }
 }
 
 export function moveCardFile(
@@ -548,6 +819,242 @@ function isConvertibleImage(filename: string): boolean {
   return CONVERTIBLE_EXT.includes(path.extname(filename).toLowerCase());
 }
 
+/** Không cho phép pipeline staging từ bản derivative hoặc tmp. */
+function isBlockedStagingSourceWebPath(webPath: string): boolean {
+  const p = webPath.replace(/\\/g, '/').toLowerCase();
+  return (
+    p.startsWith('/uploads/tmp/') ||
+    p.startsWith('/uploads/lossy/') ||
+    p.startsWith('/uploads/resize/')
+  );
+}
+
+function sanitizeStageStem(s: string): string {
+  const t = s
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+  return t.slice(0, 180) || 'asset';
+}
+
+/**
+ * Nguồn staging: legacy `filename` (basename trong uploads root) hoặc `sourceWebPath` đầy đủ
+ * (`/assets/images/...` hoặc `/uploads/...` có thư mục con).
+ */
+function resolveStageSource(
+  filename: string | undefined,
+  sourceWebPath: string | undefined
+):
+  | { sourcePath: string; base: string; uniqueStem: string }
+  | { error: string } {
+  const sw = typeof sourceWebPath === 'string' ? sourceWebPath.trim() : '';
+  if (sw) {
+    if (isBlockedStagingSourceWebPath(sw)) {
+      return { error: 'Không dùng file nguồn từ thư mục tmp/lossy/resize' };
+    }
+    if (sw.startsWith('/assets/images/')) {
+      const disk = resolveAssetsImageFilePath(sw);
+      if (!disk || !fs.existsSync(disk) || !fs.statSync(disk).isFile()) {
+        return { error: 'File không tồn tại' };
+      }
+      const base = path.basename(disk);
+      const rel = sw.slice('/assets/images/'.length).replace(/\\/g, '/');
+      const stemFromRel = rel.replace(/\.[^/.]+$/, '');
+      const uniqueStem = sanitizeStageStem(stemFromRel.replace(/\//g, '_')) || sanitizeStageStem(path.basename(base, path.extname(base)));
+      return { sourcePath: disk, base, uniqueStem };
+    }
+    if (sw.startsWith('/uploads/')) {
+      const disk = resolveUploadedFilePath(sw);
+      if (!disk || !fs.existsSync(disk) || !fs.statSync(disk).isFile()) {
+        return { error: 'File không tồn tại' };
+      }
+      const base = path.basename(disk);
+      const uploadsDir = getUploadsDir();
+      const rel = path.relative(uploadsDir, disk).replace(/\\/g, '/');
+      const stemFromRel = rel.replace(/\.[^/.]+$/, '');
+      const uniqueStem = sanitizeStageStem(stemFromRel.replace(/\//g, '_')) || sanitizeStageStem(path.basename(base, path.extname(base)));
+      return { sourcePath: disk, base, uniqueStem };
+    }
+    return { error: 'Đường dẫn nguồn không hợp lệ' };
+  }
+
+  const base = filename ? safeBasename(filename) : null;
+  if (!base) return { error: 'Thiếu filename hoặc sourceWebPath' };
+  const sourcePath = path.join(getUploadsDir(), base);
+  if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) return { error: 'File không tồn tại' };
+  const uniqueStem = sanitizeStageStem(path.basename(base, path.extname(base)));
+  return { sourcePath, base, uniqueStem };
+}
+
+function makeStageId(): string {
+  // Avoid overwriting when user clicks fast; deterministic về "targetFilename" ở commit.
+  // Stage id only needs to be unique-ish.
+  return `${Date.now()}-${String(process.hrtime.bigint()).slice(-6)}`;
+}
+
+export async function stageConvertToWebpLossy(
+  filename: string | undefined,
+  quality?: number,
+  sourceWebPath?: string
+): Promise<
+  | {
+      kind: 'lossy';
+      previewUrl: string;
+      targetFilename: string;
+      stagedFilename: string;
+    }
+  | { error: string }
+> {
+  const resolved = resolveStageSource(filename, sourceWebPath);
+  if ('error' in resolved) return resolved;
+  const { sourcePath, base, uniqueStem: baseNameNoExt } = resolved;
+  if (!isConvertibleImage(base)) return { error: 'Định dạng không hỗ trợ convert lossy. Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff' };
+
+  const q = typeof quality === 'number' ? Math.max(10, Math.min(100, Math.round(quality))) : 85;
+
+  const sourceExt = path.extname(base).toLowerCase();
+  const isSourceWebp = sourceExt === '.webp';
+  const targetFilename = isSourceWebp ? `${baseNameNoExt}.webp` : `${baseNameNoExt}-q${q}.webp`;
+  const stagedFilename = isSourceWebp
+    ? `${baseNameNoExt}-stage-${makeStageId()}.webp`
+    : `${baseNameNoExt}-q${q}-stage-${makeStageId()}.webp`;
+  const outPath = path.join(getUploadsTmpLossyDir(), stagedFilename);
+
+  ensureUploadsTmpDirs();
+  await convertToWebpLossyFile(sourcePath, outPath, q);
+
+  return {
+    kind: 'lossy',
+    previewUrl: `/uploads/tmp/lossy/${stagedFilename}`,
+    targetFilename,
+    stagedFilename,
+  };
+}
+
+export async function stageResizeUploaded(
+  filename: string | undefined,
+  width?: number,
+  height?: number,
+  sourceWebPath?: string
+): Promise<
+  | {
+      kind: 'resize';
+      previewUrl: string;
+      targetFilename: string;
+      stagedFilename: string;
+    }
+  | { error: string }
+> {
+  const w = typeof width === 'number' ? Math.max(1, Math.min(4096, Math.round(width))) : 420;
+  const h = typeof height === 'number' ? Math.max(1, Math.min(4096, Math.round(height))) : 720;
+  const resolved = resolveStageSource(filename, sourceWebPath);
+  if ('error' in resolved) return resolved;
+  const { sourcePath, base, uniqueStem: baseNameNoExt } = resolved;
+  if (!isConvertibleImage(base)) return { error: 'Định dạng không hỗ trợ resize. Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff' };
+
+  const ext = path.extname(base).toLowerCase();
+  const targetFilename = `${baseNameNoExt}-${w}x${h}${ext}`;
+  const stagedFilename = `${baseNameNoExt}-${w}x${h}-stage-${makeStageId()}${ext}`;
+  const outPath = path.join(getUploadsTmpResizeDir(), stagedFilename);
+
+  ensureUploadsTmpDirs();
+  await resizeImageCoverFitFile(sourcePath, outPath, w, h);
+
+  return {
+    kind: 'resize',
+    previewUrl: `/uploads/tmp/resize/${stagedFilename}`,
+    targetFilename,
+    stagedFilename,
+  };
+}
+
+export async function stageResizeUploadedToWebpLossy(
+  filename: string | undefined,
+  width?: number,
+  height?: number,
+  quality?: number,
+  sourceWebPath?: string
+): Promise<
+  | {
+      kind: 'lossy';
+      previewUrl: string;
+      targetFilename: string;
+      stagedFilename: string;
+    }
+  | { error: string }
+> {
+  const w = typeof width === 'number' ? Math.max(1, Math.min(4096, Math.round(width))) : 420;
+  const h = typeof height === 'number' ? Math.max(1, Math.min(4096, Math.round(height))) : 720;
+  const resolved = resolveStageSource(filename, sourceWebPath);
+  if ('error' in resolved) return resolved;
+  const { sourcePath, base, uniqueStem: baseNameNoExt } = resolved;
+  if (!isConvertibleImage(base)) return { error: 'Định dạng không hỗ trợ resize. Hỗ trợ: png, jpg, jpeg, gif, webp, bmp, tiff' };
+
+  const q = typeof quality === 'number' ? Math.max(10, Math.min(100, Math.round(quality))) : 85;
+
+  const sourceExt = path.extname(base).toLowerCase();
+  const isSourceWebp = sourceExt === '.webp';
+
+  const targetFilename = isSourceWebp ? `${baseNameNoExt}-${w}x${h}.webp` : `${baseNameNoExt}-${w}x${h}-q${q}.webp`;
+  const stagedFilename = isSourceWebp
+    ? `${baseNameNoExt}-${w}x${h}-stage-${makeStageId()}.webp`
+    : `${baseNameNoExt}-${w}x${h}-q${q}-stage-${makeStageId()}.webp`;
+  const outPath = path.join(getUploadsTmpLossyDir(), stagedFilename);
+
+  ensureUploadsTmpDirs();
+  await resizeToWebpLossyFile(sourcePath, outPath, w, h, q);
+
+  return {
+    kind: 'lossy',
+    previewUrl: `/uploads/tmp/lossy/${stagedFilename}`,
+    targetFilename,
+    stagedFilename,
+  };
+}
+
+export async function commitStagedPreview(
+  kind: StagedPreviewKind,
+  stagedFilename: string,
+  targetFilename: string
+): Promise<{ imageUrl: string } | { error: string }> {
+  const stagedBase = safeBasename(stagedFilename);
+  const targetBase = safeBasename(targetFilename);
+  if (!stagedBase || !targetBase) return { error: 'Tên file staged/target không hợp lệ' };
+
+  const stageDir = kind === 'resize' ? getUploadsTmpResizeDir() : getUploadsTmpLossyDir();
+  const stagedPath = path.join(stageDir, stagedBase);
+  const targetDir = kind === 'resize' ? getUploadsResizeDir() : getUploadsLossyDir();
+  const targetPath = path.join(targetDir, targetBase);
+
+  ensureUploadsFinalDirs();
+
+  if (!fs.existsSync(stagedPath) || !fs.statSync(stagedPath).isFile()) return { error: 'File staged không tồn tại' };
+  if (fs.existsSync(targetPath)) return { error: 'File đích đã tồn tại (không ghi đè)' };
+
+  try {
+    await tryMoveFileAsync(stagedPath, targetPath);
+  } catch (err) {
+    console.error('commitStagedPreview:', err, { stagedPath, targetPath });
+    return { error: RENAME_UPLOADED_IO_ERROR };
+  }
+
+  const webPrefix = kind === 'resize' ? '/uploads/resize' : '/uploads/lossy';
+  return { imageUrl: `${webPrefix}/${targetBase}` };
+}
+
+export function deleteStagedPreview(
+  kind: StagedPreviewKind,
+  stagedFilename: string
+): { success: true } | { error: string } {
+  const stagedBase = safeBasename(stagedFilename);
+  if (!stagedBase) return { error: 'Tên file staged không hợp lệ' };
+  const stageDir = kind === 'resize' ? getUploadsTmpResizeDir() : getUploadsTmpLossyDir();
+  const stagedPath = path.join(stageDir, stagedBase);
+  if (!fs.existsSync(stagedPath)) return { error: 'File staged không tồn tại' };
+  fs.unlinkSync(stagedPath);
+  return { success: true };
+}
+
 export async function convertToWebp(
   filename: string,
   quality?: number
@@ -564,7 +1071,7 @@ export async function convertToWebp(
     ? `${baseNameNoExt}-q${q}-${Date.now()}.webp`
     : `${baseNameNoExt}.webp`;
   const outPath = path.join(getUploadsDir(), outName);
-  await sharp(sourcePath).webp({ quality: q }).toFile(outPath);
+  await convertToWebpLossyFile(sourcePath, outPath, q);
   return { imageUrl: `/uploads/${outName}` };
 }
 
@@ -585,9 +1092,7 @@ export async function resizeUploaded(
   const outName = `${baseNameNoExt}-${w}x${h}${ext}`;
   const outPath = path.join(getUploadsDir(), outName);
   if (fs.existsSync(outPath)) return { error: `Đã tồn tại file ${outName}` };
-  await sharp(sourcePath)
-    .resize(w, h, { fit: 'cover', position: 'center', withoutEnlargement: false })
-    .toFile(outPath);
+  await resizeImageCoverFitFile(sourcePath, outPath, w, h);
   return { imageUrl: `/uploads/${outName}` };
 }
 
@@ -624,7 +1129,8 @@ export async function getFullImageMetadata(
   if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) return { error: 'File không tồn tại' };
 
   const stat = fs.statSync(fullPath);
-  const rawMeta = await sharp(fullPath).metadata();
+  const fileBuf = await fs.promises.readFile(fullPath);
+  const rawMeta = await sharp(fileBuf).metadata();
   const { exif, icc, xmp, ...rest } = rawMeta;
 
   return {

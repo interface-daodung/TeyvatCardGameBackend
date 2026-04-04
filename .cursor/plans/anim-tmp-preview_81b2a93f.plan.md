@@ -4,10 +4,10 @@ overview: Thêm pipeline backend “preview trong `server/uploads/tmp/` -> commi
 todos:
   - id: backend-preview-service
     content: Tạo `server/src/services/files/animationSpritesheetPreviewService.ts` để compose 192->webp và tạo resize(96/64) + lossy(quality thấp), lưu vào `server/uploads/tmp/{jobId}/...`.
-    status: in_progress
+    status: completed
   - id: backend-commit
     content: "Trong cùng service hoặc file con: commit job -> đảm bảo `server/uploads/resize` và `server/uploads/lossy` tồn tại, move/copy + tránh ghi đè (suffix -1, -2,...), trả URL final."
-    status: pending
+    status: in_progress
   - id: backend-routes-controllers
     content: Thêm handlers & routes trong `server/src/controllers/filesController.ts` và `server/src/routes/files.ts` cho `POST /files/animation-spritesheet-preview` và `POST /files/animation-spritesheet-preview/commit`.
     status: pending

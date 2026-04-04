@@ -163,24 +163,15 @@ export function CharacterClassAstFlow({
 
   useEffect(() => {
     if (!astFlow) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/d03b28b5-f56f-4326-9f2c-71f619658cd5',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'94244b'},body:JSON.stringify({sessionId:'94244b',runId:'pre-fix',hypothesisId:'H4',location:'CharacterClassAstFlow.tsx:158',message:'Reset flow because astFlow is null',data:{hasAstMapData:Boolean(astMapData),loading,error},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setFlowNodes([]);
       setFlowEdges([]);
       return;
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/d03b28b5-f56f-4326-9f2c-71f619658cd5',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'94244b'},body:JSON.stringify({sessionId:'94244b',runId:'pre-fix',hypothesisId:'H5',location:'CharacterClassAstFlow.tsx:164',message:'Apply generated flow',data:{nodeCount:astFlow.nodes.length,edgeCount:astFlow.edges.length,className:astMapData?.className,parentClassName:astMapData?.parentClassName},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     setFlowNodes(astFlow.nodes);
     setFlowEdges(astFlow.edges);
   }, [astFlow, astMapData, loading, error]);
 
   const onNodesChange = (changes: NodeChange[]) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/d03b28b5-f56f-4326-9f2c-71f619658cd5',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'94244b'},body:JSON.stringify({sessionId:'94244b',runId:'pre-fix',hypothesisId:'H4',location:'CharacterClassAstFlow.tsx:170',message:'Node change event',data:{changeTypes:changes.map((c)=>c.type),changeCount:changes.length},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     setFlowNodes((prev) => applyNodeChanges(changes, prev));
   };
 
