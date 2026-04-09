@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
+  faFolder,
   faLightbulb as faLightbulbSolid,
   faTrashCan,
 } from '@fortawesome/free-solid-svg-icons';
@@ -13,12 +15,23 @@ import { AtlasJsonRawHighlight } from './AtlasJsonRawHighlight';
 import { filesService, type AtlasFileEntry } from '../../services/filesService';
 import { extractAtlasFrameEntries } from './atlasFrameUtils';
 
+function exportAtlasErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err) && err.response?.data) {
+    const d = err.response.data as { error?: string };
+    if (typeof d.error === 'string') return d.error;
+  }
+  if (err instanceof Error) return err.message;
+  return 'unknown';
+}
+
 type AtlasViewModalProps = {
   entry: AtlasFileEntry | null;
   onClose: () => void;
   onDeleteRequested?: (name: string) => void;
   onDeleteSucceeded?: (name: string) => void;
   onDeleteFailed?: (name: string) => void;
+  /** Gọi sau khi xuất bản sao sang TeyvatCard/public thành công (tuỳ chọn, ví dụ refresh danh sách). */
+  onAtlasExportedToTeyvatSucceeded?: () => void;
 };
 
 function formatFileSize(bytes: number): string {
@@ -36,6 +49,7 @@ export function AtlasViewModal({
   onDeleteRequested,
   onDeleteSucceeded,
   onDeleteFailed,
+  onAtlasExportedToTeyvatSucceeded,
 }: AtlasViewModalProps) {
   const open = entry !== null;
   const [jsonError, setJsonError] = useState<string | null>(null);
@@ -46,6 +60,8 @@ export function AtlasViewModal({
   const [canvasBgMode, setCanvasBgMode] = useState<'dark' | 'light'>('light');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [exportTeyvatLoading, setExportTeyvatLoading] = useState(false);
+  const [exportOverwriteConfirmOpen, setExportOverwriteConfirmOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [startFrame, setStartFrame] = useState(0);
@@ -251,13 +267,82 @@ export function AtlasViewModal({
     return () => ro.disconnect();
   }, [drawCanvas]);
 
+  const imageFileSizeLabel = useMemo(
+    () =>
+      entry ? `Dung lượng file: ${formatFileSize(entry.imageMeta?.size ?? 0)}` : '',
+    [entry]
+  );
+
+  const handleExportAtlasToTeyvat = useCallback(async () => {
+    if (!entry) return;
+    setExportTeyvatLoading(true);
+    try {
+      const r = await filesService.exportAtlasDualVariantsToTeyvat(
+        entry.name,
+        entry.scope,
+        false
+      );
+      if ('needsOverwrite' in r) {
+        setExportOverwriteConfirmOpen(true);
+        return;
+      }
+      if (!r.ok) {
+        window.alert(r.error);
+        return;
+      }
+      onAtlasExportedToTeyvatSucceeded?.();
+      const destList = r.exported
+        .map((s: 'desktop' | 'mobile') => `TeyvatCard/public/assets/${s}/atlas`)
+        .join(' và ');
+      window.alert(
+        `Đã tạo bản sao "${entry.name}.webp" + "${entry.name}.json" tại ${destList}. Nguồn chỉ từ server/atlas/desktop và/hoặc server/atlas/mobile (server/atlas gốc không đổi).`
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to export atlas to TeyvatCard/public', err);
+      window.alert(`Xuất atlas thất bại: ${exportAtlasErrorMessage(err)}`);
+    } finally {
+      setExportTeyvatLoading(false);
+    }
+  }, [entry, onAtlasExportedToTeyvatSucceeded]);
+
+  const handleExportOverwriteConfirm = useCallback(async () => {
+    if (!entry) return;
+    setExportTeyvatLoading(true);
+    try {
+      const r = await filesService.exportAtlasDualVariantsToTeyvat(
+        entry.name,
+        entry.scope,
+        true
+      );
+      if ('needsOverwrite' in r) {
+        setExportOverwriteConfirmOpen(true);
+        return;
+      }
+      if (!r.ok) {
+        window.alert(r.error);
+        return;
+      }
+      setExportOverwriteConfirmOpen(false);
+      onAtlasExportedToTeyvatSucceeded?.();
+      const destList = r.exported
+        .map((s: 'desktop' | 'mobile') => `TeyvatCard/public/assets/${s}/atlas`)
+        .join(' và ');
+      window.alert(
+        `Đã ghi đè "${entry.name}.webp" + "${entry.name}.json" tại ${destList}. (server/atlas không đổi.)`
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to overwrite export atlas', err);
+      window.alert(`Ghi đè thất bại: ${exportAtlasErrorMessage(err)}`);
+    } finally {
+      setExportTeyvatLoading(false);
+    }
+  }, [entry, onAtlasExportedToTeyvatSucceeded]);
+
   if (!open || !entry) return null;
 
   const isCanvasLight = canvasBgMode === 'light';
-  const imageFileSizeLabel = useMemo(
-    () => `Dung lượng file: ${formatFileSize(entry.imageMeta?.size ?? 0)}`,
-    [entry.imageMeta?.size]
-  );
 
   const handleDeleteConfirm = async () => {
     if (!entry) return;
@@ -304,6 +389,23 @@ export function AtlasViewModal({
             {entry.name}
           </h2>
           <div className="flex shrink-0 items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="shrink-0 gap-1.5"
+              disabled={exportTeyvatLoading}
+              onClick={() => void handleExportAtlasToTeyvat()}
+              title={
+                entry.scope === 'default'
+                  ? 'Xuất từ server/atlas/desktop và server/atlas/mobile sang TeyvatCard/public (không đọc file trong server/atlas gốc)'
+                  : 'Xuất bản cùng tên cho cả desktop và mobile sang TeyvatCard/public'
+              }
+              aria-label="Duyệt atlas: xuất bản sao sang TeyvatCard public"
+            >
+              <FontAwesomeIcon icon={faFolder as IconProp} className="h-3.5 w-3.5" />
+              {exportTeyvatLoading ? 'Đang xuất…' : 'Duyệt atlas'}
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -467,6 +569,21 @@ export function AtlasViewModal({
         confirmLabel="Xóa atlas"
         confirmLoadingLabel="Đang xóa…"
         overlayClassName="z-[10060]"
+      />
+      <ConfirmDangerDialog
+        open={exportOverwriteConfirmOpen}
+        onCancel={() => {
+          if (exportTeyvatLoading) return;
+          setExportOverwriteConfirmOpen(false);
+        }}
+        onConfirm={() => void handleExportOverwriteConfirm()}
+        confirmLoading={exportTeyvatLoading}
+        title="Ghi đè file trong TeyvatCard?"
+        description={`Đã có file cùng tên trong TeyvatCard/public (desktop và/hoặc mobile). Ghi đè các bản sao tương ứng?`}
+        confirmLabel="Ghi đè"
+        confirmLoadingLabel="Đang ghi đè…"
+        cancelLabel="Hủy"
+        overlayClassName="z-[10062]"
       />
     </div>,
     document.body

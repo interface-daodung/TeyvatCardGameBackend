@@ -32,7 +32,14 @@ import { SPRITESHEET_FRAME_HEIGHT, SPRITESHEET_FRAME_WIDTH } from '../components
 import { cn } from '../lib/utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faUpload, faPenToSquare, faLightbulb as faLightbulbSolid, faXmark, faExpand, faCompress } from '@fortawesome/free-solid-svg-icons';
+import {
+  faUpload,
+  faPenToSquare,
+  faLightbulb as faLightbulbSolid,
+  faXmark,
+  faExpand,
+  faCompress,
+} from '@fortawesome/free-solid-svg-icons';
 import { faLightbulb as faLightbulbRegular } from '@fortawesome/free-regular-svg-icons';
 
 type PreviewAreaTab = 'preview' | 'animation' | 'metadata' | 'raw';
@@ -1599,6 +1606,7 @@ export default function ManagerAssets() {
         <AtlasViewModal
           entry={atlasViewEntry}
           onClose={() => setAtlasViewEntry(null)}
+          onAtlasExportedToTeyvatSucceeded={() => void fetchAtlasList()}
           onDeleteRequested={(name) => {
             console.log('[AtlasDelete] onDeleteRequested', { name });
             setDeletingAtlasNames((prev) => {

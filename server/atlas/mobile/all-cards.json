@@ -1,0 +1,1621 @@
+{
+  "frames": {
+    "Zhengshoui": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "YanmiZhu": {
+      "frame": {
+        "x": 105,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Xumi": {
+      "frame": {
+        "x": 210,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "XuanmuRen": {
+      "frame": {
+        "x": 315,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Woluzhibang": {
+      "frame": {
+        "x": 420,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Wangshukezhan": {
+      "frame": {
+        "x": 525,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Tianshou": {
+      "frame": {
+        "x": 630,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Shanhu": {
+      "frame": {
+        "x": 735,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Qunyuge": {
+      "frame": {
+        "x": 840,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Qinglaidao": {
+      "frame": {
+        "x": 945,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Mingshendashe": {
+      "frame": {
+        "x": 1050,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "MdLibrary": {
+      "frame": {
+        "x": 1155,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "LiyueHarbor": {
+      "frame": {
+        "x": 1260,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "LiuQuan": {
+      "frame": {
+        "x": 1365,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "JingjiChang": {
+      "frame": {
+        "x": 1470,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "HuaYu": {
+      "frame": {
+        "x": 1575,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Huangjinwu": {
+      "frame": {
+        "x": 1680,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Hengna": {
+      "frame": {
+        "x": 1785,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Gejuyuan": {
+      "frame": {
+        "x": 1890,
+        "y": 0,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Gandharva": {
+      "frame": {
+        "x": 0,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "FontaineSci": {
+      "frame": {
+        "x": 105,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Fenglong": {
+      "frame": {
+        "x": 210,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "FavoniusChurch": {
+      "frame": {
+        "x": 315,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Fankang": {
+      "frame": {
+        "x": 420,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "DouWuTai": {
+      "frame": {
+        "x": 525,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Chuiliu": {
+      "frame": {
+        "x": 630,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "ChiWangLin": {
+      "frame": {
+        "x": 735,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "Chenxijiuzhuang": {
+      "frame": {
+        "x": 840,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "BideBao": {
+      "frame": {
+        "x": 945,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "empty": {
+      "frame": {
+        "x": 1050,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sword-traveler": {
+      "frame": {
+        "x": 1155,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sword-steampunk": {
+      "frame": {
+        "x": 1260,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sword-splendor": {
+      "frame": {
+        "x": 1365,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sword-skyward": {
+      "frame": {
+        "x": 1470,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sword-sacrificial": {
+      "frame": {
+        "x": 1575,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sword-forest": {
+      "frame": {
+        "x": 1680,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sword-foliar-incision": {
+      "frame": {
+        "x": 1785,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sword-favonius": {
+      "frame": {
+        "x": 1890,
+        "y": 180,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sword-aquila": {
+      "frame": {
+        "x": 0,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "polearm-vanquisher": {
+      "frame": {
+        "x": 105,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "polearm-tassel": {
+      "frame": {
+        "x": 210,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "polearm-steampunk": {
+      "frame": {
+        "x": 315,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "polearm-skyward": {
+      "frame": {
+        "x": 420,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "polearm-rightful": {
+      "frame": {
+        "x": 525,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "polearm-lithic": {
+      "frame": {
+        "x": 630,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "polearm-jade": {
+      "frame": {
+        "x": 735,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "polearm-forest": {
+      "frame": {
+        "x": 840,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "polearm-engulfing-lightning": {
+      "frame": {
+        "x": 945,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "claymore-steampunk": {
+      "frame": {
+        "x": 1050,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "claymore-skyward": {
+      "frame": {
+        "x": 1155,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "claymore-sacrificial": {
+      "frame": {
+        "x": 1260,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "claymore-overlord": {
+      "frame": {
+        "x": 1365,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "claymore-iron": {
+      "frame": {
+        "x": 1470,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "claymore-gravestone": {
+      "frame": {
+        "x": 1575,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "claymore-forest": {
+      "frame": {
+        "x": 1680,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "claymore-bell": {
+      "frame": {
+        "x": 1785,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "claymore-beacon": {
+      "frame": {
+        "x": 1890,
+        "y": 360,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-steampunk": {
+      "frame": {
+        "x": 0,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-skyward": {
+      "frame": {
+        "x": 105,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-sacrificial": {
+      "frame": {
+        "x": 210,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-sacred-winds": {
+      "frame": {
+        "x": 315,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-remembrance": {
+      "frame": {
+        "x": 420,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-magic-guide": {
+      "frame": {
+        "x": 525,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-forest": {
+      "frame": {
+        "x": 630,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-flowing-purity": {
+      "frame": {
+        "x": 735,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-eternal-flow": {
+      "frame": {
+        "x": 840,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "catalyst-dreams": {
+      "frame": {
+        "x": 945,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "bow-skyward": {
+      "frame": {
+        "x": 1050,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "bow-simulacra": {
+      "frame": {
+        "x": 1155,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "bow-sacrificial": {
+      "frame": {
+        "x": 1260,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "bow-raven": {
+      "frame": {
+        "x": 1365,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "bow-forest": {
+      "frame": {
+        "x": 1470,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "bow-fish": {
+      "frame": {
+        "x": 1575,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "bow-elegy": {
+      "frame": {
+        "x": 1680,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "bow-amos": {
+      "frame": {
+        "x": 1785,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "unlockZhongli": {
+      "frame": {
+        "x": 1890,
+        "y": 540,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "unlockVenti": {
+      "frame": {
+        "x": 0,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "unlockRaiden": {
+      "frame": {
+        "x": 105,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "unlockNahida": {
+      "frame": {
+        "x": 210,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "unlockMavuika": {
+      "frame": {
+        "x": 315,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "unlockFurina": {
+      "frame": {
+        "x": 420,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "gold-mine": {
+      "frame": {
+        "x": 525,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "chest": {
+      "frame": {
+        "x": 630,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "bribery": {
+      "frame": {
+        "x": 735,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "quicksand": {
+      "frame": {
+        "x": 840,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "breathe-fire": {
+      "frame": {
+        "x": 945,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "abyss-call": {
+      "frame": {
+        "x": 1050,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "roast-chicken": {
+      "frame": {
+        "x": 1155,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "pizza": {
+      "frame": {
+        "x": 1260,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "mystique-soup": {
+      "frame": {
+        "x": 1365,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "macarons": {
+      "frame": {
+        "x": 1470,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "life-essence": {
+      "frame": {
+        "x": 1575,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "large-hydro": {
+      "frame": {
+        "x": 1680,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "large-cryo": {
+      "frame": {
+        "x": 1785,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hydro": {
+      "frame": {
+        "x": 1890,
+        "y": 720,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hydro-phantasm": {
+      "frame": {
+        "x": 0,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "electro": {
+      "frame": {
+        "x": 105,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "cryo": {
+      "frame": {
+        "x": 210,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "pyro-flower": {
+      "frame": {
+        "x": 315,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hydroshroom": {
+      "frame": {
+        "x": 420,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "geoshroom": {
+      "frame": {
+        "x": 525,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "dendroshroom": {
+      "frame": {
+        "x": 630,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "cryoshroom": {
+      "frame": {
+        "x": 735,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "kikouban": {
+      "frame": {
+        "x": 840,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "jintouban": {
+      "frame": {
+        "x": 945,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hitsukeban": {
+      "frame": {
+        "x": 1050,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "fiery-might": {
+      "frame": {
+        "x": 1155,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "dancing-thunder": {
+      "frame": {
+        "x": 1260,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "wooden-shieldwall": {
+      "frame": {
+        "x": 1365,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "shooter": {
+      "frame": {
+        "x": 1470,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "rock-shieldwall": {
+      "frame": {
+        "x": 1575,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "lawachurl": {
+      "frame": {
+        "x": 1680,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "ice-shieldwall": {
+      "frame": {
+        "x": 1785,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hydro-samachurl": {
+      "frame": {
+        "x": 1890,
+        "y": 900,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hilistray-water": {
+      "frame": {
+        "x": 0,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "geo-samachurl": {
+      "frame": {
+        "x": 105,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "fighter": {
+      "frame": {
+        "x": 210,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "electro-shooter": {
+      "frame": {
+        "x": 315,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "electro-samachurl": {
+      "frame": {
+        "x": 420,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "dendro-samachurl": {
+      "frame": {
+        "x": 525,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "cryo-shooter": {
+      "frame": {
+        "x": 630,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "crackling": {
+      "frame": {
+        "x": 735,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "blazing": {
+      "frame": {
+        "x": 840,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "berserker": {
+      "frame": {
+        "x": 945,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "anemo-samachurl": {
+      "frame": {
+        "x": 1050,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "pyroslinger": {
+      "frame": {
+        "x": 1155,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "pyro-agent": {
+      "frame": {
+        "x": 1260,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "maiden-water": {
+      "frame": {
+        "x": 1365,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hydrogunner": {
+      "frame": {
+        "x": 1470,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "geochanter": {
+      "frame": {
+        "x": 1575,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "escadron-ice": {
+      "frame": {
+        "x": 1680,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "electrohammer": {
+      "frame": {
+        "x": 1785,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "electro-cicin-mage": {
+      "frame": {
+        "x": 1890,
+        "y": 1080,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "cryogunner": {
+      "frame": {
+        "x": 0,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "cryo-cicin-mage": {
+      "frame": {
+        "x": 105,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "anemoboxer": {
+      "frame": {
+        "x": 210,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "sunfrost": {
+      "frame": {
+        "x": 315,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "stone-enchanter": {
+      "frame": {
+        "x": 420,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "muscleman": {
+      "frame": {
+        "x": 525,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "floral-dancer": {
+      "frame": {
+        "x": 630,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "desert-clearwater": {
+      "frame": {
+        "x": 735,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "daythunder": {
+      "frame": {
+        "x": 840,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "yumkasaur": {
+      "frame": {
+        "x": 945,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "xiuhcoatl": {
+      "frame": {
+        "x": 1050,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "terrorshroom": {
+      "frame": {
+        "x": 1155,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "seahorse-primo": {
+      "frame": {
+        "x": 1260,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "scorpion-sacred": {
+      "frame": {
+        "x": 1365,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "raijin": {
+      "frame": {
+        "x": 1470,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "oceanid": {
+      "frame": {
+        "x": 1575,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "narwhal": {
+      "frame": {
+        "x": 1680,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "maguu-kenki": {
+      "frame": {
+        "x": 1785,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "la-signora": {
+      "frame": {
+        "x": 1890,
+        "y": 1260,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hermit-crab-promo": {
+      "frame": {
+        "x": 0,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "golden-wolflord": {
+      "frame": {
+        "x": 105,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "effigy-ice": {
+      "frame": {
+        "x": 210,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "effigy-electric": {
+      "frame": {
+        "x": 315,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "dvalin": {
+      "frame": {
+        "x": 420,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "chrysopelea-sacred": {
+      "frame": {
+        "x": 525,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "azhdaha": {
+      "frame": {
+        "x": 630,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "apep": {
+      "frame": {
+        "x": 735,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "suppression-pneuma": {
+      "frame": {
+        "x": 840,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "suppression-ousia": {
+      "frame": {
+        "x": 945,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "guard": {
+      "frame": {
+        "x": 1050,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "earthdrake": {
+      "frame": {
+        "x": 1155,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "assault-pneuma": {
+      "frame": {
+        "x": 1260,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "assault-ousia": {
+      "frame": {
+        "x": 1365,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "arithmetic-pneuma": {
+      "frame": {
+        "x": 1470,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "arithmetic-ousia": {
+      "frame": {
+        "x": 1575,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "annihilation-pneuma": {
+      "frame": {
+        "x": 1680,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "annihilation-ousia": {
+      "frame": {
+        "x": 1785,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "thundercraven": {
+      "frame": {
+        "x": 1890,
+        "y": 1440,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "rockfond": {
+      "frame": {
+        "x": 0,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "pyro-mage": {
+      "frame": {
+        "x": 105,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "invoker-electric": {
+      "frame": {
+        "x": 210,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hydro_abyss_mage": {
+      "frame": {
+        "x": 315,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "herald-water": {
+      "frame": {
+        "x": 420,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "electro-mage": {
+      "frame": {
+        "x": 525,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "deacon-fire": {
+      "frame": {
+        "x": 630,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "cryo-mage": {
+      "frame": {
+        "x": 735,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "pyro-resonance": {
+      "frame": {
+        "x": 840,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "pyro-fragment": {
+      "frame": {
+        "x": 945,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hydro-resonance": {
+      "frame": {
+        "x": 1050,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "hydro-fragment": {
+      "frame": {
+        "x": 1155,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "geo-resonance": {
+      "frame": {
+        "x": 1260,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "geo-fragment": {
+      "frame": {
+        "x": 1365,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "electro-resonance": {
+      "frame": {
+        "x": 1470,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "electro-fragment": {
+      "frame": {
+        "x": 1575,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "dendro-resonance": {
+      "frame": {
+        "x": 1680,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "dendro-fragment": {
+      "frame": {
+        "x": 1785,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "cryo-resonance": {
+      "frame": {
+        "x": 1890,
+        "y": 1620,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "cryo-fragment": {
+      "frame": {
+        "x": 0,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "anemo-resonance": {
+      "frame": {
+        "x": 105,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "anemo-fragment": {
+      "frame": {
+        "x": 210,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "zhongli": {
+      "frame": {
+        "x": 315,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "venti": {
+      "frame": {
+        "x": 420,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "raiden": {
+      "frame": {
+        "x": 525,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "nahida": {
+      "frame": {
+        "x": 630,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "mavuika": {
+      "frame": {
+        "x": 735,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "furina": {
+      "frame": {
+        "x": 840,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "eula": {
+      "frame": {
+        "x": 945,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    },
+    "explosive": {
+      "frame": {
+        "x": 1050,
+        "y": 1800,
+        "w": 105,
+        "h": 180
+      }
+    }
+  },
+  "meta": {
+    "image": "all-cards.webp",
+    "size": {
+      "w": 1995,
+      "h": 1980
+    },
+    "scale": "1",
+    "path": "atlas/mobile/all-cards.webp"
+  }
+}

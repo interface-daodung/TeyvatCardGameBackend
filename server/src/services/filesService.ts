@@ -92,12 +92,6 @@ export function getAtlasTempDir(): string {
   return path.join(rootDir, 'atlas');
 }
 
-export function getTeyvatCardsPublicPath(): string {
-  return process.env.TEYVAT_CARDS_PUBLIC_PATH
-    ? path.resolve(process.env.TEYVAT_CARDS_PUBLIC_PATH)
-    : path.resolve(rootDir, '../TeyvatCard/public/assets/images/cards');
-}
-
 export function getAdminPublicPath(): string {
   return path.resolve(rootDir, '../admin-web/public');
 }
@@ -277,6 +271,76 @@ export function deleteAtlasByName(
     if (hasJson) fs.unlinkSync(jsonPath);
   } catch {
     return { error: 'Không xóa được file .json' };
+  }
+
+  return { ok: true };
+}
+
+export type ExportAtlasToTeyvatResult =
+  | { ok: true }
+  | { error: string; code?: 'NEEDS_OVERWRITE_CONFIRM' };
+
+/**
+ * Bản sao từ `server/atlas/desktop|mobile` sang `TeyvatCard/public/assets/{desktop|mobile}/atlas`
+ * (không đụng tới file trong `server/atlas`). JSON đích: `meta.path` = `assets/{desktop|mobile}/atlas/*.webp`
+ * để client load đúng như các atlas trong `public/data` (AssetManager dùng meta.path làm URL).
+ * Nếu đích đã có .webp hoặc .json cùng tên: trả `NEEDS_OVERWRITE_CONFIRM` trừ khi `confirmOverwrite === true`.
+ */
+export function exportAtlasVariantToTeyvatPublic(
+  name: string,
+  variantScope: 'desktop' | 'mobile',
+  confirmOverwrite = false
+): ExportAtlasToTeyvatResult {
+  const trimmed = name.trim();
+  if (!trimmed) return { error: 'Thiếu tên atlas' };
+  const safe = safeBasename(`${trimmed}.webp`);
+  if (!safe) return { error: 'Tên atlas không hợp lệ' };
+
+  const atlasDir = getAtlasTempDir();
+  const srcDir = path.join(atlasDir, variantScope);
+  const webpName = `${trimmed}.webp`;
+  const jsonName = `${trimmed}.json`;
+  const srcWebp = path.join(srcDir, webpName);
+  const srcJson = path.join(srcDir, jsonName);
+  if (!fs.existsSync(srcWebp) || !fs.existsSync(srcJson)) {
+    return { error: `Không tìm thấy atlas trong bản ${variantScope}` };
+  }
+
+  const teyvatPublic = getTeyvatPublicPath();
+  const destDir = path.join(teyvatPublic, 'assets', variantScope, 'atlas');
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+
+  const destWebp = path.join(destDir, webpName);
+  const destJson = path.join(destDir, jsonName);
+
+  const destHasWebp = fs.existsSync(destWebp);
+  const destHasJson = fs.existsSync(destJson);
+  if ((destHasWebp || destHasJson) && !confirmOverwrite) {
+    return {
+      error:
+        'Đã có file cùng tên trong TeyvatCard/public. Gửi lại yêu cầu với confirmOverwrite: true để ghi đè.',
+      code: 'NEEDS_OVERWRITE_CONFIRM',
+    };
+  }
+
+  const metaPathForClient = `assets/${variantScope}/atlas/${webpName}`;
+
+  try {
+    fs.copyFileSync(srcWebp, destWebp);
+    const raw = fs.readFileSync(srcJson, 'utf8');
+    let data: { meta?: { path?: string; image?: string } };
+    try {
+      data = JSON.parse(raw) as { meta?: { path?: string; image?: string } };
+    } catch {
+      return { error: 'File JSON atlas không hợp lệ' };
+    }
+    if (data.meta && typeof data.meta === 'object') {
+      data.meta.path = metaPathForClient;
+      data.meta.image = webpName;
+    }
+    fs.writeFileSync(destJson, JSON.stringify(data, null, 2), 'utf8');
+  } catch {
+    return { error: 'Không xuất được atlas sang TeyvatCard/public' };
   }
 
   return { ok: true };
@@ -1188,6 +1252,25 @@ type AtlasResolvedSource = {
   cacheRelativePath: string;
 };
 
+function buildCustomAtlasFrameKey(webPath: string, fullPath: string): string {
+  const normalizedWebPath = webPath.replace(/\\/g, '/').toLowerCase();
+  const segments = normalizedWebPath.split('/').filter(Boolean);
+  const weaponTypes = new Set(['sword', 'claymore', 'polearm', 'bow', 'catalyst']);
+  if (segments.length >= 2) {
+    const file = segments[segments.length - 1];
+    const parent = segments[segments.length - 2];
+    const hasWeaponContext = segments.includes('weapon') || segments.includes('badge');
+    if (hasWeaponContext && weaponTypes.has(parent)) {
+      const basename = file.replace(/\.[^.]+$/, '');
+      if (basename) return `${parent}-${basename}`;
+    }
+  }
+  return path
+    .basename(fullPath)
+    .replace(/\.[^.]+$/, '')
+    .replace(/[/\\]/g, '_');
+}
+
 function toAtlasCacheRelativePath(webPath: string): string | null {
   const normalized = webPath.replace(/\\/g, '/').trim();
   if (normalized.startsWith('/assets/')) {
@@ -1314,7 +1397,6 @@ export async function generateAllCardsAtlas(): Promise<
   { imageUrl: string; jsonUrl: string; count: number; sheetSize: { w: number; h: number } } | { error: string }
 > {
   const imagesBasePath = getImagesBasePath();
-  const teyvatCardsPublicPath = getTeyvatCardsPublicPath();
   const atlasTempDir = getAtlasTempDir();
 
   const tree = getImageTree(imagesBasePath, '/assets/images/cards');
@@ -1365,10 +1447,6 @@ export async function generateAllCardsAtlas(): Promise<
   const allCardsWebpName = 'all-cards.webp';
   const allCardsJsonName = 'all-cards.json';
 
-  if (!fs.existsSync(teyvatCardsPublicPath)) fs.mkdirSync(teyvatCardsPublicPath, { recursive: true });
-  const teyvatWebpPath = path.join(teyvatCardsPublicPath, allCardsWebpName);
-  const teyvatJsonPath = path.join(teyvatCardsPublicPath, allCardsJsonName);
-
   const metadata: {
     frames: Record<string, { frame: { x: number; y: number; w: number; h: number } }>;
     meta: { image: string; size: { w: number; h: number }; scale: string; path: string };
@@ -1378,7 +1456,7 @@ export async function generateAllCardsAtlas(): Promise<
       image: allCardsWebpName,
       size: { w: grid.sheetWidth, h: grid.sheetHeight },
       scale: '1',
-      path: `assets/images/cards/${allCardsWebpName}`,
+      path: `atlas/${allCardsWebpName}`,
     },
   };
   assets.forEach((asset, index) => {
@@ -1388,9 +1466,6 @@ export async function generateAllCardsAtlas(): Promise<
       frame: { x: col * spriteWidth, y: row * spriteHeight, w: spriteWidth, h: spriteHeight },
     };
   });
-
-  await fs.promises.writeFile(teyvatWebpPath, webpBuffer);
-  await fs.promises.writeFile(teyvatJsonPath, JSON.stringify(metadata, null, 2));
 
   if (!fs.existsSync(atlasTempDir)) fs.mkdirSync(atlasTempDir, { recursive: true });
   await fs.promises.writeFile(path.join(atlasTempDir, allCardsWebpName), webpBuffer);
@@ -1439,10 +1514,7 @@ export async function generateCustomAtlas(
     if (!fs.existsSync(normalized) || !fs.statSync(normalized).isFile()) continue;
     const cacheRelativePath = toAtlasCacheRelativePath(webPath);
     if (!cacheRelativePath) continue;
-    const frameKey = path
-      .basename(normalized)
-      .replace(/\.[^.]+$/, '')
-      .replace(/[/\\]/g, '_');
+    const frameKey = buildCustomAtlasFrameKey(webPath, normalized);
     resolvedSources.push({
       webPath,
       fullPath: normalized,
@@ -1457,12 +1529,10 @@ export async function generateCustomAtlas(
   const webpName = `${atlasBaseName}.webp`;
   const jsonName = `${atlasBaseName}.json`;
 
-  const teyvatCardsPublicPath = getTeyvatCardsPublicPath();
   const atlasTempDir = getAtlasTempDir();
   const atlasDesktopDir = path.join(atlasTempDir, 'desktop');
   const atlasMobileDir = path.join(atlasTempDir, 'mobile');
 
-  if (!fs.existsSync(teyvatCardsPublicPath)) fs.mkdirSync(teyvatCardsPublicPath, { recursive: true });
   if (!fs.existsSync(atlasTempDir)) fs.mkdirSync(atlasTempDir, { recursive: true });
 
   const originalFiles = resolvedSources.map((s) => s.fullPath);
@@ -1479,11 +1549,9 @@ export async function generateCustomAtlas(
     rootBuild.spriteHeight,
     rootBuild.grid,
     webpName,
-    `assets/images/cards/${webpName}`
+    `atlas/${webpName}`
   );
 
-  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, webpName), rootBuild.webpBuffer);
-  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, jsonName), JSON.stringify(rootMetadata, null, 2));
   await fs.promises.writeFile(path.join(atlasTempDir, webpName), rootBuild.webpBuffer);
   await fs.promises.writeFile(path.join(atlasTempDir, jsonName), JSON.stringify(rootMetadata, null, 2));
 
@@ -1672,11 +1740,9 @@ export async function generateAnimationAtlas(
 
   const webpName = `${name}.webp`;
   const jsonName = `${name}.json`;
-  const teyvatCardsPublicPath = getTeyvatCardsPublicPath();
   const atlasTempDir = getAtlasTempDir();
   const atlasDesktopDir = path.join(atlasTempDir, 'desktop');
   const atlasMobileDir = path.join(atlasTempDir, 'mobile');
-  if (!fs.existsSync(teyvatCardsPublicPath)) fs.mkdirSync(teyvatCardsPublicPath, { recursive: true });
   if (!fs.existsSync(atlasTempDir)) fs.mkdirSync(atlasTempDir, { recursive: true });
   if (!fs.existsSync(atlasDesktopDir)) fs.mkdirSync(atlasDesktopDir, { recursive: true });
   if (!fs.existsSync(atlasMobileDir)) fs.mkdirSync(atlasMobileDir, { recursive: true });
@@ -1684,11 +1750,9 @@ export async function generateAnimationAtlas(
   const rootVariant = await buildAnimationAtlasVariant(
     extractedFrames,
     ANIMATION_FRAME_SIZE,
-    `assets/images/animations/${webpName}`
+    `atlas/${webpName}`
   );
 
-  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, webpName), rootVariant.webpBuffer);
-  await fs.promises.writeFile(path.join(teyvatCardsPublicPath, jsonName), JSON.stringify(rootVariant.metadata, null, 2));
   await fs.promises.writeFile(path.join(atlasTempDir, webpName), rootVariant.webpBuffer);
   await fs.promises.writeFile(path.join(atlasTempDir, jsonName), JSON.stringify(rootVariant.metadata, null, 2));
 

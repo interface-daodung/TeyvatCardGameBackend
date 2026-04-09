@@ -132,6 +132,7 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
     if ((c as any).element != null) entry.element = (c as any).element;
     if ((c as any).clan != null) entry.clan = (c as any).clan;
     if ((c as any).rarity != null) entry.rarity = (c as any).rarity;
+    if ((c as any).image != null) entry.image = (c as any).image;
 
     // Additional fields for different card types
     if ((c as any).healthMin != null) entry.healthMin = (c as any).healthMin;

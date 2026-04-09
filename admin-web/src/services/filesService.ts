@@ -1,3 +1,4 @@
+import axios from 'axios';
 import api from '../lib/api';
 
 export interface FileMetadata {
@@ -155,6 +156,68 @@ export const filesService = {
 
   deleteAtlas: async (name: string, scope: 'default' | 'desktop' | 'mobile'): Promise<void> => {
     await api.delete('/files/atlas', { data: { name, scope } });
+  },
+
+  /**
+   * Bản sao từ `server/atlas/desktop|mobile` → `TeyvatCard/public/assets/{desktop|mobile}/atlas`
+   * (server/atlas không đổi). JSON: `meta.path` = `assets/desktop|mobile/atlas/*.webp`.
+   */
+  exportAtlasToTeyvat: async (
+    name: string,
+    scope: 'desktop' | 'mobile',
+    confirmOverwrite = false
+  ): Promise<void> => {
+    await api.post('/files/atlas/export-to-teyvat', { name, scope, confirmOverwrite });
+  },
+
+  /**
+   * Xuất lần lượt desktop + mobile (hoặc mobile trước nếu đang ở tab mobile).
+   * Bỏ qua variant không có trên server (404). Một lần 409 → cần gọi lại với confirmOverwrite.
+   */
+  exportAtlasDualVariantsToTeyvat: async (
+    name: string,
+    priorityScope: 'default' | 'desktop' | 'mobile',
+    confirmOverwrite: boolean
+  ): Promise<
+    | { ok: true; exported: ('desktop' | 'mobile')[] }
+    | { needsOverwrite: true }
+    | { ok: false; error: string }
+  > => {
+    const order: ('desktop' | 'mobile')[] =
+      priorityScope === 'mobile' ? ['mobile', 'desktop'] : ['desktop', 'mobile'];
+    const exported: ('desktop' | 'mobile')[] = [];
+    for (const scope of order) {
+      try {
+        await api.post('/files/atlas/export-to-teyvat', { name, scope, confirmOverwrite });
+        exported.push(scope);
+      } catch (err: unknown) {
+        const needsOverwrite =
+          axios.isAxiosError(err) &&
+          err.response?.status === 409 &&
+          (err.response?.data as { code?: string })?.code === 'NEEDS_OVERWRITE_CONFIRM';
+        if (needsOverwrite) {
+          return { needsOverwrite: true };
+        }
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+          continue;
+        }
+        const msg =
+          axios.isAxiosError(err) && err.response?.data
+            ? String((err.response.data as { error?: string }).error ?? 'Xuất atlas thất bại')
+            : err instanceof Error
+              ? err.message
+              : 'Xuất atlas thất bại';
+        return { ok: false, error: msg };
+      }
+    }
+    if (exported.length === 0) {
+      return {
+        ok: false,
+        error:
+          'Không tìm thấy atlas cùng tên trong server/atlas/desktop hoặc server/atlas/mobile.',
+      };
+    }
+    return { ok: true, exported };
   },
 
   uploadImage: async (file: File): Promise<{ imageUrl: string }> => {
@@ -335,7 +398,7 @@ export const filesService = {
     return response.data;
   },
 
-  /** Tạo TeyvatCard/public/assets/images/cards/all-cards.webp + all-cards.json, lưu tạm vào server/atlas và trả link hiển thị */
+  /** Tạo all-cards.webp + all-cards.json trong `server/atlas` và trả link `/atlas/...` */
   generateAllCardsAtlas: async (): Promise<{
     imageUrl: string;
     jsonUrl: string;

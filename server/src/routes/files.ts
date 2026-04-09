@@ -35,6 +35,7 @@ import {
   saveAnimationSpritesheetHandler,
   composeAnimationSpritesheetHandler,
   deleteAtlasHandler,
+  exportAtlasToTeyvatHandler,
 } from '../controllers/filesController.js';
 import {
   buildCardClassTsDocHandler,
@@ -58,6 +59,7 @@ filesRoutes.post('/card-class-source/save', saveCardClassSourceHandler);
 filesRoutes.get('/uploaded-tree', getUploadedTreeHandler);
 filesRoutes.get('/atlas-list', getAtlasListHandler);
 filesRoutes.delete('/atlas', deleteAtlasHandler);
+filesRoutes.post('/atlas/export-to-teyvat', exportAtlasToTeyvatHandler);
 filesRoutes.get('/metadata', getFileMetadataHandler);
 filesRoutes.post('/generate-atlas', generateCustomAtlasHandler);
 filesRoutes.post('/generate-animation-atlas', generateAnimationAtlasHandler);

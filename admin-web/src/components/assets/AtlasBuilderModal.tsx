@@ -58,6 +58,10 @@ export function AtlasBuilderModal({ images, onClose, onCreated }: AtlasBuilderMo
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewWrapRef = useRef<HTMLDivElement>(null);
 
+  const addAllShortcutHint =
+    'Phím tắt: Ctrl/Cmd + Enter để thêm tất cả ảnh trong tab đang chọn.\n' +
+    'Chỉ hoạt động khi đang ở panel Collection và không áp dụng cho tab Other.';
+
   const dimsRef = useRef(dims);
   dimsRef.current = dims;
 
@@ -643,9 +647,19 @@ export function AtlasBuilderModal({ images, onClose, onCreated }: AtlasBuilderMo
             </div>
 
             <div className="w-full md:w-72 shrink-0">
-              <label className="block text-sm font-medium mb-1">
-                Ảnh có sẵn ({images.length})
-              </label>
+              <div className="mb-1 flex items-center gap-2">
+                <label className="block text-sm font-medium">
+                  Ảnh có sẵn ({images.length})
+                </label>
+                <button
+                  type="button"
+                  className="rounded border border-border bg-background px-1.5 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+                  title={addAllShortcutHint}
+                  aria-label="Gợi ý phím tắt"
+                >
+                  ?
+                </button>
+              </div>
               <div
                 className="flex flex-wrap gap-0 border-b border-border mb-2"
                 role="tablist"
@@ -656,7 +670,7 @@ export function AtlasBuilderModal({ images, onClose, onCreated }: AtlasBuilderMo
                   role="tab"
                   aria-selected={availableTab === 'card'}
                   disabled={!canSelectTab('card')}
-                  title={tabLockTitle}
+                  title={tabLockTitle ? `${tabLockTitle}\n\n${addAllShortcutHint}` : addAllShortcutHint}
                   className={cn(
                     '-mb-px border-b-2 px-2 py-1.5 text-xs font-medium transition-colors',
                     availableTab === 'card'
@@ -673,7 +687,7 @@ export function AtlasBuilderModal({ images, onClose, onCreated }: AtlasBuilderMo
                   role="tab"
                   aria-selected={availableTab === 'item'}
                   disabled={!canSelectTab('item')}
-                  title={tabLockTitle}
+                  title={tabLockTitle ? `${tabLockTitle}\n\n${addAllShortcutHint}` : addAllShortcutHint}
                   className={cn(
                     '-mb-px border-b-2 px-2 py-1.5 text-xs font-medium transition-colors',
                     availableTab === 'item'

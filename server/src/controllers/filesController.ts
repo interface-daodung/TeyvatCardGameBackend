@@ -130,6 +130,43 @@ export async function deleteAtlasHandler(req: Request, res: Response) {
   }
 }
 
+export async function exportAtlasToTeyvatHandler(req: Request, res: Response) {
+  try {
+    const { name, scope, confirmOverwrite } = req.body as {
+      name?: string;
+      scope?: string;
+      confirmOverwrite?: boolean;
+    };
+    if (!name || typeof name !== 'string') {
+      res.status(400).json({ error: 'Thiếu name' });
+      return;
+    }
+    if (scope !== 'desktop' && scope !== 'mobile') {
+      res.status(400).json({ error: 'scope phải là desktop hoặc mobile' });
+      return;
+    }
+    const result = filesService.exportAtlasVariantToTeyvatPublic(
+      name,
+      scope,
+      Boolean(confirmOverwrite)
+    );
+    if ('error' in result) {
+      if (result.code === 'NEEDS_OVERWRITE_CONFIRM') {
+        return res.status(409).json({
+          error: result.error,
+          code: result.code,
+        });
+      }
+      const status = result.error.includes('Không tìm thấy') ? 404 : 400;
+      return res.status(status).json({ error: result.error });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Failed to export atlas to TeyvatCard/public:', err);
+    res.status(500).json({ error: 'Xuất atlas sang TeyvatCard thất bại' });
+  }
+}
+
 export async function uploadImageHandler(req: Request, res: Response) {
   try {
     if (!req.file) {
