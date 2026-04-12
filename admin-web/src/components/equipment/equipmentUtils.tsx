@@ -1,4 +1,4 @@
-import type { Item, LevelStat } from '../../services/gameDataService';
+import type { CharacterAttached, Item, LevelStat } from '../../services/gameDataService';
 
 /** Chỉ cho phép số nguyên dương (0, 1, 2, ...) - không có dấu . , */
 export const onlyPositiveInt = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -122,6 +122,8 @@ export interface GameItem {
   status: 'enabled' | 'disabled';
   /** Đường dẫn file .ts trong `models/items` (field DB `className`). */
   className?: string;
+  /** Ảnh đính kèm (nameId + path), cùng cấu trúc Character.attached. */
+  attached?: CharacterAttached[];
 }
 
 export const getDisplayPower = (item: GameItem): number => {
@@ -214,6 +216,7 @@ export function toGameItem(
     status: item.status === 'enabled' ? 'enabled' : 'disabled',
     nameTranslations,
     descriptionTranslations,
+    attached: item.attached,
   };
 }
 

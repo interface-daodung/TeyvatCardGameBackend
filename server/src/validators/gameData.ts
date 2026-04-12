@@ -5,6 +5,11 @@ const characterLevelStatSchema = z.object({
   price: z.number().min(0),
 });
 
+const characterAttachedSchema = z.object({
+  nameId: z.string().min(1),
+  image: z.string(),
+});
+
 const elementEnum = z.enum(['anemo', 'cryo', 'dendro', 'electro', 'geo', 'hydro', 'pyro', 'none']);
 
 export const createCharacterSchema = z.object({
@@ -19,6 +24,7 @@ export const createCharacterSchema = z.object({
   maxLevel: z.number().min(1).max(99).optional(),
   status: z.enum(['enabled', 'disabled']).optional(),
   levelStats: z.array(characterLevelStatSchema).optional(),
+  attached: z.array(characterAttachedSchema).optional(),
 });
 
 export const updateCharacterSchema = createCharacterSchema.partial();
@@ -50,6 +56,7 @@ export const createAdventureCardSchema = z.object({
   hp: z.number().optional(),
   resonanceDescription: z.string().optional(),
   contents: z.array(z.string()).optional(),
+  attached: z.array(characterAttachedSchema).optional(),
 });
 
 export const updateAdventureCardSchema = createAdventureCardSchema.partial();
@@ -103,6 +110,7 @@ export const createItemSchema = z.object({
   maxLevel: z.number().min(1, "Max Level tối thiểu là 1").max(99, "Max Level tối đa là 99").optional(),
   unlockPrice: z.number().int().min(0, "Unlock price không được âm").max(999999999).optional(),
   levelStats: z.array(levelStatSchema).optional(),
+  attached: z.array(characterAttachedSchema).optional(),
   /** Link class item (relative `models/items`); alias legacy `className`. */
   nameClass: z.string().optional(),
   className: z.string().optional(),
@@ -118,4 +126,5 @@ export const updateItemSchema = z.object({
   maxLevel: z.number().min(1, "Max Level tối thiểu là 1").max(99, "Max Level tối đa là 99").optional(),
   unlockPrice: z.number().int().min(0, "Unlock price không được âm").max(999999999).optional(),
   levelStats: z.array(levelStatSchema).optional(),
+  attached: z.array(characterAttachedSchema).optional(),
 });

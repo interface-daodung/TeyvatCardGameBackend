@@ -1,0 +1,188 @@
+{
+	"textures": [
+		{
+			"image": "items-slot.webp",
+			"format": "RGBA8888",
+			"size": {
+				"w": 124,
+				"h": 160
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "equipment-slot.webp",
+					"rotated": false,
+					"trimmed": true,
+					"sourceSize": {
+						"w": 128,
+						"h": 128
+					},
+					"spriteSourceSize": {
+						"x": 19,
+						"y": 6,
+						"w": 90,
+						"h": 119
+					},
+					"frame": {
+						"x": 1,
+						"y": 1,
+						"w": 90,
+						"h": 119
+					}
+				},
+				{
+					"filename": "anemo.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 30,
+						"h": 30
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 30,
+						"h": 30
+					},
+					"frame": {
+						"x": 93,
+						"y": 1,
+						"w": 30,
+						"h": 30
+					}
+				},
+				{
+					"filename": "cryo.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 30,
+						"h": 30
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 30,
+						"h": 30
+					},
+					"frame": {
+						"x": 93,
+						"y": 33,
+						"w": 30,
+						"h": 30
+					}
+				},
+				{
+					"filename": "dendro.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 30,
+						"h": 30
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 30,
+						"h": 30
+					},
+					"frame": {
+						"x": 93,
+						"y": 65,
+						"w": 30,
+						"h": 30
+					}
+				},
+				{
+					"filename": "electro.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 30,
+						"h": 30
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 30,
+						"h": 30
+					},
+					"frame": {
+						"x": 93,
+						"y": 97,
+						"w": 30,
+						"h": 30
+					}
+				},
+				{
+					"filename": "geo.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 30,
+						"h": 30
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 30,
+						"h": 30
+					},
+					"frame": {
+						"x": 1,
+						"y": 122,
+						"w": 30,
+						"h": 30
+					}
+				},
+				{
+					"filename": "hydro.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 30,
+						"h": 30
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 30,
+						"h": 30
+					},
+					"frame": {
+						"x": 33,
+						"y": 122,
+						"w": 30,
+						"h": 30
+					}
+				},
+				{
+					"filename": "pyro.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 30,
+						"h": 30
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 30,
+						"h": 30
+					},
+					"frame": {
+						"x": 65,
+						"y": 129,
+						"w": 30,
+						"h": 30
+					}
+				}
+			]
+		}
+	],
+	"meta": {
+		"app": "https://www.codeandweb.com/texturepacker",
+		"version": "3.0",
+		"smartupdate": "$TexturePacker:SmartUpdate:5faba0ddc9c308e11af13fea9b4195f5:51d0ded9c03d5013ed0af9a43bf77ba7:3ea4ff5d4644e846061ea28d83e60adb$"
+	}
+}

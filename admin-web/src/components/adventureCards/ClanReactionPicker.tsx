@@ -17,7 +17,7 @@ const CLAN_IMAGE_STEM: Record<string, string> = {
 
 function clanImageSrc(slug: string): string {
   const stem = CLAN_IMAGE_STEM[slug] ?? slug;
-  return `/assets/images/ui/Clan/${stem}.webp`;
+  return `/assets/images/ui/clan/${stem}.webp`;
 }
 
 const CLAN_PALETTE: { accent: string; bg: string }[] = [

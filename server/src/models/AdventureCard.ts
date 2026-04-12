@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import type { ICharacterAttached } from './Character';
 
 export interface IAdventureCard extends mongoose.Document {
   nameId: string;
@@ -27,9 +28,19 @@ export interface IAdventureCard extends mongoose.Document {
   hp?: number;
   resonanceDescription?: string;
   contents?: mongoose.Types.ObjectId[];
+  /** Danh sách ảnh bổ sung (cặp nameId + link/path ảnh). Bản ghi cũ có thể thiếu field. */
+  attached?: ICharacterAttached[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const characterAttachedSchema = new Schema<ICharacterAttached>(
+  {
+    nameId: { type: String, required: true },
+    image: { type: String, required: true, default: '' },
+  },
+  { _id: false }
+);
 
 const adventureCardSchema = new Schema<IAdventureCard>(
   {
@@ -77,6 +88,10 @@ const adventureCardSchema = new Schema<IAdventureCard>(
     hp: { type: Number },
     resonanceDescription: { type: String },
     contents: [{ type: Schema.Types.ObjectId, ref: 'AdventureCard' }],
+    attached: {
+      type: [characterAttachedSchema],
+      default: [],
+    },
   },
   {
     timestamps: true,

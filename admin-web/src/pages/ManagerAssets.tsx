@@ -39,6 +39,7 @@ import {
   faXmark,
   faExpand,
   faCompress,
+  faArrowsRotate,
 } from '@fortawesome/free-solid-svg-icons';
 import { faLightbulb as faLightbulbRegular } from '@fortawesome/free-regular-svg-icons';
 
@@ -171,6 +172,7 @@ export default function ManagerAssets() {
       return false;
     });
   }, []);
+
   const [previewImageLoading, setPreviewImageLoading] = useState(false);
   const [animSpriteReady, setAnimSpriteReady] = useState(false);
   const [ssSpriteReady, setSsSpriteReady] = useState(false);
@@ -199,6 +201,11 @@ export default function ManagerAssets() {
       setLoading(false);
     }
   }, []);
+
+  const handleResetTree = useCallback(() => {
+    setExpanded(new Set(['', '/assets/images', '/uploads']));
+    void fetchTrees();
+  }, [fetchTrees]);
 
   useEffect(() => {
     fetchTrees();
@@ -1392,31 +1399,45 @@ export default function ManagerAssets() {
             <CardHeader className="space-y-2 pb-2">
               <div className="flex flex-row items-start justify-between gap-2">
                 <CardTitle className="text-lg font-semibold tracking-tight">Cây thư mục</CardTitle>
-                {!treeExpanded ? (
+                <div className="flex shrink-0 items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
                     className="h-9 w-9 shrink-0"
-                    onClick={() => setTreeExpanded(true)}
-                    title="Mở rộng cây thư mục (ẩn Image preview)"
-                    aria-label="Mở rộng cây thư mục"
+                    disabled={loading}
+                    onClick={handleResetTree}
+                    title="Tải lại cây thư mục"
+                    aria-label="Tải lại cây thư mục"
                   >
-                    <FontAwesomeIcon icon={faExpand} className="h-4 w-4" />
+                    <FontAwesomeIcon icon={faArrowsRotate} className="h-4 w-4" />
                   </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 shrink-0"
-                    onClick={collapseTree}
-                    title="Thu nhỏ cây thư mục (hiện lại Image preview)"
-                    aria-label="Thu nhỏ cây thư mục"
-                  >
-                    <FontAwesomeIcon icon={faCompress} className="h-4 w-4" />
-                  </Button>
-                )}
+                  {!treeExpanded ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
+                      onClick={() => setTreeExpanded(true)}
+                      title="Mở rộng cây thư mục (ẩn Image preview)"
+                      aria-label="Mở rộng cây thư mục"
+                    >
+                      <FontAwesomeIcon icon={faExpand} className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
+                      onClick={collapseTree}
+                      title="Thu nhỏ cây thư mục (hiện lại Image preview)"
+                      aria-label="Thu nhỏ cây thư mục"
+                    >
+                      <FontAwesomeIcon icon={faCompress} className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className={cn(treeExpanded && 'flex min-h-0 flex-1 flex-col pt-0')}>

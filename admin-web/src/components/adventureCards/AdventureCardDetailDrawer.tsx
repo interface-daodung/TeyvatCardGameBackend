@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 import { motion, useDragControls, usePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCode, faFloppyDisk, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faFloppyDisk, faPaperclip, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { AdventureCardImagePicker } from './AdventureCardImagePicker';
 import { AdventureCardEditForm } from './AdventureCardEditForm';
 import { CardDeckBuilder } from '../maps/CardDeckBuilder';
@@ -10,6 +10,7 @@ import { getAdventureCardImageUrl, contentsToIds } from './adventureCardUtils';
 import { equipmentDockFabTransition, fadeSlideCard, slideInCharacterDrawer } from '../animations/motionPresets';
 import { SourceClassEditor } from '../code/SourceClassEditor';
 import { ConfirmDangerDialog } from '../ConfirmDangerDialog';
+import { CharacterAttachedPanel } from '../characters/CharacterAttachedPanel';
 import {
   BottomDockFabShell,
   DockFabButtonRow,
@@ -84,6 +85,7 @@ export function AdventureCardDetailDrawer({
 }: AdventureCardDetailDrawerProps) {
   const [isPresent, safeToRemove] = usePresence();
   const [classCodeOpen, setClassCodeOpen] = useState(false);
+  const [attachedOpen, setAttachedOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const namePreview =
@@ -105,6 +107,7 @@ export function AdventureCardDetailDrawer({
 
   useEffect(() => {
     setClassCodeOpen(false);
+    setAttachedOpen(false);
     setShowDeleteConfirm(false);
   }, [editCard._id]);
 
@@ -126,6 +129,10 @@ export function AdventureCardDetailDrawer({
   }, [editCard._id]);
 
   const handleRequestClose = useCallback(() => {
+    if (attachedOpen) {
+      setAttachedOpen(false);
+      return;
+    }
     if (classCodeOpen) {
       setClassCodeOpen(false);
       return;
@@ -135,7 +142,7 @@ export function AdventureCardDetailDrawer({
       return;
     }
     onRequestClose();
-  }, [classCodeOpen, showDeleteConfirm, onRequestClose]);
+  }, [attachedOpen, classCodeOpen, showDeleteConfirm, onRequestClose]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -193,7 +200,10 @@ export function AdventureCardDetailDrawer({
                 </DockPeekFabButton>
                 <DockPeekFabButton
                   tone="destructive"
-                  onClick={requestDelete}
+                  onClick={() => {
+                    setAttachedOpen(false);
+                    requestDelete();
+                  }}
                   disabled={deleteLoading || saveLoading || showDeleteConfirm}
                   title="Xóa thẻ"
                   aria-label="Xóa thẻ"
@@ -202,12 +212,27 @@ export function AdventureCardDetailDrawer({
                 </DockPeekFabButton>
                 <DockPeekFabButton
                   tone={classCodeOpen ? 'slateActive' : 'slate'}
-                  onClick={() => setClassCodeOpen((v) => !v)}
+                  onClick={() => {
+                    setClassCodeOpen((v) => !v);
+                    setAttachedOpen(false);
+                  }}
                   title={classCodeOpen ? 'Đóng trình sửa class' : 'Mở trình sửa class (.ts)'}
                   aria-label={classCodeOpen ? 'Đóng trình sửa class' : 'Mở trình sửa class'}
                   aria-pressed={classCodeOpen}
                 >
                   <FontAwesomeIcon icon={faCode} className={dockPeekFabIconClassName} aria-hidden />
+                </DockPeekFabButton>
+                <DockPeekFabButton
+                  tone={attachedOpen ? 'slateActive' : 'slate'}
+                  onClick={() => {
+                    setAttachedOpen((v) => !v);
+                    setClassCodeOpen(false);
+                  }}
+                  title={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh đính kèm'}
+                  aria-label={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh đính kèm'}
+                  aria-pressed={attachedOpen}
+                >
+                  <FontAwesomeIcon icon={faPaperclip} className={dockPeekFabIconClassName} aria-hidden />
                 </DockPeekFabButton>
               </DockFabButtonRow>
             </DockFabMotionGroup>
@@ -287,6 +312,14 @@ export function AdventureCardDetailDrawer({
                     </p>
                   )}
                 </motion.div>
+              ) : attachedOpen ? (
+                <CharacterAttachedPanel
+                  entityId={editCard._id}
+                  attached={form.attached ?? editCard.attached}
+                  saveLoading={saveLoading}
+                  context="adventureCard"
+                  onPersistAttached={(next) => setForm((p) => ({ ...p, attached: next }))}
+                />
               ) : (
                 <>
                   <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,240px),1fr] lg:items-start">

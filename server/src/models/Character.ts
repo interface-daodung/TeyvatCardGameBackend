@@ -5,6 +5,12 @@ export interface ICharacterLevelStat {
   price: number;
 }
 
+/** Ảnh đính kèm (vd. skin / biến thể): định danh + đường dẫn/link ảnh. */
+export interface ICharacterAttached {
+  nameId: string;
+  image: string;
+}
+
 export interface ICharacter extends mongoose.Document {
   nameId: string;
   name: string;
@@ -21,6 +27,8 @@ export interface ICharacter extends mongoose.Document {
   unlockPrice?: number;
   status: 'enabled' | 'disabled';
   levelStats: ICharacterLevelStat[];
+  /** Danh sách ảnh bổ sung (cặp nameId + link/path ảnh). Bản ghi cũ có thể thiếu field. */
+  attached?: ICharacterAttached[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +37,14 @@ const characterLevelStatSchema = new Schema<ICharacterLevelStat>(
   {
     level: { type: Number, required: true, min: 1 },
     price: { type: Number, required: true, min: 0 },
+  },
+  { _id: false }
+);
+
+const characterAttachedSchema = new Schema<ICharacterAttached>(
+  {
+    nameId: { type: String, required: true },
+    image: { type: String, required: true, default: '' },
   },
   { _id: false }
 );
@@ -87,6 +103,10 @@ const characterSchema = new Schema<ICharacter>(
     },
     levelStats: {
       type: [characterLevelStatSchema],
+      default: [],
+    },
+    attached: {
+      type: [characterAttachedSchema],
       default: [],
     },
   },

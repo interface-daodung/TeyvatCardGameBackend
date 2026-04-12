@@ -10,6 +10,7 @@ import { CharacterLevelEditModal } from './CharacterLevelEditModal';
 import { useCharacterDetail, type UseCharacterDetailLangControl } from './useCharacterDetail';
 import { SourceClassEditor } from '../code/SourceClassEditor';
 import { CharacterClassAstFlow } from '../code/CharacterClassAstFlow';
+import { CharacterAttachedPanel } from './CharacterAttachedPanel';
 import {
   filesService,
   type CharacterClassAstMapResult,
@@ -37,6 +38,8 @@ export interface CharacterDetailViewProps {
   drawerClassCodeOpen?: boolean;
   /** FAB: chỉ luồng AST / CharacterClassAstFlow */
   drawerAstFlowOpen?: boolean;
+  /** FAB: quản lý ảnh đính kèm (skill) */
+  drawerAttachedOpen?: boolean;
 }
 
 export function CharacterDetailView({
@@ -45,6 +48,7 @@ export function CharacterDetailView({
   langControl,
   drawerClassCodeOpen = false,
   drawerAstFlowOpen = false,
+  drawerAttachedOpen = false,
 }: CharacterDetailViewProps) {
   const detail = useCharacterDetail(nameId, langControl);
   const [astMapLoading, setAstMapLoading] = useState(false);
@@ -273,6 +277,13 @@ export function CharacterDetailView({
             classRelativePath={characterRelativeClassPath}
           />
         </motion.div>
+      ) : drawerAttachedOpen ? (
+        <CharacterAttachedPanel
+          entityId={detail.character._id}
+          attached={detail.character.attached}
+          saveLoading={detail.saveLoading}
+          onPersistAttached={(attached) => void detail.persistChanges({ attached })}
+        />
       ) : (
         detailGrid
       )}

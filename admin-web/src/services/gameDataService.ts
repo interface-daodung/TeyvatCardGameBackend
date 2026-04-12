@@ -5,6 +5,11 @@ export interface CharacterLevelStat {
   price: number;
 }
 
+export interface CharacterAttached {
+  nameId: string;
+  image: string;
+}
+
 export interface Character {
   _id: string;
   nameId: string;
@@ -23,6 +28,8 @@ export interface Character {
   unlockPrice?: number;
   status: 'enabled' | 'disabled';
   levelStats: CharacterLevelStat[];
+  /** Ảnh đính kèm (nameId + path/link). */
+  attached?: CharacterAttached[];
 }
 
 export interface AdventureCard {
@@ -54,6 +61,8 @@ export interface AdventureCard {
   resonanceDescription?: string;
   /** DB lưu mảng ID. API trả về có thể populated (object[]) hoặc IDs (string[]). Form edit lưu string[]. */
   contents?: string[] | AdventureCard[];
+  /** Ảnh đính kèm (nameId + path/link), cùng cấu trúc với Character.attached. */
+  attached?: CharacterAttached[];
 }
 
 export interface MapTypeRatios {
@@ -111,6 +120,8 @@ export interface Item {
   /** Giá mở khóa (mặc định 0). */
   unlockPrice?: number;
   levelStats: LevelStat[];
+  /** Ảnh đính kèm (nameId + path/link), cùng cấu trúc với Character.attached. */
+  attached?: CharacterAttached[];
   status?: 'enabled' | 'disabled';
 }
 

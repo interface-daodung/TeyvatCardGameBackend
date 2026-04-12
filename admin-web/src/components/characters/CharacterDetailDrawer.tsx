@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useDragControls, usePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCode, faCodeBranch, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faCodeBranch, faPaperclip, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { equipmentDockFabTransition, slideInCharacterDrawer } from '../animations/motionPresets';
 import { CharacterDetailView } from './CharacterDetailView';
 import type { UseCharacterDetailLangControl } from './useCharacterDetail';
@@ -41,12 +41,14 @@ export function CharacterDetailDrawer({
   const [panelWidth, setPanelWidth] = useState(0);
   const [classCodeOpen, setClassCodeOpen] = useState(false);
   const [astFlowOpen, setAstFlowOpen] = useState(false);
+  const [attachedOpen, setAttachedOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     setClassCodeOpen(false);
     setAstFlowOpen(false);
+    setAttachedOpen(false);
     setShowDeleteConfirm(false);
   }, [nameId]);
 
@@ -124,7 +126,10 @@ export function CharacterDetailDrawer({
               <DockFabButtonRow>
                 <DockPeekFabButton
                   tone="destructive"
-                  onClick={requestDelete}
+                  onClick={() => {
+                    setAttachedOpen(false);
+                    requestDelete();
+                  }}
                   disabled={!canDelete || deleteLoading || showDeleteConfirm}
                   title="Xóa nhân vật"
                   aria-label="Xóa nhân vật"
@@ -140,6 +145,7 @@ export function CharacterDetailDrawer({
                   onClick={() => {
                     setAstFlowOpen((v) => !v);
                     setClassCodeOpen(false);
+                    setAttachedOpen(false);
                   }}
                   title={astFlowOpen ? 'Đóng luồng AST' : 'Mở luồng AST (class)'}
                   aria-label={astFlowOpen ? 'Đóng luồng AST' : 'Mở luồng AST'}
@@ -156,6 +162,7 @@ export function CharacterDetailDrawer({
                   onClick={() => {
                     setClassCodeOpen((v) => !v);
                     setAstFlowOpen(false);
+                    setAttachedOpen(false);
                   }}
                   title={classCodeOpen ? 'Đóng trình sửa class' : 'Mở trình sửa class'}
                   aria-label={classCodeOpen ? 'Đóng trình sửa class' : 'Mở trình sửa class'}
@@ -163,6 +170,23 @@ export function CharacterDetailDrawer({
                 >
                   <FontAwesomeIcon
                     icon={faCode}
+                    className={dockPeekFabIconClassName}
+                    aria-hidden
+                  />
+                </DockPeekFabButton>
+                <DockPeekFabButton
+                  tone={attachedOpen ? 'slateActive' : 'slate'}
+                  onClick={() => {
+                    setAttachedOpen((v) => !v);
+                    setClassCodeOpen(false);
+                    setAstFlowOpen(false);
+                  }}
+                  title={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh kỹ năng đính kèm (skill)'}
+                  aria-label={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh kỹ năng đính kèm'}
+                  aria-pressed={attachedOpen}
+                >
+                  <FontAwesomeIcon
+                    icon={faPaperclip}
                     className={dockPeekFabIconClassName}
                     aria-hidden
                   />
@@ -234,6 +258,7 @@ export function CharacterDetailDrawer({
               langControl={langControl}
               drawerClassCodeOpen={classCodeOpen}
               drawerAstFlowOpen={astFlowOpen}
+              drawerAttachedOpen={attachedOpen}
             />
           </div>
         </div>

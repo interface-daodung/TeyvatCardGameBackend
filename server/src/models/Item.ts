@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import type { ICharacterAttached } from './Character';
 
 export interface ILevelStat {
   power: number;
@@ -26,6 +27,8 @@ export interface IItem extends mongoose.Document {
   /** Giá mở khóa (mặc định 0). */
   unlockPrice: number;
   levelStats: ILevelStat[];
+  /** Danh sách ảnh bổ sung (cặp nameId + link/path ảnh). Bản ghi cũ có thể thiếu field. */
+  attached?: ICharacterAttached[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +38,14 @@ const levelStatSchema = new Schema<ILevelStat>(
     power: { type: Number, required: true, min: 0 },
     cooldown: { type: Number, required: true, min: 0 },
     price: { type: Number, required: true, min: 0 },
+  },
+  { _id: false }
+);
+
+const characterAttachedSchema = new Schema<ICharacterAttached>(
+  {
+    nameId: { type: String, required: true },
+    image: { type: String, required: true, default: '' },
   },
   { _id: false }
 );
@@ -86,6 +97,10 @@ const itemSchema = new Schema<IItem>(
     },
     levelStats: {
       type: [levelStatSchema],
+      default: [],
+    },
+    attached: {
+      type: [characterAttachedSchema],
       default: [],
     },
   },

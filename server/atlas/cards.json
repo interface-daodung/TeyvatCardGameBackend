@@ -1,0 +1,4432 @@
+{
+	"textures": [
+		{
+			"image": "cards-0.webp",
+			"format": "RGBA8888",
+			"size": {
+				"w": 3780,
+				"h": 3600
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "abyss-call.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/cryo-mage.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/deacon-fire.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/electro-mage.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/herald-water.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/hydro_abyss_mage.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/invoker-electric.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/pyro-mage.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/rockbreaker.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/rockfond.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "abyss/thundercraven.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "ambush.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "anemo-fragment.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "anemo-resonance.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/annihilation-ousia.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/annihilation-pneuma.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/annihilation.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/arithmetic-ousia.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/arithmetic-pneuma.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/arithmetic.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/assault-ousia.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/assault-pneuma.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/assault.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/earthdrake.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/guard.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/ousia.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/pneuma.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/suppression-ousia.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/suppression-pneuma.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Automatons/suppression.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "autumn-frost.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/apep.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/azhdaha.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/azhdaha/cryo.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/azhdaha/electro.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/azhdaha/hydro.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/azhdaha/pyro.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/chrysopelea-sacred.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/Crocodile-sacred.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/dvalin.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/effigy-electric.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/effigy-ice.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/flamingo-primo.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/golden-wolflord.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/hermit-crab-promo.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				}
+			]
+		},
+		{
+			"image": "cards-1.webp",
+			"format": "RGBA8888",
+			"size": {
+				"w": 3780,
+				"h": 3600
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "boss/hydro-tulpa.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/la-signora-harbinger.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/la-signora.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/maguu-kenki.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/narwhal.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/oceanid.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/panther-sacred.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/raijin.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/scorpion-sacred.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/seahorse-primo.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/terrorshroom.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/xiuhcoatl.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "boss/yumkasaur.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "bow/amos.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "bow/elegy.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "bow/fish.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "bow/forest.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "bow/raven.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "bow/sacrificial.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "bow/simulacra.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "bow/skyward.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "brawl.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "breathe-fire.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "bribery.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "burnt-soup.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "butter-crab.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/dreams.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/eternal-flow.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/flowing-purity.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/forest.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/magic-guide.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/remembrance.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/sacred-winds.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/sacrificial.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/skyward.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "catalyst/steampunk.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "chest.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "claymore/beacon.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "claymore/bell.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "claymore/forest.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "claymore/gravestone.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "claymore/iron.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "claymore/overlord.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "claymore/sacrificial.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "claymore/skyward.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				}
+			]
+		},
+		{
+			"image": "cards-2.webp",
+			"format": "RGBA8888",
+			"size": {
+				"w": 3780,
+				"h": 3600
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "claymore/steampunk.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "cloche-preparing.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "cloche.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "crackers.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "cryelect-resonance.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "cryo-fragment.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "cryo-resonance.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "dendro-fragment.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "dendro-resonance.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "drop-floor.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "electro-fragment.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "electro-resonance.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "eremite/daythunder.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "eremite/desert-clearwater.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "eremite/floral-dancer.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "eremite/muscleman.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "eremite/stone-enchanter.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "eremite/sunfrost.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "explosive.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/anemoboxer.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/cryo-cicin-mage.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/cryogunner.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/electro-cicin-mage.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/electrohammer.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/escadron-ice.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/geochanter.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/hydrogunner.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/maiden-water.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/pyro-agent.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fatui/pyroslinger.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "forbidden-knowledge.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Fotiaoqiang.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "fried-egg.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "geo-fragment.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "geo-resonance.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "gepy-resonance.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "gilded-hall.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "gold-chest.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "gold-mine.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Grenade.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hash-brown.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/anemo-samachurl.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/berserker.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/blazing.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/crackling.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				}
+			]
+		},
+		{
+			"image": "cards-3.webp",
+			"format": "RGBA8888",
+			"size": {
+				"w": 3780,
+				"h": 3600
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "hilichurl/cryo-shooter.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/dendro-samachurl.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/electro-samachurl.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/electro-shooter.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/fighter.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/geo-samachurl.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/hilistray-water.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/hydro-samachurl.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/ice-shieldwall.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/lawachurl.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/rock-shieldwall.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/shooter.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hilichurl/wooden-shieldwall.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hyddend-resonance.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hydpy-resonance.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hydro-fragment.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "hydro-resonance.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "kairagi/dancing-thunder.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "kairagi/fiery-might.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "kairagi/hitsukeban.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "kairagi/jintouban.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "kairagi/kikouban.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "landmine.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "life-essence.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "loot-box.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "macarons.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "meat-rolls.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "moon-resonance.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "mystique-soup.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "pitfall.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "pizza.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "polearm/engulfing-lightning.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "polearm/forest.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "polearm/jade.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "polearm/lithic.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "polearm/rightful.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "polearm/skyward.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "polearm/steampunk.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "polearm/tassel.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "polearm/vanquisher.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "pyro-fragment.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "pyro-resonance.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "quicksand.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Reward.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2940,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "roast-chicken.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 3360,
+						"y": 2880,
+						"w": 420,
+						"h": 720
+					}
+				}
+			]
+		},
+		{
+			"image": "cards-4.webp",
+			"format": "RGBA8888",
+			"size": {
+				"w": 2940,
+				"h": 2880
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "sashimi.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "scare.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "Seal .png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sharp.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "shroom/cryoshroom.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "shroom/dendroshroom.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "shroom/geoshroom.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "shroom/hydroshroom.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "shroom/pyro-flower.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "slime/cryo.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "slime/electro.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "slime/hydro-phantasm.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "slime/hydro.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "slime/large-cryo.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 720,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "slime/large-hydro.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "smoked-chicken.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sword/aquila.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sword/favonius.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sword/foliar-incision.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sword/forest.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sword/sacrificial.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 1440,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sword/skyward.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 0,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sword/splendor.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 420,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sword/steampunk.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 840,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "sword/traveler.webp",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1260,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "unsharpened.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 1680,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "verdant-gift.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2100,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				},
+				{
+					"filename": "wave-kissed.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 420,
+						"h": 720
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 420,
+						"h": 720
+					},
+					"frame": {
+						"x": 2520,
+						"y": 2160,
+						"w": 420,
+						"h": 720
+					}
+				}
+			]
+		}
+	],
+	"meta": {
+		"app": "https://www.codeandweb.com/texturepacker",
+		"version": "3.0",
+		"smartupdate": "$TexturePacker:SmartUpdate:23b622da2cca3537ad49c9f350e5d3e3:fef8a32958835953c7a9efb1a41fc62b:8fe48c0e9302799c7b584267838b579e$"
+	}
+}

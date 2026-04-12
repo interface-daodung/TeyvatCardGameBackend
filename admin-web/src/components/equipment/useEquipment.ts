@@ -599,6 +599,7 @@ export function useEquipment() {
           ),
           levelStats: mergedLevelStats,
           status: nextStatus,
+          attached: formValues.attached ?? selectedItem.attached,
         })
       );
       if (formValues.nameTranslations) {

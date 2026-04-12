@@ -32,6 +32,15 @@ function buildCharacterDataForConfig(characters: Record<string, unknown>[]): Rec
   }));
 }
 
+function buildItemDataForConfig(items: Record<string, unknown>[]): Record<string, unknown>[] {
+  return items.map((i) => ({
+    ...i,
+    maxLevel: i.maxLevel ?? 10,
+    levelStats: Array.isArray(i.levelStats) ? i.levelStats : [],
+    attached: Array.isArray(i.attached) ? i.attached : [],
+  }));
+}
+
 function buildCardsDataForConfig(cards: Record<string, unknown>[]): { cards: Record<string, unknown>[] } {
   const idToClassName: Record<string, string> = {};
   for (const c of cards) {
@@ -59,6 +68,7 @@ function buildCardsDataForConfig(cards: Record<string, unknown>[]): { cards: Rec
       if (Array.isArray(c.contents) && c.contents.length > 0) {
         (card as Record<string, unknown>).contents = mapContentIdsToClassNames(c.contents);
       }
+      (card as Record<string, unknown>).attached = Array.isArray(c.attached) ? c.attached : [];
       return card;
     }),
   };
@@ -217,11 +227,7 @@ export async function checkServerConfigurationUpdate(): Promise<CheckServerConfi
     localizations: localizationSnapshot,
     themeData: { themes },
     itemData: {
-      items: (items as Record<string, unknown>[]).map((i) => ({
-        ...i,
-        maxLevel: (i as Record<string, unknown>).maxLevel ?? 10,
-        levelStats: Array.isArray((i as Record<string, unknown>).levelStats) ? (i as Record<string, unknown>).levelStats : [],
-      })),
+      items: buildItemDataForConfig(items as Record<string, unknown>[]),
     },
   };
 
@@ -270,7 +276,7 @@ export async function checkServerConfigurationUpdate(): Promise<CheckServerConfi
     diff('cards', (configuration.CardsData as { cards?: Record<string, unknown>[] }).cards ?? [], prevCards);
     diff('characters', buildCharacterDataForConfig(characters as Record<string, unknown>[]), prevChars);
     diff('themes', themes as Record<string, unknown>[], prevThemes);
-    diff('items', items as Record<string, unknown>[], prevItems);
+    diff('items', buildItemDataForConfig(items as Record<string, unknown>[]), prevItems);
     const prevEn = (latestCfg?.localizations as { en?: Record<string, string> })?.en ?? {};
     const currEn = localizationSnapshot.en;
     const locAdded: string[] = [];
@@ -401,11 +407,7 @@ export async function syncServerConfigurationVersion(): Promise<
     localizations: localizationSnapshot,
     themeData: { themes },
     itemData: {
-      items: (items as Record<string, unknown>[]).map((i) => ({
-        ...i,
-        maxLevel: (i as Record<string, unknown>).maxLevel ?? 10,
-        levelStats: Array.isArray((i as Record<string, unknown>).levelStats) ? (i as Record<string, unknown>).levelStats : [],
-      })),
+      items: buildItemDataForConfig(items as Record<string, unknown>[]),
     },
   };
 

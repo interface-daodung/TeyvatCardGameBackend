@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCode,
   faFloppyDisk,
+  faPaperclip,
   faSquarePen,
   faTrash,
 } from '@fortawesome/free-solid-svg-icons';
@@ -22,6 +23,7 @@ import {
 import type { FileTreeItem } from '../../services/filesService';
 import { EquipmentItemFieldModal } from './EquipmentItemFieldModal';
 import { ConfirmDangerDialog } from '../ConfirmDangerDialog';
+import { CharacterAttachedPanel } from '../characters/CharacterAttachedPanel';
 import { EquipmentItemClassCodePanel } from './EquipmentItemClassCodePanel';
 import { UnsavedChangesDialog } from '../unsavedChanges';
 import {
@@ -163,9 +165,11 @@ export function EquipmentEditDrawer({
   const dragControls = useDragControls();
   /** Mặc định ẩn vùng ts-morph; bật bằng nút code ở FAB — toàn drawer chỉ còn editor class. */
   const [itemClassDrawerOpen, setItemClassDrawerOpen] = useState(false);
+  const [attachedOpen, setAttachedOpen] = useState(false);
 
   useEffect(() => {
     setItemClassDrawerOpen(false);
+    setAttachedOpen(false);
   }, [selectedItem._id]);
 
   const selectedLevelPreview =
@@ -464,6 +468,16 @@ export function EquipmentEditDrawer({
                   onChangePath={(path) => setFormValues((p) => ({ ...p, className: path }))}
                 />
               </div>
+            ) : attachedOpen ? (
+              <div className="flex min-h-[min(42dvh,22rem)] flex-1 flex-col px-4 py-3 sm:px-5">
+                <CharacterAttachedPanel
+                  entityId={selectedItem._id}
+                  attached={formValues.attached ?? selectedItem.attached}
+                  saveLoading={saveLoading}
+                  context="item"
+                  onPersistAttached={(next) => setFormValues((p) => ({ ...p, attached: next }))}
+                />
+              </div>
             ) : (
               <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-start sm:gap-8 sm:p-6 md:p-8">
                 {metaFields}
@@ -510,7 +524,10 @@ export function EquipmentEditDrawer({
               <DockFabButtonRow>
                 <DockPeekFabButton
                   tone="destructive"
-                  onClick={onRequestDelete}
+                  onClick={() => {
+                    setAttachedOpen(false);
+                    onRequestDelete();
+                  }}
                   disabled={saveLoading || deleteLoading || showDeleteConfirm}
                   title="Xóa item"
                   aria-label="Xóa item"
@@ -543,7 +560,10 @@ export function EquipmentEditDrawer({
                 </DockPeekFabButton>
                 <DockPeekFabButton
                   tone={itemClassDrawerOpen ? 'slateActive' : 'slate'}
-                  onClick={() => setItemClassDrawerOpen((v) => !v)}
+                  onClick={() => {
+                    setItemClassDrawerOpen((v) => !v);
+                    setAttachedOpen(false);
+                  }}
                   title={
                     itemClassDrawerOpen
                       ? 'Đóng trình sửa class'
@@ -558,6 +578,22 @@ export function EquipmentEditDrawer({
                 >
                   <FontAwesomeIcon
                     icon={faCode}
+                    className={dockPeekFabIconClassName}
+                    aria-hidden
+                  />
+                </DockPeekFabButton>
+                <DockPeekFabButton
+                  tone={attachedOpen ? 'slateActive' : 'slate'}
+                  onClick={() => {
+                    setAttachedOpen((v) => !v);
+                    setItemClassDrawerOpen(false);
+                  }}
+                  title={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh đính kèm'}
+                  aria-label={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh đính kèm'}
+                  aria-pressed={attachedOpen}
+                >
+                  <FontAwesomeIcon
+                    icon={faPaperclip}
                     className={dockPeekFabIconClassName}
                     aria-hidden
                   />
