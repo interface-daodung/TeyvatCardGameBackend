@@ -22,6 +22,76 @@ export interface ExportResult {
 
 type RawDoc = Record<string, unknown>;
 
+/** `{ nameId, image }[]` cho client; bỏ phần tử không hợp lệ. */
+function normalizeAttached(raw: unknown): { nameId: string; image: string }[] {
+  if (!Array.isArray(raw)) return [];
+  const out: { nameId: string; image: string }[] = [];
+  for (const x of raw) {
+    if (x == null || typeof x !== 'object') continue;
+    const o = x as Record<string, unknown>;
+    const nameId = typeof o.nameId === 'string' ? o.nameId : '';
+    const image = typeof o.image === 'string' ? o.image : '';
+    if (nameId || image) out.push({ nameId, image });
+  }
+  return out;
+}
+
+function strField(doc: RawDoc, key: string, fallback = ''): string {
+  const v = doc[key];
+  return typeof v === 'string' ? v : fallback;
+}
+
+function cardIdString(c: RawDoc): string {
+  const raw = (c as { _id?: unknown })._id;
+  return raw && typeof (raw as { toString?: () => string }).toString === 'function'
+    ? (raw as { toString: () => string }).toString()
+    : raw
+      ? String(raw)
+      : '';
+}
+
+/**
+ * Map nào có trong `deck` tham chiếu tới AdventureCard `status === 'disabled'` thì không được export.
+ * Trả về danh sách lỗi mô tả từng map cần sửa.
+ */
+export function validateMapsDeckHasNoDisabledCards(configuration: Record<string, unknown>): {
+  ok: boolean;
+  errors: string[];
+} {
+  const maps = (configuration.MapsData as { maps?: RawDoc[] })?.maps ?? [];
+  const cards = (configuration.CardsData as { cards?: RawDoc[] })?.cards ?? [];
+
+  const cardById = new Map<string, RawDoc>();
+  for (const c of cards) {
+    const id = cardIdString(c);
+    if (id) cardById.set(id, c);
+  }
+
+  const errors: string[] = [];
+  for (const m of maps) {
+    const mapLabel = String((m as { nameId?: string; name?: string }).nameId ?? (m as { name?: string }).name ?? '?');
+    const deck = ((m as { deck?: unknown[] }).deck ?? []) as unknown[];
+    for (const deckId of deck) {
+      const deckIdStr =
+        deckId && typeof (deckId as { toString?: () => string }).toString === 'function'
+          ? (deckId as { toString: () => string }).toString()
+          : deckId
+            ? String(deckId)
+            : '';
+      if (!deckIdStr) continue;
+      const card = cardById.get(deckIdStr);
+      if (!card) continue;
+      const st = (card as { status?: string }).status;
+      if (st === 'disabled') {
+        const cardLabel = String((card as { nameId?: string }).nameId ?? deckIdStr);
+        errors.push(`Map "${mapLabel}": deck chứa thẻ đã tắt (disabled) — "${cardLabel}".`);
+      }
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}
+
 /**
  * Transform configuration sang format JSON mà TeyvatCard game expect.
  */
@@ -47,14 +117,13 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
   // Build card lookup by _id (handle ObjectId từ lean())
   const cardById = new Map<string, RawDoc>();
   for (const c of cards) {
-    const raw = (c as any)._id;
-    const id = raw && typeof raw.toString === 'function' ? raw.toString() : raw ? String(raw) : '';
+    const id = cardIdString(c);
     if (id) cardById.set(id, c);
   }
 
-  // dungeonList: Map[] -> game format
+  // dungeonList: Map[] -> game format (chỉ map enabled)
   const dungeonList = maps
-    .filter((m) => (m as any).status === 'enabled')
+    .filter((m) => ((m as { status?: string }).status ?? 'enabled') === 'enabled')
     .map((m) => {
       const deck = ((m as any).deck ?? []) as unknown[];
       const availableCards: Record<string, string[]> = {
@@ -95,12 +164,17 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
         }
       }
       const stageId = (m as any).nameId ?? (m as any).name;
+      const md = m as RawDoc;
       return {
         stageId,
         name: `map.${stageId}.name`,
         typeRatios: (m as any).typeRatios ?? {},
         availableCards,
         map_background: (m as any).map_background ?? '',
+        image: strField(md, 'image'),
+        imageSpritesheet: strField(md, 'imageSpritesheet'),
+        imageUnlock: strField(md, 'imageUnlock'),
+        attached: normalizeAttached(md.attached),
       };
     });
 
@@ -116,8 +190,8 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
     empty: [],
   };
   for (const c of cards) {
-    const status = (c as any).status;
-    if (status && status !== 'enabled') continue;
+    if (((c as { status?: string }).status ?? 'enabled') !== 'enabled') continue;
+    const cd = c as RawDoc;
     const type = ((c as any).type ?? 'empty') as string;
     const arr = typeGroups[type] ?? typeGroups.empty;
     const id = (c as any).nameId;
@@ -127,12 +201,15 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
       type: (c as any).type,
       description: `adventureCard.${id}.description`,
       className: (c as any).className ?? (c as any).nameId,
+      image: strField(cd, 'image'),
+      imageSpritesheet: strField(cd, 'imageSpritesheet'),
+      imageUnlock: strField(cd, 'imageUnlock'),
+      attached: normalizeAttached(cd.attached),
     };
     if ((c as any).category != null) entry.category = (c as any).category;
     if ((c as any).element != null) entry.element = (c as any).element;
     if ((c as any).clan != null) entry.clan = (c as any).clan;
     if ((c as any).rarity != null) entry.rarity = (c as any).rarity;
-    if ((c as any).image != null) entry.image = (c as any).image;
 
     // Additional fields for different card types
     if ((c as any).healthMin != null) entry.healthMin = (c as any).healthMin;
@@ -157,23 +234,39 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
     if (v.length > 0) libraryCards[k] = v;
   }
   if (!libraryCards.empty || libraryCards.empty.length === 0) {
-    libraryCards.empty = [{ id: 'empty', name: 'Empty', type: 'empty', description: 'Empty - Thẻ trống không có tác dụng.', className: 'Empty' }];
+    libraryCards.empty = [
+      {
+        id: 'empty',
+        name: 'Empty',
+        type: 'empty',
+        description: 'Empty - Thẻ trống không có tác dụng.',
+        className: 'Empty',
+        image: '',
+        imageSpritesheet: '',
+        imageUnlock: '',
+        attached: [],
+      },
+    ];
   }
 
   // cardCharacterList: Character[]
   const cardCharacterList = characters
     .filter((ch) => ((ch as any).status ?? 'enabled') === 'enabled')
     .map((ch) => {
-      const d = ch as any;
-      const id = d.nameId;
+      const d = ch as RawDoc;
+      const id = typeof d.nameId === 'string' ? d.nameId : String(d.nameId ?? '');
       return {
         id,
         name: `character.${id}.name`,
-        description: d.description ?? '',
-        hp: d.HP ?? d.hp ?? 10,
-        element: d.element ?? 'none',
-        maxLevel: d.maxLevel ?? 10,
+        description: (d.description as string) ?? '',
+        hp: (d.HP as number) ?? (d.hp as number) ?? 10,
+        element: (d.element as string) ?? 'none',
+        maxLevel: (d.maxLevel as number) ?? 10,
         levelStats: Array.isArray(d.levelStats) ? d.levelStats : [],
+        image: strField(d, 'image'),
+        imageSpritesheet: strField(d, 'imageSpritesheet'),
+        imageUnlock: strField(d, 'imageUnlock'),
+        attached: normalizeAttached(d.attached),
       };
     });
 
@@ -233,6 +326,10 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
         unlockPrice: typeof d.unlockPrice === 'number' ? d.unlockPrice : 0,
         levelStats: Array.isArray(d.levelStats) ? d.levelStats : [],
         nameClass,
+        image: typeof d.image === 'string' ? d.image : '',
+        imageSpritesheet: typeof d.imageSpritesheet === 'string' ? d.imageSpritesheet : '',
+        imageUnlock: typeof d.imageUnlock === 'string' ? d.imageUnlock : '',
+        attached: normalizeAttached(d.attached),
       };
     });
 
@@ -269,6 +366,16 @@ export function exportServerConfigToTeyvatData(
   const result: ExportResult = { success: true, files: [], errors: [] };
 
   try {
+    const deckCheck = validateMapsDeckHasNoDisabledCards(configuration);
+    if (!deckCheck.ok) {
+      result.success = false;
+      result.errors.push(
+        'Cập nhật thất bại: có map đang lưu deck chứa thẻ đã disabled. Sửa maps (bỏ thẻ đó khỏi deck) rồi thử lại.',
+        ...deckCheck.errors
+      );
+      return result;
+    }
+
     const transformed = transformToTeyvatFormat(configuration);
 
     if (!fs.existsSync(TEYVAT_DATA_DIR)) {

@@ -33,3 +33,8 @@ export {
   dockPeekFabToneClassName,
   type DockPeekFabTone,
 } from './dockPeekFabClasses';
+
+export { AttachedPanel, type AttachedPanelProps } from './AttachedPanel';
+
+export { UnsavedChangesDialog, type UnsavedChangesDialogProps } from './UnsavedChangesDialog';
+export { useUnsavedBaseline } from './useUnsavedBaseline';

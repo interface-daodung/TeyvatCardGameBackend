@@ -16,11 +16,11 @@ function findDirChild(items: FileTreeItem[] | undefined, name: string): FileTree
 }
 
 function stemFromWebPath(p: string): string {
-  const base = p.split('/').pop() ?? 'skill';
-  return base.replace(/\.[^.]+$/, '') || 'skill';
+  const base = p.split('/').pop() ?? 'image';
+  return base.replace(/\.[^.]+$/, '') || 'image';
 }
 
-export interface CharacterAttachedPanelProps {
+export interface AttachedPanelProps {
   /** `_id` — key ổn định cho input */
   entityId: string;
   attached: CharacterAttached[] | undefined;
@@ -30,13 +30,13 @@ export interface CharacterAttachedPanelProps {
   context?: 'character' | 'adventureCard' | 'item';
 }
 
-export function CharacterAttachedPanel({
+export function AttachedPanel({
   entityId,
   attached: attachedProp,
   saveLoading,
   onPersistAttached,
   context = 'character',
-}: CharacterAttachedPanelProps) {
+}: AttachedPanelProps) {
   const attached = attachedProp ?? [];
 
   const [fullImageTree, setFullImageTree] = useState<FileTreeItem[] | null>(null);
@@ -51,6 +51,14 @@ export function CharacterAttachedPanel({
     const skill = findDirChild(fullImageTree, 'skill');
     return skill?.children ?? [];
   }, [fullImageTree]);
+
+  const animationsSubtree = useMemo(() => {
+    if (!fullImageTree?.length) return [];
+    const animations = findDirChild(fullImageTree, 'animations');
+    return animations?.children ?? [];
+  }, [fullImageTree]);
+
+  const hasAnyPickerTree = skillSubtree.length > 0 || animationsSubtree.length > 0;
 
   useEffect(() => {
     let cancelled = false;
@@ -138,9 +146,10 @@ export function CharacterAttachedPanel({
               : 'Ảnh kỹ năng đính kèm'}
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Chọn ảnh từ{' '}
-          <code className="rounded bg-muted px-1 py-0.5 text-[11px]">assets/images/skill</code> (cây thư
-          mục). Mỗi mục: định danh <span className="font-medium">nameId</span> + đường dẫn ảnh —{' '}
+          Chọn ảnh trong{' '}
+          <code className="rounded bg-muted px-1 py-0.5 text-[11px]">assets/images/skill</code> hoặc{' '}
+          <code className="rounded bg-muted px-1 py-0.5 text-[11px]">assets/images/animations</code>.
+          Mỗi mục: định danh <span className="font-medium">nameId</span> + đường dẫn ảnh —{' '}
           {context === 'character'
             ? 'lưu trong nhân vật.'
             : 'cập nhật form và nhấn Lưu để ghi vào cơ sở dữ liệu.'}
@@ -156,7 +165,7 @@ export function CharacterAttachedPanel({
             )}
           >
             <FontAwesomeIcon icon={faPlus} className="h-3.5 w-3.5" aria-hidden />
-            Thêm (chọn ảnh trong skill)
+            Thêm ảnh
           </button>
           {saveLoading && (
             <span className="text-xs text-muted-foreground">Đang lưu…</span>
@@ -166,7 +175,9 @@ export function CharacterAttachedPanel({
 
       <div className="relative min-h-0 flex-1 overflow-y-auto px-3 py-3 md:px-4">
         {attached.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Chưa có ảnh đính kèm. Nhấn &quot;Thêm&quot; để chọn file trong cây skill.</p>
+          <p className="text-sm text-muted-foreground">
+            Chưa có ảnh đính kèm. Nhấn &quot;Thêm ảnh&quot; để chọn trong thư mục skill hoặc animations.
+          </p>
         ) : (
           <ul className="space-y-3">
             {attached.map((row, index) => (
@@ -231,7 +242,7 @@ export function CharacterAttachedPanel({
                 <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">
                   <button
                     type="button"
-                    title="Đổi ảnh (cây skill)"
+                    title="Đổi ảnh (skill hoặc animations)"
                     aria-label="Đổi ảnh"
                     disabled={saveLoading}
                     onClick={() => openPickerForRow(index)}
@@ -261,7 +272,8 @@ export function CharacterAttachedPanel({
           <div className="flex shrink-0 items-center justify-between border-b border-border bg-muted px-3 py-2 text-xs font-medium">
             <span className="truncate pr-2">
               Chọn ảnh —{' '}
-              <code className="text-[11px]">/assets/images/skill</code> (và thư mục con)
+              <code className="text-[11px]">/assets/images/skill</code> ·{' '}
+              <code className="text-[11px]">/assets/images/animations</code>
             </span>
             <button
               type="button"
@@ -274,19 +286,45 @@ export function CharacterAttachedPanel({
           <div className="min-h-0 flex-1 overflow-y-auto p-2 text-xs">
             {imageTreeLoading ? (
               <p className="text-muted-foreground">Đang tải cây thư mục…</p>
-            ) : skillSubtree.length > 0 ? (
-              skillSubtree.map((item) => (
-                <FileTreeNode
-                  key={item.path}
-                  item={item}
-                  expanded={expanded}
-                  onToggle={toggleExpanded}
-                  onSelect={onSelectFile}
-                />
-              ))
+            ) : hasAnyPickerTree ? (
+              <div className="space-y-4">
+                {skillSubtree.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 font-medium text-muted-foreground">
+                      <code className="text-[11px] text-foreground">skill</code>
+                    </p>
+                    {skillSubtree.map((item) => (
+                      <FileTreeNode
+                        key={item.path}
+                        item={item}
+                        expanded={expanded}
+                        onToggle={toggleExpanded}
+                        onSelect={onSelectFile}
+                      />
+                    ))}
+                  </div>
+                )}
+                {animationsSubtree.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 font-medium text-muted-foreground">
+                      <code className="text-[11px] text-foreground">animations</code>
+                    </p>
+                    {animationsSubtree.map((item) => (
+                      <FileTreeNode
+                        key={item.path}
+                        item={item}
+                        expanded={expanded}
+                        onToggle={toggleExpanded}
+                        onSelect={onSelectFile}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
               <p className="text-muted-foreground">
-                Không tìm thấy thư mục <strong>skill</strong> trong assets hoặc thư mục trống.
+                Không tìm thấy ảnh trong <strong>skill</strong> hoặc <strong>animations</strong> (thư mục
+                thiếu hoặc trống).
               </p>
             )}
           </div>

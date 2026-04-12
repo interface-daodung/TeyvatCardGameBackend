@@ -1,4 +1,5 @@
 import type { Map as MapType, AdventureCard } from '../../services/gameDataService';
+import { normalizeMapStatus } from './mapUtils';
 import { cn } from '../../lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -15,6 +16,7 @@ interface MapCardProps {
 export function MapCard({ map, onEdit }: MapCardProps) {
     const bgUrl = map.map_background?.trim();
     const hasBg = Boolean(bgUrl);
+    const status = normalizeMapStatus(map.status);
 
     return (
         <Card
@@ -61,20 +63,16 @@ export function MapCard({ map, onEdit }: MapCardProps) {
                                     <Badge
                                         variant="outline"
                                         className={cn(
-                                            map.status === 'enabled'
+                                            status === 'enabled'
                                                 ? hasBg
                                                     ? 'border-emerald-300/50 bg-emerald-500/20 text-emerald-100'
                                                     : 'border-emerald-200 bg-emerald-100 text-emerald-800'
-                                                : map.status === 'hidden'
-                                                  ? hasBg
-                                                      ? 'border-slate-400/50 bg-slate-500/25 text-slate-100'
-                                                      : 'border-slate-200 bg-slate-100 text-slate-700'
-                                                  : hasBg
-                                                    ? 'border-red-300/50 bg-red-500/20 text-red-100'
-                                                    : 'border-red-200 bg-red-100 text-red-800'
+                                                : hasBg
+                                                  ? 'border-red-300/50 bg-red-500/20 text-red-100'
+                                                  : 'border-red-200 bg-red-100 text-red-800'
                                         )}
                                     >
-                                        {map.status}
+                                        {status}
                                     </Badge>
                                 </div>
                                 {map.description && (

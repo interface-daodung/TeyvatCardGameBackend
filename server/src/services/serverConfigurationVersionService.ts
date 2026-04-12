@@ -6,7 +6,10 @@ import { Localization } from '../models/Localization.js';
 import { Character } from '../models/Character.js';
 import { Theme } from '../models/Theme.js';
 import { Item } from '../models/Item.js';
-import { exportServerConfigToTeyvatData } from '../utils/exportServerConfigToTeyvatData.js';
+import {
+  exportServerConfigToTeyvatData,
+  validateMapsDeckHasNoDisabledCards,
+} from '../utils/exportServerConfigToTeyvatData.js';
 import { getTeyvatPackageMajor } from '../utils/teyvatPackageVersion.js';
 
 function canonicalJson(obj: unknown): string {
@@ -410,6 +413,18 @@ export async function syncServerConfigurationVersion(): Promise<
       items: buildItemDataForConfig(items as Record<string, unknown>[]),
     },
   };
+
+  const deckValidation = validateMapsDeckHasNoDisabledCards(configuration as Record<string, unknown>);
+  if (!deckValidation.ok) {
+    return {
+      success: false,
+      status: 400,
+      error: [
+        'Cập nhật thất bại: có map đang lưu deck chứa thẻ đã disabled. Sửa maps (bỏ thẻ đó khỏi deck) rồi thử lại.',
+        ...deckValidation.errors,
+      ].join('\n'),
+    };
+  }
 
   const doc = await ServerConfigurationVersion.create({ version: nextVersion, configuration });
 

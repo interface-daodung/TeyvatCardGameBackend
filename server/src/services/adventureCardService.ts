@@ -1,11 +1,25 @@
 import { AdventureCard } from '../models/AdventureCard.js';
 
+let legacyAdventureCardStatusMigrated = false;
+
+/** Một lần mỗi process: thẻ cũ `hidden` → `disabled`. */
+async function migrateLegacyAdventureCardStatusesOnce() {
+  if (legacyAdventureCardStatusMigrated) return;
+  legacyAdventureCardStatusMigrated = true;
+  try {
+    await AdventureCard.collection.updateMany({ status: 'hidden' }, { $set: { status: 'disabled' } });
+  } catch {
+    /* ignore */
+  }
+}
+
 export interface GetAdventureCardsFilters {
   status?: string;
   type?: string;
 }
 
 export async function getAdventureCards(filters: GetAdventureCardsFilters) {
+  await migrateLegacyAdventureCardStatusesOnce();
   const query: Record<string, string> = {};
   if (filters.status) query.status = filters.status;
   if (filters.type) query.type = filters.type;
@@ -14,6 +28,7 @@ export async function getAdventureCards(filters: GetAdventureCardsFilters) {
 }
 
 export async function getAdventureCardById(id: string) {
+  await migrateLegacyAdventureCardStatusesOnce();
   const card = await AdventureCard.findById(id).populate('contents');
   return card;
 }

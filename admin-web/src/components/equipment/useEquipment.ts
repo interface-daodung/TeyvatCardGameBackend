@@ -3,7 +3,7 @@ import { gameDataService } from '../../services/gameDataService';
 import { localizationService } from '../../services/localizationService';
 import { filesService, type FileTreeItem } from '../../services/filesService';
 import type { EditLang } from '../LangDropdown';
-import { useUnsavedBaseline } from '../unsavedChanges';
+import { useUnsavedBaseline } from '../share';
 import {
   type GameItem,
   type LevelStat,

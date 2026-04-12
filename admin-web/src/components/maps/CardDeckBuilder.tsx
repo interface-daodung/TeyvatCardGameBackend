@@ -1,5 +1,5 @@
 import type { AdventureCard } from '../../services/gameDataService';
-import { getCardImageUrl } from './mapUtils';
+import { getCardImageUrl, isAdventureCardShownInDeckSource } from './mapUtils';
 import { DeckDropZone } from './DeckDropZone';
 import { DraggableCardThumbnail } from './DraggableCardThumbnail';
 
@@ -33,7 +33,7 @@ export function CardDeckBuilder({
     getImageUrl = getCardImageUrl,
     deckLabel = 'Deck',
     sourceLabel = 'Thẻ có sẵn (kéo vào deck)',
-    filterCard = (c) => c.type !== 'empty' && c.nameId !== 'empty',
+    filterCard = isAdventureCardShownInDeckSource,
 }: CardDeckBuilderProps) {
     const handleAdd = (cardId: string) => {
         if (!cardIds.includes(cardId)) {

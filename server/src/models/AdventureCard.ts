@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import type { ICharacterAttached } from './Character';
+import { AttachedSchema, type IAttached } from '../types/attached.js';
 
 export interface IAdventureCard extends mongoose.Document {
   nameId: string;
@@ -11,7 +11,7 @@ export interface IAdventureCard extends mongoose.Document {
   clan?: string; // e.g. hilichurl (for enemy)
   rarity?: number;
   className?: string;
-  status: 'enabled' | 'disabled' | 'hidden';
+  status: 'enabled' | 'disabled';
   image?: string; // image URI for admin-web
   // Additional fields based on type
   healthMin?: number;
@@ -29,18 +29,10 @@ export interface IAdventureCard extends mongoose.Document {
   resonanceDescription?: string;
   contents?: mongoose.Types.ObjectId[];
   /** Danh sách ảnh bổ sung (cặp nameId + link/path ảnh). Bản ghi cũ có thể thiếu field. */
-  attached?: ICharacterAttached[];
+  attached?: IAttached[];
   createdAt: Date;
   updatedAt: Date;
 }
-
-const characterAttachedSchema = new Schema<ICharacterAttached>(
-  {
-    nameId: { type: String, required: true },
-    image: { type: String, required: true, default: '' },
-  },
-  { _id: false }
-);
 
 const adventureCardSchema = new Schema<IAdventureCard>(
   {
@@ -70,7 +62,7 @@ const adventureCardSchema = new Schema<IAdventureCard>(
     image: { type: String },
     status: {
       type: String,
-      enum: ['enabled', 'disabled', 'hidden'],
+      enum: ['enabled', 'disabled'],
       default: 'enabled',
     },
     // Additional fields based on type
@@ -89,7 +81,7 @@ const adventureCardSchema = new Schema<IAdventureCard>(
     resonanceDescription: { type: String },
     contents: [{ type: Schema.Types.ObjectId, ref: 'AdventureCard' }],
     attached: {
-      type: [characterAttachedSchema],
+      type: [AttachedSchema],
       default: [],
     },
   },

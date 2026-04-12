@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { getTypeIcon, getAdventureCardImageUrl } from './adventureCardUtils';
+import { getTypeIcon, getAdventureCardImageUrl, normalizeAdventureCardStatus } from './adventureCardUtils';
 import type { AdventureCard } from '../../services/gameDataService';
 import { cn } from '../../lib/utils';
 
@@ -24,6 +24,7 @@ export function AdventureCardTile({
   compact = false,
 }: AdventureCardTileProps) {
   const imageUrl = getAdventureCardImageUrl(card);
+  const status = normalizeAdventureCardStatus(card.status);
   const typeIcon = getTypeIcon(card.type);
   const name = displayName ?? card.name;
   const description = displayDescription ?? card.description ?? '';
@@ -70,18 +71,14 @@ export function AdventureCardTile({
                 </div>
               )}
               <Badge
-                variant={
-                  card.status === 'enabled' ? 'default' : card.status === 'disabled' ? 'destructive' : 'secondary'
-                }
+                variant={status === 'enabled' ? 'default' : 'destructive'}
                 className={
-                  card.status === 'enabled'
+                  status === 'enabled'
                     ? 'bg-emerald-500/90 text-white border-emerald-300/60'
-                    : card.status === 'hidden'
-                      ? 'bg-slate-700/90 text-slate-50 border-slate-500/60'
-                      : 'bg-red-500/90 text-white border-red-300/60'
+                    : 'bg-red-500/90 text-white border-red-300/60'
                 }
               >
-                {card.status}
+                {status}
               </Badge>
             </div>
           )}

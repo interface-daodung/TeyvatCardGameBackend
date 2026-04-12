@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquarePen } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '../ui/button';
-import { UnsavedChangesDialog, useUnsavedBaseline } from '../unsavedChanges';
+import { UnsavedChangesDialog, useUnsavedBaseline } from '../share';
 
 type LevelModalSnapshot = {
   max: number;

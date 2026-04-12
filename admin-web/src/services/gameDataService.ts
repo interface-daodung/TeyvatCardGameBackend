@@ -18,7 +18,7 @@ export interface Character {
   /** Ảnh thẻ (path web). */
   image?: string;
   /** Spritesheet Phaser; rỗng/undefined = mặc định theo nameId. */
-  spritesheetImage?: string;
+  imageSpritesheet?: string;
   /** Ảnh unlock (`assets/images/cards/unlock`). Rỗng → empty.webp. */
   imageUnlock?: string;
   element?: string; // anemo | cryo | dendro | electro | geo | hydro | pyro | none
@@ -44,7 +44,7 @@ export interface AdventureCard {
   rarity?: number;
   className?: string;
   image?: string;
-  status: 'enabled' | 'disabled' | 'hidden';
+  status: 'enabled' | 'disabled';
   // Additional fields based on type
   healthMin?: number;
   healthMax?: number;
@@ -84,7 +84,7 @@ export interface Map {
   map_background?: string;
   typeRatios: MapTypeRatios;
   deck: AdventureCard[];
-  status: 'enabled' | 'disabled' | 'hidden';
+  status: 'enabled' | 'disabled';
 }
 
 export type MapCreatePayload = {
@@ -94,7 +94,7 @@ export type MapCreatePayload = {
   map_background?: string;
   typeRatios?: MapTypeRatios;
   deck: string[];
-  status?: 'enabled' | 'disabled' | 'hidden';
+  status?: 'enabled' | 'disabled';
 };
 
 export type MapUpdatePayload = Partial<MapCreatePayload>;

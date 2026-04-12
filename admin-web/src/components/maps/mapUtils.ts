@@ -1,4 +1,21 @@
-import type { MapTypeRatios } from '../../services/gameDataService';
+import type { AdventureCard, MapTypeRatios } from '../../services/gameDataService';
+
+/** Thẻ hiển thị ở cột “kéo vào deck”: không phải placeholder empty và không bị disabled trong admin. */
+export function isAdventureCardShownInDeckSource(card: AdventureCard): boolean {
+    return card.type !== 'empty' && card.nameId !== 'empty' && card.status !== 'disabled';
+}
+
+/** Deck còn ít nhất một thẻ adventure đang `disabled` (lookup theo danh sách thẻ hiện có). */
+export function deckContainsDisabledAdventureCard(
+    deckIds: string[],
+    allCards: AdventureCard[],
+): boolean {
+    for (const id of deckIds) {
+        const c = allCards.find((x) => x._id === id);
+        if (c?.status === 'disabled') return true;
+    }
+    return false;
+}
 export { getAdventureCardImageUrl as getCardImageUrl } from '../adventureCards/adventureCardUtils';
 
 export const TYPE_RATIO_KEYS: (keyof MapTypeRatios)[] = [
@@ -21,7 +38,14 @@ export const TYPE_RATIO_ICONS: Record<keyof MapTypeRatios, string> = {
     bombs: '💣',
 };
 
-export const MAP_STATUSES: ('enabled' | 'disabled' | 'hidden')[] = ['enabled', 'disabled', 'hidden'];
+export type MapStatus = 'enabled' | 'disabled';
+
+export const MAP_STATUSES: MapStatus[] = ['enabled', 'disabled'];
+
+/** Chuẩn hóa trạng thái map (bản ghi cũ có thể là `hidden`). */
+export function normalizeMapStatus(status: string | undefined | null): MapStatus {
+    return status === 'enabled' ? 'enabled' : 'disabled';
+}
 
 export const DEFAULT_TYPE_RATIOS: MapTypeRatios = {
     enemies: 0,

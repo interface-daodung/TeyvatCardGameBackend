@@ -6,8 +6,8 @@ import type { AdventureCard } from '../../services/gameDataService';
 import type { FileTreeItem } from '../../services/filesService';
 import { DualRangeSlider } from '../ui/DualRangeSlider';
 import { CardDeckBuilder } from '../maps/CardDeckBuilder';
-import { getAdventureCardImageUrl, contentsToIds } from './adventureCardUtils';
-import { UnsavedChangesDialog } from '../unsavedChanges';
+import { getAdventureCardImageUrl, contentsToIds, normalizeAdventureCardStatus } from './adventureCardUtils';
+import { UnsavedChangesDialog } from '../share';
 import { scaleInModal, fadeInOverlay } from '../animations/motionPresets';
 import { ElementReactionPicker } from '../characters/ElementReactionPicker';
 import { ClanReactionPicker } from './ClanReactionPicker';
@@ -23,7 +23,7 @@ const TYPES: AdventureCard['type'][] = [
   'empty',
 ];
 
-const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled', 'hidden'];
+const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled'];
 
 interface AdventureCardCreateModalProps {
   form: Partial<AdventureCard>;
@@ -69,13 +69,11 @@ export function AdventureCardCreateModal({
   allCards,
 }: AdventureCardCreateModalProps) {
   const type = form.type ?? 'weapon';
-  const status = form.status ?? 'enabled';
+  const status = normalizeAdventureCardStatus(form.status ?? 'enabled');
   const statusClasses =
     status === 'enabled'
       ? 'bg-emerald-500 text-emerald-50 hover:bg-emerald-600'
-      : status === 'hidden'
-        ? 'bg-slate-600 text-slate-50 hover:bg-slate-700'
-        : 'bg-red-500 text-red-50 hover:bg-red-600';
+      : 'bg-red-500 text-red-50 hover:bg-red-600';
 
   const cycleStatus = () => {
     const index = STATUSES.indexOf(status);

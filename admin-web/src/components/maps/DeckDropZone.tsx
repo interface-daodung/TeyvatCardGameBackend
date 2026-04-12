@@ -56,10 +56,15 @@ export function DeckDropZone({
             {cardIds.map((cardId, index) => {
                 const card = allCards.find((c) => c._id === cardId);
                 if (!card) return null;
+                const isDisabled = card.status === 'disabled';
                 return (
                     <div
                         key={`${cardId}-${index}`}
-                        className="relative group w-14 shrink-0 aspect-[420/720] rounded overflow-hidden border border-border bg-card shadow-sm"
+                        className={`relative group w-14 shrink-0 aspect-[420/720] rounded overflow-hidden bg-card shadow-sm ${
+                            isDisabled
+                                ? 'border-2 border-red-500 ring-1 ring-red-500/40'
+                                : 'border border-border'
+                        }`}
                     >
                         <img
                             src={getImageUrl(card)}
@@ -72,7 +77,9 @@ export function DeckDropZone({
                         <button
                             type="button"
                             onClick={() => onRemove(index)}
-                            className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity shadow hover:bg-red-600"
+                            className={`absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-sm font-bold transition-opacity shadow hover:bg-red-600 ${
+                                isDisabled ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}
                             aria-label="Bỏ thẻ khỏi deck"
                         >
                             −

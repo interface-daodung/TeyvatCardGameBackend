@@ -23,10 +23,10 @@ import {
 import type { FileTreeItem } from '../../services/filesService';
 import { EquipmentItemFieldModal } from './EquipmentItemFieldModal';
 import { ConfirmDangerDialog } from '../ConfirmDangerDialog';
-import { CharacterAttachedPanel } from '../characters/CharacterAttachedPanel';
 import { EquipmentItemClassCodePanel } from './EquipmentItemClassCodePanel';
-import { UnsavedChangesDialog } from '../unsavedChanges';
+import { UnsavedChangesDialog } from '../share';
 import {
+  AttachedPanel,
   BottomDockFabShell,
   DockFabButtonRow,
   DockFabMotionGroup,
@@ -470,7 +470,7 @@ export function EquipmentEditDrawer({
               </div>
             ) : attachedOpen ? (
               <div className="flex min-h-[min(42dvh,22rem)] flex-1 flex-col px-4 py-3 sm:px-5">
-                <CharacterAttachedPanel
+                <AttachedPanel
                   entityId={selectedItem._id}
                   attached={formValues.attached ?? selectedItem.attached}
                   saveLoading={saveLoading}

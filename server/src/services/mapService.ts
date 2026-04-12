@@ -1,13 +1,28 @@
 import mongoose from 'mongoose';
 import { Map } from '../models/Map.js';
 
+let legacyMapStatusMigrated = false;
+
+/** Một lần mỗi process: map cũ `hidden` → `disabled` (enum không còn `hidden`). */
+async function migrateLegacyMapStatusesOnce() {
+  if (legacyMapStatusMigrated) return;
+  legacyMapStatusMigrated = true;
+  try {
+    await Map.collection.updateMany({ status: 'hidden' }, { $set: { status: 'disabled' } });
+  } catch {
+    /* bỏ qua nếu collection/schema khác phiên bản */
+  }
+}
+
 export async function getMaps(status?: string) {
+  await migrateLegacyMapStatusesOnce();
   const query = status ? { status } : {};
   const maps = await Map.find(query).populate('deck').sort({ createdAt: -1 });
   return { maps };
 }
 
 export async function getMapById(id: string) {
+  await migrateLegacyMapStatusesOnce();
   const map = await Map.findById(id).populate('deck');
   return map;
 }

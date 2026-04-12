@@ -10,8 +10,8 @@ import { getAdventureCardImageUrl, contentsToIds } from './adventureCardUtils';
 import { equipmentDockFabTransition, fadeSlideCard, slideInCharacterDrawer } from '../animations/motionPresets';
 import { SourceClassEditor } from '../code/SourceClassEditor';
 import { ConfirmDangerDialog } from '../ConfirmDangerDialog';
-import { CharacterAttachedPanel } from '../characters/CharacterAttachedPanel';
 import {
+  AttachedPanel,
   BottomDockFabShell,
   DockFabButtonRow,
   DockFabMotionGroup,
@@ -313,7 +313,7 @@ export function AdventureCardDetailDrawer({
                   )}
                 </motion.div>
               ) : attachedOpen ? (
-                <CharacterAttachedPanel
+                <AttachedPanel
                   entityId={editCard._id}
                   attached={form.attached ?? editCard.attached}
                   saveLoading={saveLoading}

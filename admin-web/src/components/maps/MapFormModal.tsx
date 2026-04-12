@@ -13,9 +13,19 @@ import { FileTreeNode } from '../FileTreeNode';
 import { I18nEditorPanel, type EditLang } from '../i18n/I18nEditorPanel';
 import { TypeRatioEditor } from './TypeRatioEditor';
 import { CardDeckBuilder } from './CardDeckBuilder';
-import { DEFAULT_TYPE_RATIOS, MAP_STATUSES, getFormTypeRatios, getFreeRatio } from './mapUtils';
+import {
+    DEFAULT_TYPE_RATIOS,
+    MAP_STATUSES,
+    deckContainsDisabledAdventureCard,
+    getFormTypeRatios,
+    getFreeRatio,
+    isAdventureCardShownInDeckSource,
+    normalizeMapStatus,
+    type MapStatus,
+} from './mapUtils';
 import type { FileTreeItem } from '../../services/filesService';
-import { UnsavedChangesDialog, useUnsavedBaseline } from '../unsavedChanges';
+import { UnsavedChangesDialog, useUnsavedBaseline } from '../share';
+import { ImageLightbox, type LightboxImage } from '../ui/ImageLightbox';
 
 const LANG_OPTIONS: EditLang[] = ['en', 'vi', 'ja'];
 
@@ -52,7 +62,7 @@ export function MapFormModal({
         description: string;
         mapBackground: string;
         typeRatios: MapTypeRatios;
-        status: 'enabled' | 'disabled' | 'hidden';
+        status: MapStatus;
         deckIds: string[];
     };
 
@@ -95,6 +105,8 @@ export function MapFormModal({
     // ── Map background picker state ──
     const [mapBackgroundTreeOpen, setMapBackgroundTreeOpen] = useState(false);
     const [mapBackgroundTreeExpanded, setMapBackgroundTreeExpanded] = useState<Set<string>>(new Set());
+    const [mapBackgroundLightbox, setMapBackgroundLightbox] = useState<LightboxImage | null>(null);
+    const [showDisabledDeckBlockDialog, setShowDisabledDeckBlockDialog] = useState(false);
 
     // ── Sync form when modal opens or editing target changes ──
     useEffect(() => {
@@ -109,7 +121,7 @@ export function MapFormModal({
                 description: editingMap.description ?? '',
                 mapBackground: editingMap.map_background ?? '',
                 typeRatios: getFormTypeRatios(editingMap.typeRatios),
-                status: editingMap.status,
+                status: normalizeMapStatus(editingMap.status),
                 deckIds: (editingMap.deck ?? []).map((c: AdventureCard) => c._id),
             };
             setForm(next);
@@ -133,6 +145,7 @@ export function MapFormModal({
         if (!open) {
             setShowUnsavedConfirm(false);
             setShowI18nUnsavedConfirm(false);
+            setShowDisabledDeckBlockDialog(false);
         }
     }, [open]);
 
@@ -290,12 +303,18 @@ export function MapFormModal({
 
     const freeRatio = getFreeRatio(form.typeRatios);
     const canSaveRatios = freeRatio === 0;
+    const deckHasDisabledCards = deckContainsDisabledAdventureCard(form.deckIds, adventureCards);
 
     // ── Submit / Delete ──
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!canSaveRatios) {
             setError('Tổng tỉ lệ phải bằng 100 (free ratio phải về 0 mới được lưu).');
+            return;
+        }
+        if (deckHasDisabledCards) {
+            setShowUnsavedConfirm(false);
+            setShowDisabledDeckBlockDialog(true);
             return;
         }
         setSubmitLoading(true);
@@ -354,6 +373,8 @@ export function MapFormModal({
         setError(null);
         setMapBackgroundTreeOpen(false);
         setMapBackgroundTreeExpanded(new Set());
+        setMapBackgroundLightbox(null);
+        setShowDisabledDeckBlockDialog(false);
         onClose();
     };
 
@@ -540,17 +561,8 @@ export function MapFormModal({
                         <div>
                             <label className="block text-sm font-medium mb-1">map_background</label>
                             <div
-                                className="relative w-full max-w-[360px] rounded-xl overflow-hidden border border-border bg-muted cursor-pointer aspect-[16/9]"
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => !mapBackgroundTreeOpen && setMapBackgroundTreeOpen(true)}
-                                onKeyDown={(e) => {
-                                    if ((e.key === 'Enter' || e.key === ' ') && !mapBackgroundTreeOpen) {
-                                        e.preventDefault();
-                                        setMapBackgroundTreeOpen(true);
-                                    }
-                                }}
-                                aria-label="Chọn ảnh map background"
+                                className={`relative w-full max-w-[360px] rounded-xl overflow-hidden border border-border bg-muted aspect-[16/9] ${mapBackgroundTreeOpen || !form.mapBackground ? 'cursor-pointer' : ''}`}
+                                aria-label="Ảnh map background"
                             >
                                 {mapBackgroundTreeOpen ? (
                                     <div className="absolute inset-0 flex flex-col overflow-hidden">
@@ -597,37 +609,74 @@ export function MapFormModal({
                                     </div>
                                 ) : form.mapBackground ? (
                                     <>
-                                        <img
-                                            src={form.mapBackground}
-                                            alt="map_background"
-                                            className="absolute inset-0 w-full h-full object-cover"
-                                            onError={(e) => {
-                                                // Nếu path sai, bỏ render ảnh để khỏi làm vỡ layout.
-                                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                        <div
+                                            className="absolute inset-0 cursor-default"
+                                            role="button"
+                                            tabIndex={0}
+                                            title="Ctrl+click: chọn ảnh nền. Double-click: xem toàn màn hình."
+                                            onDoubleClick={(e) => {
+                                                e.preventDefault();
+                                                setMapBackgroundLightbox({
+                                                    src: form.mapBackground,
+                                                    alt: 'map_background',
+                                                });
                                             }}
-                                        />
-                                        <div className="absolute inset-0 bg-black/30" />
-                                        <div className="absolute left-2 right-2 bottom-2 text-[11px] text-white/90 line-clamp-2">
-                                            {form.mapBackground}
+                                            onClick={(e) => {
+                                                if (e.ctrlKey || e.metaKey) {
+                                                    e.preventDefault();
+                                                    setMapBackgroundTreeOpen(true);
+                                                }
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if ((e.ctrlKey || e.metaKey) && (e.key === 'Enter' || e.key === ' ')) {
+                                                    e.preventDefault();
+                                                    setMapBackgroundTreeOpen(true);
+                                                }
+                                            }}
+                                        >
+                                            <img
+                                                src={form.mapBackground}
+                                                alt="map_background"
+                                                className="pointer-events-none absolute inset-0 w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    // Nếu path sai, bỏ render ảnh để khỏi làm vỡ layout.
+                                                    (e.currentTarget as HTMLImageElement).style.display = 'none';
+                                                }}
+                                            />
+                                            <div className="pointer-events-none absolute inset-0 bg-black/30" />
+                                            <div className="pointer-events-none absolute left-2 right-10 bottom-2 text-[11px] text-white/90 line-clamp-2">
+                                                {form.mapBackground}
+                                            </div>
                                         </div>
+                                        <button
+                                            type="button"
+                                            className="absolute top-2 right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-sm text-white shadow-sm transition-colors hover:bg-black/75"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setForm((p) => ({ ...p, mapBackground: '' }));
+                                            }}
+                                            aria-label="Xóa ảnh nền"
+                                        >
+                                            ✕
+                                        </button>
                                     </>
                                 ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center px-2 text-xs text-muted-foreground">
+                                    <div
+                                        className="absolute inset-0 flex items-center justify-center px-2 text-xs text-muted-foreground"
+                                        role="button"
+                                        tabIndex={0}
+                                        title="Click để chọn ảnh nền"
+                                        onClick={() => setMapBackgroundTreeOpen(true)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                setMapBackgroundTreeOpen(true);
+                                            }
+                                        }}
+                                    >
                                         Chưa chọn map_background
                                     </div>
                                 )}
-                            </div>
-
-                            <div className="flex items-center gap-2 mt-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={!form.mapBackground}
-                                    onClick={() => setForm((p) => ({ ...p, mapBackground: '' }))}
-                                >
-                                    Xóa ảnh
-                                </Button>
                             </div>
                         </div>
 
@@ -645,9 +694,7 @@ export function MapFormModal({
                                 tabIndex={0}
                                 className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent select-none cursor-pointer ${form.status === 'enabled'
                                         ? 'bg-emerald-500 text-emerald-50 hover:bg-emerald-600'
-                                        : form.status === 'hidden'
-                                            ? 'bg-slate-600 text-slate-50 hover:bg-slate-700'
-                                            : 'bg-red-500 text-red-50 hover:bg-red-600'
+                                        : 'bg-red-500 text-red-50 hover:bg-red-600'
                                     }`}
                                 onClick={() => {
                                     const index = MAP_STATUSES.indexOf(form.status);
@@ -668,11 +715,20 @@ export function MapFormModal({
                         </div>
 
                         {/* Card Deck Builder */}
-                        <CardDeckBuilder
-                            cardIds={form.deckIds}
-                            availableCards={adventureCards}
-                            onDeckChange={(newIds) => setForm((p) => ({ ...p, deckIds: newIds }))}
-                        />
+                        <div>
+                            <CardDeckBuilder
+                                cardIds={form.deckIds}
+                                availableCards={adventureCards}
+                                onDeckChange={(newIds) => setForm((p) => ({ ...p, deckIds: newIds }))}
+                                filterCard={isAdventureCardShownInDeckSource}
+                            />
+                            {deckHasDisabledCards && (
+                                <p className="text-sm text-destructive mt-2">
+                                    Deck còn thẻ đã disabled (viền đỏ). Xóa hết các thẻ đó khỏi deck
+                                    trước khi lưu.
+                                </p>
+                            )}
+                        </div>
 
                         {/* Action buttons */}
                         <div className="flex justify-between gap-2 pt-2">
@@ -701,6 +757,12 @@ export function MapFormModal({
                 </div>
             </div>
 
+            <ImageLightbox
+                open={mapBackgroundLightbox}
+                onClose={() => setMapBackgroundLightbox(null)}
+                className="z-[10000]"
+            />
+
             <UnsavedChangesDialog
                 open={showUnsavedConfirm}
                 onStay={() => setShowUnsavedConfirm(false)}
@@ -722,6 +784,50 @@ export function MapFormModal({
                 title="Lưu bản dịch?"
                 description="Bạn đã chỉnh sửa i18n tên map chưa lưu. Bạn có muốn lưu trước khi đóng không?"
             />
+
+            {showDisabledDeckBlockDialog ? (
+                <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/60"
+                        onClick={() => setShowDisabledDeckBlockDialog(false)}
+                        aria-hidden
+                    />
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="disabled-deck-dialog-title"
+                        className="relative z-10 w-full max-w-md rounded-lg bg-card border border-border shadow-xl overflow-hidden"
+                    >
+                        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-muted/30 shrink-0">
+                            <h3 id="disabled-deck-dialog-title" className="text-lg font-semibold pr-2">
+                                Không thể lưu
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowDisabledDeckBlockDialog(false)}
+                                className="shrink-0 p-1.5 rounded-md hover:bg-muted text-xl leading-none"
+                                aria-label="Đóng"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            <p className="text-sm text-muted-foreground">
+                                Map vẫn còn thẻ adventure đã bị disabled trong deck. Hãy bấm nút −
+                                trên từng thẻ có viền đỏ để gỡ hết khỏi deck, sau đó lưu lại.
+                            </p>
+                            <div className="flex justify-end">
+                                <Button
+                                    type="button"
+                                    onClick={() => setShowDisabledDeckBlockDialog(false)}
+                                >
+                                    Đã hiểu
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </div>,
         document.body
     );

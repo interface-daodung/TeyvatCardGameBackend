@@ -62,10 +62,10 @@ export function CharacterDetailImage({
   }, [character.imageUnlock]);
 
   const resolvedSpritesheetUrl = useMemo(() => {
-    const s = character.spritesheetImage?.trim();
+    const s = character.imageSpritesheet?.trim();
     if (s) return s;
     return `/assets/images/cards/character/${character.nameId}-sprite.webp`;
-  }, [character.spritesheetImage, character.nameId]);
+  }, [character.imageSpritesheet, character.nameId]);
 
   useEffect(() => {
     if (imageTab !== 'animated') return;

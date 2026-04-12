@@ -10,7 +10,7 @@ import { CharacterLevelEditModal } from './CharacterLevelEditModal';
 import { useCharacterDetail, type UseCharacterDetailLangControl } from './useCharacterDetail';
 import { SourceClassEditor } from '../code/SourceClassEditor';
 import { CharacterClassAstFlow } from '../code/CharacterClassAstFlow';
-import { CharacterAttachedPanel } from './CharacterAttachedPanel';
+import { AttachedPanel } from '../share';
 import {
   filesService,
   type CharacterClassAstMapResult,
@@ -166,7 +166,7 @@ export function CharacterDetailView({
     setImagePickerOpen(false);
     if (imagePickerRoot === 'character-spritesheet') {
       try {
-        await detail.persistChanges({ spritesheetImage: path });
+        await detail.persistChanges({ imageSpritesheet: path });
       } catch {
         /* persistChanges đã set saveLoading; lỗi có thể báo sau */
       }
@@ -278,7 +278,7 @@ export function CharacterDetailView({
           />
         </motion.div>
       ) : drawerAttachedOpen ? (
-        <CharacterAttachedPanel
+        <AttachedPanel
           entityId={detail.character._id}
           attached={detail.character.attached}
           saveLoading={detail.saveLoading}

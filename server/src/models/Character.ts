@@ -1,14 +1,9 @@
 import mongoose, { Schema } from 'mongoose';
+import { AttachedSchema, type IAttached } from '../types/attached.js';
 
 export interface ICharacterLevelStat {
   level: number;
   price: number;
-}
-
-/** Ảnh đính kèm (vd. skin / biến thể): định danh + đường dẫn/link ảnh. */
-export interface ICharacterAttached {
-  nameId: string;
-  image: string;
 }
 
 export interface ICharacter extends mongoose.Document {
@@ -16,7 +11,7 @@ export interface ICharacter extends mongoose.Document {
   name: string;
   image: string;
   /** Đường dẫn web spritesheet animation (vd. .../character/Spritesheet/foo.webp). Rỗng = dùng mặc định `{nameId}-sprite.webp`. */
-  spritesheetImage?: string;
+  imageSpritesheet?: string;
   /** Ảnh unlock (thư mục cards/character/unlock). Rỗng/null → hiển thị empty.webp. */
   imageUnlock?: string;
   description: string; // i18n key: Character.{nameId}.description
@@ -28,7 +23,7 @@ export interface ICharacter extends mongoose.Document {
   status: 'enabled' | 'disabled';
   levelStats: ICharacterLevelStat[];
   /** Danh sách ảnh bổ sung (cặp nameId + link/path ảnh). Bản ghi cũ có thể thiếu field. */
-  attached?: ICharacterAttached[];
+  attached?: IAttached[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,14 +32,6 @@ const characterLevelStatSchema = new Schema<ICharacterLevelStat>(
   {
     level: { type: Number, required: true, min: 1 },
     price: { type: Number, required: true, min: 0 },
-  },
-  { _id: false }
-);
-
-const characterAttachedSchema = new Schema<ICharacterAttached>(
-  {
-    nameId: { type: String, required: true },
-    image: { type: String, required: true, default: '' },
   },
   { _id: false }
 );
@@ -64,7 +51,7 @@ const characterSchema = new Schema<ICharacter>(
       type: String,
       default: '',
     },
-    spritesheetImage: {
+    imageSpritesheet: {
       type: String,
       default: '',
     },
@@ -106,7 +93,7 @@ const characterSchema = new Schema<ICharacter>(
       default: [],
     },
     attached: {
-      type: [characterAttachedSchema],
+      type: [AttachedSchema],
       default: [],
     },
   },

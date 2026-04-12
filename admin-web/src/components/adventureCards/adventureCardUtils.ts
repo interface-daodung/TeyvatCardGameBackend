@@ -1,5 +1,12 @@
 import type { AdventureCard } from '../../services/gameDataService';
 
+export type AdventureCardStatus = 'enabled' | 'disabled';
+
+/** Chuẩn hóa trạng thái (bản ghi cũ có thể là `hidden`). */
+export function normalizeAdventureCardStatus(status: string | undefined | null): AdventureCardStatus {
+  return status === 'enabled' ? 'enabled' : 'disabled';
+}
+
 /** DB lưu contents là mảng ID (string[]). API có thể trả về populated (object[]) hoặc IDs. Chuẩn hóa về string[]. */
 export function contentsToIds(contents: unknown): string[] {
   if (!Array.isArray(contents)) return [];

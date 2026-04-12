@@ -5,7 +5,8 @@ const characterLevelStatSchema = z.object({
   price: z.number().min(0),
 });
 
-const characterAttachedSchema = z.object({
+/** Zod shape cho từng phần tử `attached` (khớp `IAttached` / `AttachedSchema`). */
+const attachedPayloadSchema = z.object({
   nameId: z.string().min(1),
   image: z.string(),
 });
@@ -17,14 +18,14 @@ export const createCharacterSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   image: z.string().optional(),
-  spritesheetImage: z.string().optional(),
+  imageSpritesheet: z.string().optional(),
   imageUnlock: z.string().optional(),
   element: elementEnum.optional(),
   HP: z.number().min(1).optional(),
   maxLevel: z.number().min(1).max(99).optional(),
   status: z.enum(['enabled', 'disabled']).optional(),
   levelStats: z.array(characterLevelStatSchema).optional(),
-  attached: z.array(characterAttachedSchema).optional(),
+  attached: z.array(attachedPayloadSchema).optional(),
 });
 
 export const updateCharacterSchema = createCharacterSchema.partial();
@@ -40,7 +41,7 @@ export const createAdventureCardSchema = z.object({
   rarity: z.number().min(1).max(5).optional(),
   className: z.string().optional(),
   image: z.string().optional(),
-  status: z.enum(['enabled', 'disabled', 'hidden']).optional(),
+  status: z.enum(['enabled', 'disabled']).optional(),
   // Additional fields based on type
   healthMin: z.number().optional(),
   healthMax: z.number().optional(),
@@ -56,7 +57,7 @@ export const createAdventureCardSchema = z.object({
   hp: z.number().optional(),
   resonanceDescription: z.string().optional(),
   contents: z.array(z.string()).optional(),
-  attached: z.array(characterAttachedSchema).optional(),
+  attached: z.array(attachedPayloadSchema).optional(),
 });
 
 export const updateAdventureCardSchema = createAdventureCardSchema.partial();
@@ -78,7 +79,7 @@ export const createMapSchema = z.object({
   map_background: z.string().optional(),
   typeRatios: mapTypeRatiosSchema.optional(),
   deck: z.array(z.string()),
-  status: z.enum(['enabled', 'disabled', 'hidden']).optional(),
+  status: z.enum(['enabled', 'disabled']).optional(),
 });
 
 export const updateMapSchema = createMapSchema.partial();
@@ -110,7 +111,7 @@ export const createItemSchema = z.object({
   maxLevel: z.number().min(1, "Max Level tối thiểu là 1").max(99, "Max Level tối đa là 99").optional(),
   unlockPrice: z.number().int().min(0, "Unlock price không được âm").max(999999999).optional(),
   levelStats: z.array(levelStatSchema).optional(),
-  attached: z.array(characterAttachedSchema).optional(),
+  attached: z.array(attachedPayloadSchema).optional(),
   /** Link class item (relative `models/items`); alias legacy `className`. */
   nameClass: z.string().optional(),
   className: z.string().optional(),
@@ -126,5 +127,5 @@ export const updateItemSchema = z.object({
   maxLevel: z.number().min(1, "Max Level tối thiểu là 1").max(99, "Max Level tối đa là 99").optional(),
   unlockPrice: z.number().int().min(0, "Unlock price không được âm").max(999999999).optional(),
   levelStats: z.array(levelStatSchema).optional(),
-  attached: z.array(characterAttachedSchema).optional(),
+  attached: z.array(attachedPayloadSchema).optional(),
 });

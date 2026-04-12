@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { gameDataService, type AdventureCard } from '../../services/gameDataService';
-import { useUnsavedBaseline } from '../unsavedChanges';
-import { contentsToIds } from './adventureCardUtils';
+import { useUnsavedBaseline } from '../share';
+import { contentsToIds, normalizeAdventureCardStatus } from './adventureCardUtils';
 import { localizationService } from '../../services/localizationService';
 import { filesService, type FileTreeItem } from '../../services/filesService';
 import type { EditLang } from '../LangDropdown';
@@ -262,7 +262,7 @@ export function useAdventureCardEdit(
   const applyOpenEdit = (card: AdventureCard) => {
     setPendingEditCard(null);
     setEditCard(card);
-    const next = structuredClone(card);
+    const next = { ...structuredClone(card), status: normalizeAdventureCardStatus(card.status) };
     setForm(next);
     setEditBaseline(next);
     setShowUnsavedConfirmEdit(false);

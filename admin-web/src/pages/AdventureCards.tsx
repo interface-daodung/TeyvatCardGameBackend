@@ -24,7 +24,7 @@ import { AdventureCardI18nEditorModal } from '../components/adventureCards/Adven
 import { AdventureCardCreateModal } from '../components/adventureCards/AdventureCardCreateModal';
 import { sortAdventureCards } from '../components/adventureCards/adventureCardUtils';
 import { useAdventureCardEdit } from '../components/adventureCards/useAdventureCardEdit';
-import { UnsavedChangesDialog } from '../components/unsavedChanges';
+import { UnsavedChangesDialog } from '../components/share';
 import { cn } from '../lib/utils';
 
 type CardTranslations = Record<string, Record<EditLang, string>>;

@@ -1,13 +1,14 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquarePen } from '@fortawesome/free-solid-svg-icons';
 import type { AdventureCard } from '../../services/gameDataService';
+import { normalizeAdventureCardStatus } from './adventureCardUtils';
 import { DualRangeSlider } from '../ui/DualRangeSlider';
 import { StatusCyclePillButton, adventureCardStatusPillClass } from '../share';
 import { ElementReactionPicker } from '../characters/ElementReactionPicker';
 import { ClanReactionPicker } from './ClanReactionPicker';
 import { WeaponCategoryReactionPicker } from './WeaponCategoryReactionPicker';
 
-const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled', 'hidden'];
+const STATUSES: AdventureCard['status'][] = ['enabled', 'disabled'];
 
 interface AdventureCardEditFormProps {
   card: AdventureCard;
@@ -31,7 +32,7 @@ export function AdventureCardEditForm({
   onOpenI18nDesc,
   onOpenClassNamePicker,
 }: AdventureCardEditFormProps) {
-  const currentStatus = (form.status ?? card.status) as AdventureCard['status'];
+  const currentStatus = normalizeAdventureCardStatus(form.status ?? card.status);
 
   return (
     <div className="space-y-4">
