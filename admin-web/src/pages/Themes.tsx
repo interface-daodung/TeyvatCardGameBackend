@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../components/PageHeader';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import {
   getThemes,
@@ -13,185 +12,25 @@ import {
   type Theme,
   type ThemeColors,
 } from '../services/themeService';
-import { scaleInModal, fadeInOverlay, fadeSlideCard } from '../components/animations/motionPresets';
+import { fadeSlideCard } from '../components/animations/motionPresets';
+import { ThemePreview } from '../components/themes/ThemePreview';
+import { ThemePaletteCard } from '../components/themes/ThemePaletteCard';
+import { ThemeFormModal } from '../components/themes/ThemeFormModal';
 
-const COLOR_KEYS: (keyof ThemeColors)[] = [
-  'primary',
-  'secondary',
-  'accent',
-  'neutral',
-  'background',
-  'surface',
-  'text',
-];
+const COLOR_KEYS: (keyof ThemeColors)[] = ['primary', 'secondary', 'accent', 'neutral', 'background', 'surface', 'text'];
 
-function ThemePreview({ colors }: { colors: ThemeColors }) {
-  return (
-    <div
-      className="rounded-lg overflow-hidden border border-slate-200 shadow-lg"
-      style={{
-        backgroundColor: colors.background,
-        color: colors.text,
-      }}
-    >
-      <div
-        className="p-4"
-        style={{ backgroundColor: colors.surface }}
-      >
-        <h3 className="font-semibold mb-2" style={{ color: colors.text }}>
-          Xem trước theme
-        </h3>
-        <p className="text-sm mb-3" style={{ color: colors.neutral }}>
-          Màu chữ neutral, nút primary và accent.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="px-3 py-1.5 rounded text-sm font-medium text-white"
-            style={{ backgroundColor: colors.primary }}
-          >
-            Primary
-          </button>
-          <button
-            type="button"
-            className="px-3 py-1.5 rounded text-sm font-medium"
-            style={{ backgroundColor: colors.secondary, color: colors.text }}
-          >
-            Secondary
-          </button>
-          <button
-            type="button"
-            className="px-3 py-1.5 rounded text-sm font-medium"
-            style={{ backgroundColor: colors.accent, color: colors.background }}
-          >
-            Accent
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+function getDefaultPreviewColors(themes: Theme[]): ThemeColors {
+  const defaultTheme = themes.find((theme) => theme.name.toLowerCase() === 'default');
+  if (defaultTheme) return defaultTheme.colors;
+  if (themes.length > 0) return themes[0].colors;
+  return defaultThemeColors();
 }
 
-function ThemeFormModal({
-  initialName,
-  initialColors,
-  onClose,
-  onSave,
-  saveLoading,
-}: {
-  initialName: string;
-  initialColors: ThemeColors;
-  onClose: () => void;
-  onSave: (name: string, colors: ThemeColors) => Promise<void>;
-  saveLoading: boolean;
-}) {
-  const [name, setName] = useState(initialName);
-  const [colors, setColors] = useState<ThemeColors>(initialColors);
-  const [error, setError] = useState<string | null>(null);
-
-  const setColor = (key: keyof ThemeColors, value: string) => {
-    setColors((prev) => ({ ...prev, [key]: value }));
-    setError(null);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      setError('Tên theme không được để trống.');
-      return;
-    }
-    const hex = /^#[0-9A-Fa-f]{6}$/;
-    for (const k of COLOR_KEYS) {
-      if (!hex.test(colors[k])) {
-        setError(`Màu "${k}" phải là mã hex (vd: #95245b).`);
-        return;
-      }
-    }
-    try {
-      await onSave(name.trim(), colors);
-      onClose();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Lưu thất bại.');
-    }
-  };
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-    >
-      <motion.div
-        className="absolute inset-0 bg-black/50 cursor-pointer"
-        aria-hidden
-        variants={fadeInOverlay}
-        initial="hidden"
-        animate="visible"
-        onClick={onClose}
-      />
-      <motion.div
-        className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative z-10"
-        onClick={(e) => e.stopPropagation()}
-        variants={scaleInModal}
-        initial="hidden"
-        animate="visible"
-      >
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-slate-800">
-            {initialName ? 'Chỉnh sửa theme' : 'Thêm theme mới'}
-          </h2>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Tên theme</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800"
-              placeholder="vd: default, dark, light"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <span className="block text-sm font-medium text-slate-700">Màu sắc</span>
-            {COLOR_KEYS.map((key) => (
-              <div key={key} className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={colors[key]}
-                  onChange={(e) => setColor(key, e.target.value)}
-                  className="w-10 h-10 rounded border border-slate-300 cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={colors[key]}
-                  onChange={(e) => setColor(key, e.target.value)}
-                  className="flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-mono"
-                  placeholder="#000000"
-                />
-                <span className="text-slate-500 text-sm w-24 capitalize">{key}</span>
-              </div>
-            ))}
-          </div>
-
-          {error && (
-            <div className="rounded-md bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>
-          )}
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Hủy
-            </Button>
-            <Button type="submit" disabled={saveLoading}>
-              {saveLoading ? 'Đang lưu...' : 'Lưu'}
-            </Button>
-          </div>
-        </form>
-      </motion.div>
-    </div>,
-    document.body
-  );
+function getPreviewThemeId(themes: Theme[]): string {
+  const defaultTheme = themes.find((theme) => theme.name.toLowerCase() === 'default');
+  if (defaultTheme) return defaultTheme._id;
+  if (themes.length > 0) return themes[0]._id;
+  return 'default';
 }
 
 export default function Themes() {
@@ -200,8 +39,32 @@ export default function Themes() {
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
-  const [previewColors, setPreviewColors] = useState<ThemeColors | null>(null);
+  const [previewColors, setPreviewColors] = useState<ThemeColors>(defaultThemeColors());
+  const [previewThemeId, setPreviewThemeId] = useState<string>('default');
   const [saveLoading, setSaveLoading] = useState(false);
+
+  const setPreviewByTheme = useCallback((theme: Theme) => {
+    setPreviewThemeId(theme._id);
+    setPreviewColors(theme.colors);
+  }, []);
+
+  const syncPreviewByList = useCallback(
+    (list: Theme[]) => {
+      if (list.length === 0) {
+        setPreviewThemeId('default');
+        setPreviewColors(defaultThemeColors());
+        return;
+      }
+      const current = list.find((theme) => theme._id === previewThemeId);
+      if (current) {
+        setPreviewColors(current.colors);
+        return;
+      }
+      setPreviewThemeId(getPreviewThemeId(list));
+      setPreviewColors(getDefaultPreviewColors(list));
+    },
+    [previewThemeId]
+  );
 
   const fetchThemes = useCallback(async () => {
     setLoading(true);
@@ -209,12 +72,13 @@ export default function Themes() {
     try {
       const list = await getThemes();
       setThemes(list);
+      syncPreviewByList(list);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không tải được danh sách theme.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [syncPreviewByList]);
 
   useEffect(() => {
     fetchThemes();
@@ -233,11 +97,9 @@ export default function Themes() {
   const handleSave = async (name: string, colors: ThemeColors) => {
     setSaveLoading(true);
     try {
-      if (editingTheme) {
-        await updateTheme(editingTheme._id, { name, colors });
-      } else {
-        await createTheme({ name, colors });
-      }
+      if (editingTheme) await updateTheme(editingTheme._id, { name, colors });
+      else await createTheme({ name, colors });
+
       await fetchThemes();
       setModalOpen(false);
       setEditingTheme(null);
@@ -247,38 +109,31 @@ export default function Themes() {
   };
 
   const handleDelete = async (theme: Theme) => {
+    if (theme.name.toLowerCase() === 'default') {
+      setError('Theme "default" không thể xóa, chỉ có thể chỉnh sửa.');
+      return;
+    }
     if (!window.confirm(`Xóa theme "${theme.name}"?`)) return;
+
     try {
       await deleteTheme(theme._id);
       await fetchThemes();
-      if (previewColors && themes.find((t) => t._id === theme._id)?.colors === previewColors) {
-        setPreviewColors(null);
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Xóa thất bại.');
     }
   };
 
-  const modalInitialName = editingTheme?.name ?? '';
-  const modalInitialColors = editingTheme?.colors ?? defaultThemeColors();
-
   return (
     <div className="p-4 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <PageHeader
-          title="Themes"
-          description="Chỉnh sửa và kiểm tra các bộ màu (lưu trong DB, collection themes)"
-        />
-        <Button onClick={openCreate}>Thêm theme</Button>
+        <PageHeader title="Themes" description="Chỉnh sửa và kiểm tra các bộ màu (lưu trong DB, collection themes)" />
+        <Button type="button" onClick={openCreate}>
+          Thêm theme
+        </Button>
       </div>
 
       {error && (
-        <motion.div
-          className="rounded-lg bg-destructive/10 text-destructive px-4 py-2 text-sm"
-          variants={fadeSlideCard}
-          initial="hidden"
-          animate="visible"
-        >
+        <motion.div className="rounded-lg bg-destructive/10 text-destructive px-4 py-2 text-sm" variants={fadeSlideCard} initial="hidden" animate="visible">
           {error}
         </motion.div>
       )}
@@ -287,97 +142,46 @@ export default function Themes() {
         <div className="text-slate-500">Đang tải...</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div
-            className="space-y-4"
-            variants={fadeSlideCard}
-            initial="hidden"
-            animate="visible"
-          >
+          <div className="space-y-4">
             <h3 className="text-lg font-medium text-slate-700">Danh sách theme</h3>
             {themes.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-slate-500">
-                  Chưa có theme. Bấm &quot;Thêm theme&quot; để tạo.
-                </CardContent>
+                <CardContent className="py-8 text-center text-slate-500">Chưa có theme. Bấm &quot;Thêm theme&quot; để tạo.</CardContent>
               </Card>
             ) : (
               <div className="space-y-3">
-                {themes.map((theme, index) => (
-                  <motion.div
-                    key={theme._id}
-                    variants={fadeSlideCard}
-                    initial="hidden"
-                    animate="visible"
-                    custom={index}
-                  >
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">{theme.name}</CardTitle>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setPreviewColors(theme.colors)}
-                            >
-                              Xem trước
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => openEdit(theme)}>
-                              Sửa
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(theme)}
-                            >
-                              Xóa
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="flex flex-wrap gap-1">
-                          {COLOR_KEYS.map((key) => (
-                            <div
-                              key={key}
-                              className="w-8 h-8 rounded border border-slate-200"
-                              style={{ backgroundColor: theme.colors[key] }}
-                              title={`${key}: ${theme.colors[key]}`}
-                            />
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+                {themes.map((theme) => {
+                  const isDefault = theme.name.toLowerCase() === 'default';
+                  const isPreviewing = previewThemeId === theme._id;
+                  return (
+                    <ThemePaletteCard
+                      key={theme._id}
+                      theme={theme}
+                      colorKeys={COLOR_KEYS}
+                      isDefault={isDefault}
+                      isPreviewing={isPreviewing}
+                      onPreview={() => setPreviewByTheme(theme)}
+                      onEdit={() => openEdit(theme)}
+                      onDelete={() => handleDelete(theme)}
+                    />
+                  );
+                })}
               </div>
             )}
-          </motion.div>
+          </div>
 
-          <motion.div
-            className="space-y-4"
-            variants={fadeSlideCard}
-            initial="hidden"
-            animate="visible"
-          >
+          <div className="space-y-4">
             <h3 className="text-lg font-medium text-slate-700">Xem trước bộ màu</h3>
-            {previewColors ? (
-              <ThemePreview colors={previewColors} />
-            ) : (
-              <Card>
-                <CardContent className="py-8 text-center text-slate-500">
-                  Chọn &quot;Xem trước&quot; trên một theme để hiển thị tại đây.
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
+            <ThemePreview colors={previewColors} />
+          </div>
         </div>
       )}
 
       {modalOpen && (
         <ThemeFormModal
-          initialName={modalInitialName}
-          initialColors={modalInitialColors}
+          initialName={editingTheme?.name ?? ''}
+          initialColors={editingTheme?.colors ?? defaultThemeColors()}
+          colorKeys={COLOR_KEYS}
           onClose={() => {
             setModalOpen(false);
             setEditingTheme(null);
