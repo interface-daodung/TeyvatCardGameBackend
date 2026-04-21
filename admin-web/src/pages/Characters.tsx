@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { gameDataService, type Character } from '../services/gameDataService';
@@ -20,9 +20,9 @@ import {
   characterDrawerLayoutEase,
 } from '../components/animations/motionPresets';
 import { Button } from '../components/ui/button';
-import { ClassNamePickerPanel } from '../components/adventureCards/ClassNamePickerPanel';
 import { ELEMENT_OPTIONS } from '../components/characters/characterDetailUtils';
 import { cn } from '../lib/utils';
+import { filesService, type CardClassTreeNode } from '../services/filesService';
 
 type CharacterElement = NonNullable<Character['element']>;
 
@@ -32,10 +32,13 @@ export default function Characters() {
   const [error, setError] = useState<string | null>(null);
   const [editLang, setEditLang] = useState<EditLang>('en');
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-  const [descriptionByNameId, setDescriptionByNameId] = useState<Record<string, string>>({});
+  const [descriptionTranslationsByNameId, setDescriptionTranslationsByNameId] = useState<
+    Record<string, Record<string, string>>
+  >({});
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [classPickerOpen, setClassPickerOpen] = useState(false);
   const [selectedClassName, setSelectedClassName] = useState('');
+  const [characterClassSuggestions, setCharacterClassSuggestions] = useState<string[]>([]);
+  const [characterClassSuggestionsLoaded, setCharacterClassSuggestionsLoaded] = useState(false);
   const [createNameId, setCreateNameId] = useState('');
   const [createHp, setCreateHp] = useState('10');
   const [createElement, setCreateElement] = useState<CharacterElement>('cryo');
@@ -62,9 +65,41 @@ export default function Characters() {
       .finally(() => setLoading(false));
   }, []);
 
+  const loadCharacterClassSuggestions = async () => {
+    if (characterClassSuggestionsLoaded) return;
+    const flattenClassNames = (nodes: CardClassTreeNode[]): string[] => {
+      const result: string[] = [];
+      const walk = (items: CardClassTreeNode[]) => {
+        for (const item of items) {
+          if (item.type === 'dir') {
+            if (item.children?.length) walk(item.children);
+            continue;
+          }
+          if (!item.name.endsWith('.ts')) continue;
+          const className = item.classes?.[0] ?? item.name.replace(/\.ts$/i, '');
+          if (className.trim()) result.push(className.trim());
+        }
+      };
+      walk(nodes);
+      return Array.from(new Set(result)).sort((a, b) => a.localeCompare(b));
+    };
+
+    filesService
+      .getCardClassTree('cards')
+      .then((tree) => {
+        const characterNode = tree.find((node) => node.type === 'dir' && node.name === 'character');
+        setCharacterClassSuggestions(flattenClassNames(characterNode?.children ?? []));
+        setCharacterClassSuggestionsLoaded(true);
+      })
+      .catch(() => {
+        setCharacterClassSuggestions([]);
+        setCharacterClassSuggestionsLoaded(false);
+      });
+  };
+
   useEffect(() => {
     if (characters.length === 0) {
-      setDescriptionByNameId({});
+      setDescriptionTranslationsByNameId({});
       return;
     }
     const keyFor = (c: Character) =>
@@ -73,17 +108,26 @@ export default function Characters() {
       characters.map((c) =>
         localizationService
           .getLocalizationByKey(keyFor(c))
-          .then((loc) => ({ nameId: c.nameId, t: loc.translations ?? {} }))
+          .then((loc) => ({ nameId: c.nameId, t: loc.translations ?? {} as Record<string, string> }))
           .catch(() => ({ nameId: c.nameId, t: {} as Record<string, string> }))
       )
     ).then((results) => {
-      const next: Record<string, string> = {};
+      const next: Record<string, Record<string, string>> = {};
       results.forEach(({ nameId, t }) => {
-        next[nameId] = t[editLang] ?? t.en ?? '';
+        next[nameId] = t;
       });
-      setDescriptionByNameId(next);
+      setDescriptionTranslationsByNameId(next);
     });
-  }, [characters, editLang]);
+  }, [characters]);
+
+  const descriptionByNameId = useMemo(() => {
+    const next: Record<string, string> = {};
+    for (const character of characters) {
+      const t = descriptionTranslationsByNameId[character.nameId] ?? {};
+      next[character.nameId] = t[editLang] ?? t.en ?? '';
+    }
+    return next;
+  }, [characters, descriptionTranslationsByNameId, editLang]);
 
   useEffect(() => {
     const el = document.getElementById('admin-main-scroll');
@@ -141,18 +185,7 @@ export default function Characters() {
     e.preventDefault();
   };
 
-  const handlePickCharacterClass = (className: string) => {
-    setCreateError(null);
-    setSelectedClassName(className);
-    setCreateNameId(className.toLowerCase());
-  };
-
   const handleCreateCharacterSubmit = async () => {
-    const className = selectedClassName.trim();
-    if (!className) {
-      setCreateError('Hãy chọn class từ thư mục character.');
-      return;
-    }
     const nameId = createNameId.trim().toLowerCase();
     if (!nameId) {
       setCreateError('Nhập nameId (ID duy nhất trong game, thường trùng chữ thường của tên class).');
@@ -170,16 +203,16 @@ export default function Characters() {
     setCreateError(null);
     setCreateLoading(true);
     try {
+      const className = selectedClassName.trim();
       const created = await gameDataService.createCharacter({
         nameId,
-        name: className,
+        name: className || nameId,
         HP: hp,
         element: createElement,
         description: `character.${nameId}.description`,
       });
       setCharacters((prev) => [created, ...prev]);
       setCreateModalOpen(false);
-      setClassPickerOpen(false);
       setSelectedClassName('');
       setCreateNameId('');
       setCreateHp('10');
@@ -196,7 +229,6 @@ export default function Characters() {
   const closeCreateModal = () => {
     if (createLoading) return;
     setCreateModalOpen(false);
-    setClassPickerOpen(false);
     setSelectedClassName('');
     setCreateNameId('');
     setCreateHp('10');
@@ -273,8 +305,8 @@ export default function Characters() {
           setCreateNameId('');
           setCreateHp('10');
           setCreateElement('cryo');
-          setClassPickerOpen(false);
           setCreateModalOpen(true);
+          void loadCharacterClassSuggestions();
         }}
       >
         Tạo thẻ mới
@@ -428,9 +460,6 @@ export default function Characters() {
                   <div className="flex items-center justify-between bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
                     <div>
                       <h2 className="text-xl font-semibold text-white">Tạo nhân vật mới</h2>
-                      <p className="mt-1 text-sm text-primary-100">
-                        Chọn class từ <span className="font-mono">…/cards/character</span>, rồi bấm Tạo.
-                      </p>
                     </div>
                     <button
                       type="button"
@@ -536,25 +565,29 @@ export default function Characters() {
                       </div>
                     </div>
                     <div>
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <label className="block text-xs font-medium text-muted-foreground">Class name</label>
-                        <button
-                          type="button"
-                          onClick={() => setClassPickerOpen(true)}
-                          className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-                        >
-                          Chọn từ cây thư mục
-                        </button>
-                      </div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">Class name</label>
                       <input
                         type="text"
-                        readOnly
-                        placeholder="Chọn từ cây thư mục"
+                        placeholder="Không bắt buộc (gợi ý theo file .ts)"
                         disabled={createLoading}
-                        className="w-full cursor-pointer rounded-md border border-input bg-muted/50 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+                        className="w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
                         value={selectedClassName}
-                        onClick={() => setClassPickerOpen(true)}
+                        list="character-class-suggestions"
+                        onChange={(e) => {
+                          setCreateError(null);
+                          const className = e.target.value;
+                          setSelectedClassName(className);
+                          setCreateNameId((prev) => prev.trim() || className.trim().toLowerCase());
+                        }}
                       />
+                      <datalist id="character-class-suggestions">
+                        {characterClassSuggestions.map((className) => (
+                          <option key={className} value={className} />
+                        ))}
+                      </datalist>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Gợi ý lấy từ tên file `.ts` trong `models/cards/character`.
+                      </p>
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
@@ -563,9 +596,7 @@ export default function Characters() {
                     </Button>
                     <Button
                       type="button"
-                      disabled={
-                        createLoading || !selectedClassName.trim() || !createNameId.trim()
-                      }
+                      disabled={createLoading || !createNameId.trim()}
                       onClick={handleCreateCharacterSubmit}
                     >
                       {createLoading ? 'Đang tạo...' : 'Tạo'}
@@ -573,17 +604,7 @@ export default function Characters() {
                   </div>
                 </div>
 
-                {classPickerOpen && (
-                  <ClassNamePickerPanel
-                    title="Chọn class nhân vật"
-                    subfolder="character"
-                    currentValue={selectedClassName}
-                    onSelect={(className) => {
-                      handlePickCharacterClass(className);
-                    }}
-                    onClose={() => setClassPickerOpen(false)}
-                  />
-                )}
+                
               </motion.div>
             </div>
           </div>,

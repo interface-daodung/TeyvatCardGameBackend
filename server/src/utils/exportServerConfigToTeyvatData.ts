@@ -22,16 +22,51 @@ export interface ExportResult {
 
 type RawDoc = Record<string, unknown>;
 
-/** `{ nameId, image }[]` cho client; bỏ phần tử không hợp lệ. */
-function normalizeAttached(raw: unknown): { nameId: string; image: string }[] {
+type NormalizedAttached = {
+  nameId: string;
+  image: string;
+  type: 'SE' | 'image' | 'animation';
+  frameRate?: number;
+  frameTotal?: number;
+};
+
+function inferAttachedTypeFromPath(imagePath: string): 'SE' | 'image' | 'animation' {
+  const normalized = imagePath.replace(/\\/g, '/').toLowerCase();
+  if (normalized.includes('/assets/images/animations/')) return 'animation';
+  if (normalized.includes('/assets/sounds/se/')) return 'SE';
+  return 'image';
+}
+
+/** `{ nameId, image, type, frameRate?, frameTotal? }[]` cho client; bỏ phần tử không hợp lệ. */
+function normalizeAttached(raw: unknown): NormalizedAttached[] {
   if (!Array.isArray(raw)) return [];
-  const out: { nameId: string; image: string }[] = [];
+  const out: NormalizedAttached[] = [];
   for (const x of raw) {
     if (x == null || typeof x !== 'object') continue;
     const o = x as Record<string, unknown>;
     const nameId = typeof o.nameId === 'string' ? o.nameId : '';
     const image = typeof o.image === 'string' ? o.image : '';
-    if (nameId || image) out.push({ nameId, image });
+    if (!nameId && !image) continue;
+
+    const rawType = typeof o.type === 'string' ? o.type : '';
+    const inferredType = inferAttachedTypeFromPath(image);
+    const type: NormalizedAttached['type'] =
+      rawType === 'animation' || rawType === 'SE' || rawType === 'image' ? rawType : inferredType;
+
+    const rawFrameRate = typeof o.frameRate === 'number' ? o.frameRate : null;
+    const rawFrameTotal = typeof o.frameTotal === 'number' ? o.frameTotal : null;
+    if (type === 'animation') {
+      out.push({
+        nameId,
+        image,
+        type,
+        frameRate: rawFrameRate != null && Number.isFinite(rawFrameRate) && rawFrameRate > 0 ? Math.floor(rawFrameRate) : 1,
+        frameTotal:
+          rawFrameTotal != null && Number.isFinite(rawFrameTotal) && rawFrameTotal > 0 ? Math.floor(rawFrameTotal) : 1,
+      });
+      continue;
+    }
+    out.push({ nameId, image, type });
   }
   return out;
 }
@@ -202,8 +237,6 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
       description: `adventureCard.${id}.description`,
       className: (c as any).className ?? (c as any).nameId,
       image: strField(cd, 'image'),
-      imageSpritesheet: strField(cd, 'imageSpritesheet'),
-      imageUnlock: strField(cd, 'imageUnlock'),
       attached: normalizeAttached(cd.attached),
     };
     if ((c as any).category != null) entry.category = (c as any).category;
@@ -242,8 +275,6 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
         description: 'Empty - Thẻ trống không có tác dụng.',
         className: 'Empty',
         image: '',
-        imageSpritesheet: '',
-        imageUnlock: '',
         attached: [],
       },
     ];
@@ -284,16 +315,43 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
     error: '#e74c3c',
     info: '#3498db',
   };
-  const themeMap: Record<string, { name: string; colors: Record<string, unknown> }> = {};
+  const defaultAssets = {
+    background: '/assets/images/ui/background/default.webp',
+    icons: {
+      compass: '/assets/images/ui/compass.webp',
+      equip: '/assets/images/ui/equip.webp',
+      library: '/assets/images/ui/library.webp',
+    },
+  };
+  const themeMap: Record<
+    string,
+    { name: string; colors: Record<string, unknown>; assets: typeof defaultAssets }
+  > = {};
   if (Array.isArray(themes)) {
     for (const t of themes) {
       const name = ((t as any).name as string) || 'default';
       const raw = (t as any).colors ?? {};
+      const rawAssets = (t as any).assets ?? {};
+      const rawIcons = rawAssets.icons ?? {};
       const colors: Record<string, unknown> = { ...defaultColors };
       for (const k of Object.keys(defaultColors)) {
         if (raw[k] != null && typeof raw[k] === 'string') colors[k] = raw[k];
       }
-      themeMap[name] = { name, colors };
+      const bgPath =
+        typeof rawAssets.background === 'string' && rawAssets.background.trim() !== ''
+          ? rawAssets.background
+          : typeof rawAssets.backgroundImage === 'string'
+            ? rawAssets.backgroundImage
+            : defaultAssets.background;
+      const assets = {
+        background: bgPath,
+        icons: {
+          compass: typeof rawIcons.compass === 'string' ? rawIcons.compass : defaultAssets.icons.compass,
+          equip: typeof rawIcons.equip === 'string' ? rawIcons.equip : defaultAssets.icons.equip,
+          library: typeof rawIcons.library === 'string' ? rawIcons.library : defaultAssets.icons.library,
+        },
+      };
+      themeMap[name] = { name, colors, assets };
     }
   }
 
@@ -304,6 +362,7 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
           default: {
             name: 'default',
             colors: { ...defaultColors },
+            assets: { ...defaultAssets, icons: { ...defaultAssets.icons } },
           },
         };
 
@@ -327,8 +386,6 @@ function transformToTeyvatFormat(configuration: Record<string, unknown>): {
         levelStats: Array.isArray(d.levelStats) ? d.levelStats : [],
         nameClass,
         image: typeof d.image === 'string' ? d.image : '',
-        imageSpritesheet: typeof d.imageSpritesheet === 'string' ? d.imageSpritesheet : '',
-        imageUnlock: typeof d.imageUnlock === 'string' ? d.imageUnlock : '',
         attached: normalizeAttached(d.attached),
       };
     });

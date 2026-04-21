@@ -12,6 +12,30 @@ import {
 } from '../utils/exportServerConfigToTeyvatData.js';
 import { getTeyvatPackageMajor } from '../utils/teyvatPackageVersion.js';
 
+const DEFAULT_THEME_BG = '/assets/images/ui/background/default.webp';
+
+/** Theme từ DB (lean) có thể còn `assets.backgroundImage` — chuẩn hóa trước khi hash/sync vào ServerConfigurationVersion. */
+function normalizeThemesForConfiguration(themes: Record<string, unknown>[]): Record<string, unknown>[] {
+  return themes.map((t) => {
+    const assets = t.assets as Record<string, unknown> | undefined;
+    if (!assets || typeof assets !== 'object') return t;
+    const bg =
+      typeof assets.background === 'string' && assets.background.trim() !== ''
+        ? assets.background
+        : typeof assets.backgroundImage === 'string'
+          ? assets.backgroundImage
+          : DEFAULT_THEME_BG;
+    const { backgroundImage: _legacy, ...rest } = assets;
+    return {
+      ...t,
+      assets: {
+        ...rest,
+        background: bg,
+      },
+    };
+  });
+}
+
 function canonicalJson(obj: unknown): string {
   if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
   if (Array.isArray(obj)) return '[' + obj.map(canonicalJson).join(',') + ']';
@@ -132,7 +156,11 @@ function buildConfigDiff(
   diff('maps', currMaps, prevMaps);
   diff('cards', currCards, prevCards);
   diff('characters', currChars, prevChars);
-  diff('themes', currThemes, prevThemes);
+  diff(
+    'themes',
+    normalizeThemesForConfiguration(currThemes),
+    normalizeThemesForConfiguration(prevThemes)
+  );
   diff('items', currItems, prevItems);
 
   const prevEn = (prevCfg?.localizations as { en?: Record<string, string> })?.en ?? {};
@@ -228,7 +256,7 @@ export async function checkServerConfigurationUpdate(): Promise<CheckServerConfi
       characters: buildCharacterDataForConfig(characters as Record<string, unknown>[]),
     },
     localizations: localizationSnapshot,
-    themeData: { themes },
+    themeData: { themes: normalizeThemesForConfiguration(themes as Record<string, unknown>[]) },
     itemData: {
       items: buildItemDataForConfig(items as Record<string, unknown>[]),
     },
@@ -278,7 +306,11 @@ export async function checkServerConfigurationUpdate(): Promise<CheckServerConfi
     diff('maps', mapsWithBackground as Record<string, unknown>[], prevMaps);
     diff('cards', (configuration.CardsData as { cards?: Record<string, unknown>[] }).cards ?? [], prevCards);
     diff('characters', buildCharacterDataForConfig(characters as Record<string, unknown>[]), prevChars);
-    diff('themes', themes as Record<string, unknown>[], prevThemes);
+    diff(
+      'themes',
+      normalizeThemesForConfiguration(themes as Record<string, unknown>[]),
+      normalizeThemesForConfiguration(prevThemes as Record<string, unknown>[])
+    );
     diff('items', buildItemDataForConfig(items as Record<string, unknown>[]), prevItems);
     const prevEn = (latestCfg?.localizations as { en?: Record<string, string> })?.en ?? {};
     const currEn = localizationSnapshot.en;
@@ -408,7 +440,7 @@ export async function syncServerConfigurationVersion(): Promise<
       characters: charactersInConfig,
     },
     localizations: localizationSnapshot,
-    themeData: { themes },
+    themeData: { themes: normalizeThemesForConfiguration(themes as Record<string, unknown>[]) },
     itemData: {
       items: buildItemDataForConfig(items as Record<string, unknown>[]),
     },

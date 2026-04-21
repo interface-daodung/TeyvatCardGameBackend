@@ -203,14 +203,6 @@ export default function Login() {
         </Card>
         </motion.div>
 
-        <motion.p
-          className="text-center text-sm text-purple-600/70 font-medium bg-purple-50/50 px-4 py-2 rounded-lg border border-purple-200/50"
-          variants={fadeInText}
-          initial="hidden"
-          animate="visible"
-        >
-          Default: admin@example.com / admin123
-        </motion.p>
       </div>
     </div>
   );

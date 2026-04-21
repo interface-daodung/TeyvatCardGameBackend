@@ -10,6 +10,7 @@ import {
   unbanCard,
   revokeRefreshToken,
   verifyUserEmail,
+  changeUserPassword,
 } from '../controllers/userController.js';
 
 export const userRoutes = Router();
@@ -25,3 +26,4 @@ userRoutes.post('/:id/ban-card', banCard);
 userRoutes.post('/:id/unban-card', unbanCard);
 userRoutes.post('/:id/revoke-refresh-token', revokeRefreshToken);
 userRoutes.post('/:id/verify-email', verifyUserEmail);
+userRoutes.post('/:id/change-password', changeUserPassword);

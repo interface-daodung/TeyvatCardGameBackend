@@ -4,16 +4,16 @@ overview: Đánh giá cho thấy có thể tách phần chọn ảnh dùng chung
 todos:
   - id: extract-base-surface
     content: Tạo `ImagePickerSurface` (và nếu cần `FileTreePickerOverlay`) để gom overlay + trigger + lightbox tĩnh
-    status: pending
+    status: completed
   - id: migrate-adventure-equipment
     content: Chuyển `AdventureCardImagePicker` và `EquipmentItemImagePicker` sang dùng component chung, giữ UI riêng qua props/render slot
-    status: pending
+    status: completed
   - id: optional-character-phase2
     content: Tái dùng component chung cho tab `default/unlock` của `CharacterDetailImage`, giữ nguyên tab `animated`
-    status: pending
+    status: completed
   - id: verify-regression
     content: Kiểm tra thủ công toàn bộ luồng mở picker, chọn ảnh, lightbox và keyboard interaction
-    status: pending
+    status: completed
 isProject: false
 ---
 

@@ -10,6 +10,10 @@ export interface FileTreeDragItem {
   name: string;
 }
 
+function getFileIcon(path: string) {
+  return /\.(mp3|ogg|wav|m4a|aac|webm)$/i.test(path) ? '🎵' : '🖼️';
+}
+
 interface TreeNodeProps {
   item: FileTreeItem;
   expanded: Set<string>;
@@ -65,7 +69,10 @@ export function FileTreeNode({
           }
           className="flex-1 min-w-0 text-left px-2 py-1 flex items-center gap-1 truncate"
         >
-          <span className="text-blue-600 truncate">🖼️ {item.name}</span>
+          <span className="flex items-center gap-1 text-blue-600 truncate">
+            <span className="shrink-0 leading-none">{getFileIcon(item.path)}</span>
+            <span className="truncate">{item.name}</span>
+          </span>
         </button>
         {showEdit && (
           <button

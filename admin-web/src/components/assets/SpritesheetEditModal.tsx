@@ -20,7 +20,7 @@ import {
 
 export type { SpritesheetFileOption };
 
-type PanelTab = 'collection' | 'preview' | 'json';
+type PanelTab = 'collection' | 'preview' | 'json' | 'resize';
 
 type Props = {
   files: SpritesheetFileOption[];
@@ -49,6 +49,9 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveOk, setSaveOk] = useState<string | null>(null);
+  const [resizeExporting, setResizeExporting] = useState(false);
+  const [resizeError, setResizeError] = useState<string | null>(null);
+  const [resizeOk, setResizeOk] = useState<string | null>(null);
   const [decodeLoading, setDecodeLoading] = useState(false);
   const [lightboxFrame, setLightboxFrame] = useState<{ src: string; alt: string } | null>(null);
 
@@ -96,6 +99,8 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
 
   useEffect(() => {
     setLightboxFrame(null);
+    setResizeError(null);
+    setResizeOk(null);
   }, [selectedPath]);
 
   useEffect(() => {
@@ -103,6 +108,12 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
     const t = window.setTimeout(() => setSaveOk(null), 5000);
     return () => window.clearTimeout(t);
   }, [saveOk]);
+
+  useEffect(() => {
+    if (!resizeOk) return;
+    const t = window.setTimeout(() => setResizeOk(null), 8000);
+    return () => window.clearTimeout(t);
+  }, [resizeOk]);
 
   const gridInfo = useMemo(() => {
     const n = frameCanvases.length;
@@ -214,7 +225,33 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
     setSourceDims(null);
     setSaveError(null);
     setSaveOk(null);
+    setResizeError(null);
+    setResizeOk(null);
   };
+
+  const canExportResize = frameCanvases.length > 0 && !decodeLoading;
+
+  const handleExportResize = useCallback(async () => {
+    if (!selectedPath || !canExportResize) return;
+    try {
+      setResizeExporting(true);
+      setResizeError(null);
+      setResizeOk(null);
+      const r = await filesService.exportSpritesheetResizeVariants(selectedPath);
+      setResizeOk(
+        `Desktop: ${r.desktop.imageUrl} (${r.desktop.sheetSize.w}×${r.desktop.sheetSize.h}) · Mobile: ${r.mobile.imageUrl} (${r.mobile.sheetSize.w}×${r.mobile.sheetSize.h})`
+      );
+      onSaved?.();
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : 'Xuất resize thất bại';
+      setResizeError(msg || 'Xuất resize thất bại');
+    } finally {
+      setResizeExporting(false);
+    }
+  }, [selectedPath, canExportResize, onSaved]);
 
   const handleSave = useCallback(async () => {
     if (!selectedPath || !canSave) return;
@@ -241,15 +278,15 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
       onClick={() => {
-        if (!saving) onClose();
+        if (!saving && !resizeExporting) onClose();
       }}
     >
       <Card
         className="relative w-full max-w-6xl overflow-hidden border bg-card shadow-2xl"
         onClick={(e) => e.stopPropagation()}
-        aria-busy={saving}
+        aria-busy={saving || resizeExporting}
       >
-        <div aria-hidden={saving}>
+        <div aria-hidden={saving || resizeExporting}>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-lg font-semibold tracking-tight">Spritesheet edit</CardTitle>
           <div className="flex items-center gap-2">
@@ -263,7 +300,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                   ? 'text-sky-600 hover:bg-sky-500/10 hover:text-sky-700'
                   : 'text-muted-foreground'
               )}
-              disabled={!canSave || saving || !selectedPath}
+              disabled={!canSave || saving || resizeExporting || !selectedPath}
               title={
                 canSave
                   ? 'Lưu spritesheet bestGrid ra admin-web/public'
@@ -274,7 +311,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
               <FontAwesomeIcon icon={faFloppyDisk} className="h-4 w-4" />
               <span className="sr-only">Lưu bestGrid</span>
             </Button>
-            <Button variant="ghost" size="sm" type="button" disabled={saving} onClick={onClose}>
+            <Button variant="ghost" size="sm" type="button" disabled={saving || resizeExporting} onClick={onClose}>
               ✕
             </Button>
           </div>
@@ -337,7 +374,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                       role="tablist"
                       aria-label="Spritesheet panels"
                     >
-                      {(['collection', 'preview', 'json'] as const).map((tab) => (
+                      {(['collection', 'preview', 'json', 'resize'] as const).map((tab) => (
                         <button
                           key={tab}
                           type="button"
@@ -468,6 +505,37 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                         )}
                       </div>
                     )}
+
+                    {panelTab === 'resize' && (
+                      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                          Cắt từng frame {FW}×{FH}, resize stretch (Sharp <span className="font-mono">fit: &apos;fill&apos;</span>)
+                          rồi ghép bestGrid — không thu nhỏ trực tiếp cả spritesheet gốc.                           Desktop:{' '}
+                          <span className="font-medium text-foreground">210×360</span> / frame · Mobile:{' '}
+                          <span className="font-medium text-foreground">105×180</span> / frame. File ghi vào{' '}
+                          <span className="font-mono text-[11px]">server/uploads/resize/desktop/</span> và{' '}
+                          <span className="font-mono text-[11px]">server/uploads/resize/mobile/</span> — cùng tên file gốc{' '}
+                          <span className="font-mono text-[11px]">{'{basename}'}.webp</span>.
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-8"
+                            disabled={!canExportResize || resizeExporting}
+                            onClick={() => void handleExportResize()}
+                          >
+                            Xuất desktop + mobile
+                          </Button>
+                        </div>
+                        {resizeError && (
+                          <p className="text-xs font-medium text-destructive">{resizeError}</p>
+                        )}
+                        {resizeOk && (
+                          <p className="break-all text-xs font-medium text-emerald-600">{resizeOk}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -489,9 +557,13 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
         </div>
 
         <AssetLoadingOverlay
-          show={saving}
+          show={saving || resizeExporting}
           variant="modal"
-          label="Đang lưu và xử lý ảnh trên server…"
+          label={
+            resizeExporting
+              ? 'Đang xuất resize (desktop + mobile) trên server…'
+              : 'Đang lưu và xử lý ảnh trên server…'
+          }
           subLabel="Vui lòng chờ phản hồi."
         />
       </Card>

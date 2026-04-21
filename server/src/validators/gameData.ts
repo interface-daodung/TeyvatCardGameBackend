@@ -6,10 +6,55 @@ const characterLevelStatSchema = z.object({
 });
 
 /** Zod shape cho từng phần tử `attached` (khớp `IAttached` / `AttachedSchema`). */
-const attachedPayloadSchema = z.object({
-  nameId: z.string().min(1),
-  image: z.string(),
-});
+function inferAttachedTypeFromPath(imagePath: string): 'SE' | 'image' | 'animation' {
+  const normalized = imagePath.replace(/\\/g, '/').toLowerCase();
+  if (normalized.includes('/assets/images/animations/')) return 'animation';
+  if (normalized.includes('/assets/sounds/se/')) return 'SE';
+  return 'image';
+}
+
+const attachedPayloadSchema = z
+  .object({
+    nameId: z.string().min(1),
+    image: z.string(),
+    type: z.enum(['SE', 'image', 'animation']).optional(),
+    frameRate: z.number().int().min(1).optional(),
+    frameTotal: z.number().int().min(1).optional(),
+  })
+  .superRefine((val, ctx) => {
+    const effectiveType = val.type ?? inferAttachedTypeFromPath(val.image);
+    if (effectiveType === 'animation') {
+      if (val.frameRate == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['frameRate'],
+          message: 'frameRate bắt buộc khi type=animation',
+        });
+      }
+      if (val.frameTotal == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['frameTotal'],
+          message: 'frameTotal bắt buộc khi type=animation',
+        });
+      }
+      return;
+    }
+    if (val.frameRate != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['frameRate'],
+        message: 'frameRate chỉ dùng cho type=animation',
+      });
+    }
+    if (val.frameTotal != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['frameTotal'],
+        message: 'frameTotal chỉ dùng cho type=animation',
+      });
+    }
+  });
 
 const elementEnum = z.enum(['anemo', 'cryo', 'dendro', 'electro', 'geo', 'hydro', 'pyro', 'none']);
 

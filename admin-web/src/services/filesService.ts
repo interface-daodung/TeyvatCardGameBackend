@@ -159,8 +159,8 @@ export const filesService = {
   },
 
   /**
-   * Bản sao từ `server/atlas/desktop|mobile` → `TeyvatCard/public/assets/{desktop|mobile}/atlas`
-   * (server/atlas không đổi). JSON: `meta.path` = `assets/desktop|mobile/atlas/*.webp`.
+   * Bản sao từ `server/atlas/desktop|mobile` → `TeyvatCard/public/assets/images/{desktop|mobile}/atlas`
+   * (server/atlas không đổi). JSON: `meta.path` = `assets/images/desktop|mobile/atlas/*.webp`.
    */
   exportAtlasToTeyvat: async (
     name: string,
@@ -218,6 +218,16 @@ export const filesService = {
       };
     }
     return { ok: true, exported };
+  },
+
+  exportAnimationToTeyvat: async (
+    path: string,
+    confirmOverwrite: boolean
+  ): Promise<void> => {
+    await api.post('/files/animations/export-to-teyvat', {
+      path,
+      confirmOverwrite,
+    });
   },
 
   uploadImage: async (file: File): Promise<{ imageUrl: string }> => {
@@ -463,6 +473,18 @@ export const filesService = {
       sheetSize: { w: number; h: number };
       frameCount: number;
     }>('/files/spritesheet-best-grid', { path });
+    return response.data;
+  },
+
+  /**
+   * Cắt từng frame 350×590, resize stretch (fill) 210×360 / 105×180, ghép bestGrid.
+   * Ghi `server/uploads/resize/desktop/{name}.webp` và `server/uploads/resize/mobile/{name}.webp`.
+   */
+  exportSpritesheetResizeVariants: async (path: string) => {
+    const response = await api.post<{
+      desktop: { imageUrl: string; sheetSize: { w: number; h: number }; frameCount: number };
+      mobile: { imageUrl: string; sheetSize: { w: number; h: number }; frameCount: number };
+    }>('/files/spritesheet-resize-exports', { path });
     return response.data;
   },
 

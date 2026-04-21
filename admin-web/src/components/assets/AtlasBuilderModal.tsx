@@ -10,6 +10,7 @@ import {
 import { JsonRawHighlight } from './JsonRawHighlight';
 import { AssetLoadingOverlay } from './AssetLoadingOverlay';
 import { buildSimulatedAtlasMetadata, drawImageCover } from './atlasPreviewUtils';
+import { gameDataService } from '../../services/gameDataService';
 
 interface AtlasImageItem {
   path: string;
@@ -30,6 +31,10 @@ interface AtlasBuilderModalProps {
     count: number;
     sheetSize: { w: number; h: number };
   }) => void;
+  /** Pre-fill atlas name (e.g. when opened from map form). Must match server validation if used as-is. */
+  initialAtlasName?: string;
+  /** Pre-select these image paths in the collection (paths must exist in `images`). */
+  initialSelectedPaths?: string[];
 }
 
 function recordDims(
@@ -46,12 +51,22 @@ function recordDims(
   });
 }
 
-export function AtlasBuilderModal({ images, onClose, onCreated }: AtlasBuilderModalProps) {
-  const [selected, setSelected] = useState<string[]>([]);
+export function AtlasBuilderModal({
+  images,
+  onClose,
+  onCreated,
+  initialAtlasName,
+  initialSelectedPaths,
+}: AtlasBuilderModalProps) {
+  const [selected, setSelected] = useState<string[]>(() => {
+    if (!initialSelectedPaths?.length) return [];
+    return initialSelectedPaths.filter((p) => images.some((i) => i.path === p));
+  });
   const [dims, setDims] = useState<Record<string, { w: number; h: number }>>({});
   const [availableTab, setAvailableTab] = useState<AvailableTab>('card');
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialAtlasName ?? '');
   const [submitting, setSubmitting] = useState(false);
+  const [loadingCardsPreset, setLoadingCardsPreset] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [atlasNameEnterError, setAtlasNameEnterError] = useState<string | null>(null);
   const [atlasPanelTab, setAtlasPanelTab] = useState<AtlasPanelTab>('collection');
@@ -329,6 +344,62 @@ export function AtlasBuilderModal({ images, onClose, onCreated }: AtlasBuilderMo
     setSelected([]);
   };
 
+  const normalizePath = (value: string) =>
+    value.trim().replace(/\\/g, '/').replace(/^https?:\/\/[^/]+/i, '');
+
+  const getBasename = (value: string) => {
+    const normalized = normalizePath(value);
+    const idx = normalized.lastIndexOf('/');
+    return idx >= 0 ? normalized.slice(idx + 1).toLowerCase() : normalized.toLowerCase();
+  };
+
+  const handleApplyCardsPreset = useCallback(async () => {
+    try {
+      setLoadingCardsPreset(true);
+      setError(null);
+      const cards = await gameDataService.getAdventureCards();
+      const normalizedImageMap = new Map<string, string>();
+      const basenameImageMap = new Map<string, string>();
+
+      for (const img of images) {
+        const normalized = normalizePath(img.path);
+        normalizedImageMap.set(normalized, img.path);
+        const basename = getBasename(normalized);
+        if (!basenameImageMap.has(basename)) {
+          basenameImageMap.set(basename, img.path);
+        }
+      }
+
+      const matchedPaths: string[] = [];
+      for (const card of cards) {
+        if (!card.image) continue;
+        const normalizedCardImage = normalizePath(card.image);
+        const byFullPath = normalizedImageMap.get(normalizedCardImage);
+        const byBasename = basenameImageMap.get(getBasename(normalizedCardImage));
+        const resolvedPath = byFullPath ?? byBasename;
+        if (resolvedPath) {
+          matchedPaths.push(resolvedPath);
+        }
+      }
+
+      const uniqueMatchedPaths = Array.from(new Set(matchedPaths));
+      if (uniqueMatchedPaths.length === 0) {
+        setError('Không tìm thấy ảnh card nào khớp để thêm vào atlas.');
+        return;
+      }
+
+      setSelected(uniqueMatchedPaths);
+      setName('cards');
+      setAvailableTab('card');
+      setAtlasPanelTab('collection');
+      setAtlasNameEnterError(null);
+    } catch {
+      setError('Không tải được danh sách cards.');
+    } finally {
+      setLoadingCardsPreset(false);
+    }
+  }, [images]);
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const path = e.dataTransfer.getData('text/plain');
@@ -532,18 +603,35 @@ export function AtlasBuilderModal({ images, onClose, onCreated }: AtlasBuilderMo
                     JSON
                   </button>
                 </div>
-                <button
-                  type="button"
-                  title="Xóa hết ảnh trong atlas để đổi tab"
-                  disabled={selected.length === 0}
-                  onClick={handleClearAtlas}
-                  className={cn(
-                    '-mb-px shrink-0 border-b-2 border-transparent px-2 py-1.5 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground',
-                    selected.length === 0 && 'cursor-not-allowed opacity-50'
-                  )}
-                >
-                  reset
-                </button>
+                <div className="ml-auto flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    title="Lấy toàn bộ ảnh từ danh sách cards"
+                    disabled={loadingCardsPreset || submitting}
+                    onClick={() => {
+                      void handleApplyCardsPreset();
+                    }}
+                    className={cn(
+                      '-mb-px shrink-0 border-b-2 border-transparent px-2 py-1.5 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground',
+                      (loadingCardsPreset || submitting) && 'cursor-not-allowed opacity-50'
+                    )}
+                  >
+                    {loadingCardsPreset ? 'cards...' : 'cards'}
+                  </button>
+                  <button
+                    type="button"
+                    title="Xóa hết ảnh trong atlas để đổi tab"
+                    disabled={selected.length === 0 || loadingCardsPreset || submitting}
+                    onClick={handleClearAtlas}
+                    className={cn(
+                      '-mb-px shrink-0 border-b-2 border-transparent px-2 py-1.5 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground',
+                      (selected.length === 0 || loadingCardsPreset || submitting) &&
+                        'cursor-not-allowed opacity-50'
+                    )}
+                  >
+                    reset
+                  </button>
+                </div>
               </div>
 
               <div

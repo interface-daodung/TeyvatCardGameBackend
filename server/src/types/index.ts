@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 
-export type { IAttached } from './attached.js';
+export type { AttachedType, IAttached } from './attached.js';
 export { AttachedSchema } from './attached.js';
 
 export interface AuthRequest extends Request {

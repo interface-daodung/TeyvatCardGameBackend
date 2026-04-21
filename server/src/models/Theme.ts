@@ -10,9 +10,21 @@ export interface IThemeColors {
   text: string;
 }
 
+export interface IThemeAssetIcons {
+  compass: string;
+  equip: string;
+  library: string;
+}
+
+export interface IThemeAssets {
+  background: string;
+  icons: IThemeAssetIcons;
+}
+
 export interface ITheme extends mongoose.Document {
   name: string;
   colors: IThemeColors;
+  assets: IThemeAssets;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,6 +57,30 @@ const themeSchema = new Schema<ITheme>(
         surface: '#1a1a2e',
         text: '#ffffff',
       }),
+    },
+    assets: {
+      background: {
+        type: String,
+        required: true,
+        default: '/assets/images/ui/background/default.webp',
+      },
+      icons: {
+        compass: {
+          type: String,
+          required: true,
+          default: '/assets/images/ui/compass.webp',
+        },
+        equip: {
+          type: String,
+          required: true,
+          default: '/assets/images/ui/equip.webp',
+        },
+        library: {
+          type: String,
+          required: true,
+          default: '/assets/images/ui/library.webp',
+        },
+      },
     },
   },
   {

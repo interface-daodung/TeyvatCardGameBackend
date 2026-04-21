@@ -15,6 +15,7 @@ import { SpritesheetEditModal } from '../components/assets/SpritesheetEditModal'
 import { AnimationEditModal } from '../components/assets/AnimationEditModal';
 import { isPathExcludedFromAtlasBuilder } from '../components/assets/atlasImageKind';
 import { AtlasViewModal } from '../components/assets/AtlasViewModal';
+import { ConfirmDangerDialog } from '../components/ConfirmDangerDialog';
 import {
   filesService,
   type FileTreeItem,
@@ -35,6 +36,7 @@ import type { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
   faUpload,
   faPenToSquare,
+  faFolder,
   faLightbulb as faLightbulbSolid,
   faXmark,
   faExpand,
@@ -42,6 +44,7 @@ import {
   faArrowsRotate,
 } from '@fortawesome/free-solid-svg-icons';
 import { faLightbulb as faLightbulbRegular } from '@fortawesome/free-regular-svg-icons';
+import axios from 'axios';
 
 type PreviewAreaTab = 'preview' | 'animation' | 'metadata' | 'raw';
 type AtlasListScopeTab = 'default' | 'desktop' | 'mobile';
@@ -155,6 +158,8 @@ export default function ManagerAssets() {
   const [ssPlaying, setSsPlaying] = useState(false);
   const [ssTotalFrames, setSsTotalFrames] = useState(0);
   const [previewLightbox, setPreviewLightbox] = useState<{ src: string; alt: string } | null>(null);
+  const [exportAnimationLoading, setExportAnimationLoading] = useState(false);
+  const [exportAnimationOverwriteConfirmOpen, setExportAnimationOverwriteConfirmOpen] = useState(false);
   const [previewAreaTab, setPreviewAreaTab] = useState<PreviewAreaTab>('preview');
   /** Cây mở rộng: ẩn hoàn toàn Image preview (có animation thu/phóng chiều rộng). */
   const [treeExpanded, setTreeExpanded] = useState(false);
@@ -651,6 +656,55 @@ export default function ManagerAssets() {
     setAtlasBuilderOpen(true);
   };
 
+  const exportAnimationErrorMessage = useCallback((err: unknown): string => {
+    if (axios.isAxiosError(err) && err.response?.data) {
+      const data = err.response.data as { error?: string };
+      if (typeof data.error === 'string') return data.error;
+    }
+    if (err instanceof Error) return err.message;
+    return 'unknown';
+  }, []);
+
+  const handleExportAnimationToTeyvat = useCallback(async () => {
+    if (!selectedPath || !selectedIsAnimationSprite) return;
+    setExportAnimationLoading(true);
+    try {
+      await filesService.exportAnimationToTeyvat(selectedPath, false);
+      setExportAnimationOverwriteConfirmOpen(false);
+      window.alert(
+        `Đã tạo bản copy "${basename(selectedPath)}" vào TeyvatCard/public/assets/images/animations.`
+      );
+    } catch (err: unknown) {
+      const needsOverwrite =
+        axios.isAxiosError(err) &&
+        err.response?.status === 409 &&
+        (err.response?.data as { code?: string })?.code === 'NEEDS_OVERWRITE_CONFIRM';
+      if (needsOverwrite) {
+        setExportAnimationOverwriteConfirmOpen(true);
+        return;
+      }
+      window.alert(`Duyệt animation thất bại: ${exportAnimationErrorMessage(err)}`);
+    } finally {
+      setExportAnimationLoading(false);
+    }
+  }, [selectedPath, selectedIsAnimationSprite, exportAnimationErrorMessage]);
+
+  const handleExportAnimationOverwriteConfirm = useCallback(async () => {
+    if (!selectedPath || !selectedIsAnimationSprite) return;
+    setExportAnimationLoading(true);
+    try {
+      await filesService.exportAnimationToTeyvat(selectedPath, true);
+      setExportAnimationOverwriteConfirmOpen(false);
+      window.alert(
+        `Đã ghi đè bản copy "${basename(selectedPath)}" tại TeyvatCard/public/assets/images/animations.`
+      );
+    } catch (err: unknown) {
+      window.alert(`Ghi đè animation thất bại: ${exportAnimationErrorMessage(err)}`);
+    } finally {
+      setExportAnimationLoading(false);
+    }
+  }, [selectedPath, selectedIsAnimationSprite, exportAnimationErrorMessage]);
+
   const handleAtlasCreated = () => {
     setAtlasError(null);
     void fetchAtlasList();
@@ -972,6 +1026,22 @@ export default function ManagerAssets() {
                     aria-label="Edit details"
                   >
                     <FontAwesomeIcon icon={faPenToSquare} className="h-4 w-4" />
+                  </Button>
+                ) : null}
+                {selectedIsAnimationSprite &&
+                selectedPath &&
+                !hasPendingUpload ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => void handleExportAnimationToTeyvat()}
+                    disabled={exportAnimationLoading}
+                    title="Duyệt animation"
+                    aria-label="Duyệt animation"
+                  >
+                    <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
                   </Button>
                 ) : null}
                 <Button
@@ -1894,6 +1964,21 @@ export default function ManagerAssets() {
           </div>,
           document.body
         )}
+      <ConfirmDangerDialog
+        open={exportAnimationOverwriteConfirmOpen}
+        onCancel={() => {
+          if (exportAnimationLoading) return;
+          setExportAnimationOverwriteConfirmOpen(false);
+        }}
+        onConfirm={() => void handleExportAnimationOverwriteConfirm()}
+        confirmLoading={exportAnimationLoading}
+        title="Ghi đè animation trong TeyvatCard?"
+        description="Đã có file cùng tên trong TeyvatCard/public/assets/images/animations. Bạn có muốn ghi đè không?"
+        confirmLabel="Ghi đè"
+        confirmLoadingLabel="Đang ghi đè…"
+        cancelLabel="Hủy"
+        overlayClassName="z-[10062]"
+      />
     </div>
   );
 }

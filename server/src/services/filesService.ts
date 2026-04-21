@@ -10,6 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '../..');
 
 export const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'];
+export const AUDIO_EXT = ['.mp3', '.ogg', '.wav', '.m4a', '.aac', '.webm'];
 
 /** Lỗi IO khi đổi tên (Windows/OneDrive/EPERM); dùng để map HTTP 423 ở controller. */
 export const RENAME_UPLOADED_IO_ERROR =
@@ -40,6 +41,14 @@ export function getItemImagesBasePath(): string {
 
 export function getItemImageTree(): FileTreeItem[] {
   return getImageTree(getItemImagesBasePath(), '/assets/images/item', true);
+}
+
+export function getSoundEffectsBasePath(): string {
+  return path.resolve(rootDir, '../admin-web/public/assets/sounds/SE');
+}
+
+export function getSoundEffectsTree(): FileTreeItem[] {
+  return getFileTree(getSoundEffectsBasePath(), '/assets/sounds/SE', AUDIO_EXT);
 }
 
 export function getMapBackgroundImageTree(): FileTreeItem[] {
@@ -76,13 +85,26 @@ export function getUploadsResizeDir(): string {
   return path.join(getUploadsDir(), 'resize');
 }
 
+export function getUploadsResizeDesktopDir(): string {
+  return path.join(getUploadsResizeDir(), 'desktop');
+}
+
+export function getUploadsResizeMobileDir(): string {
+  return path.join(getUploadsResizeDir(), 'mobile');
+}
+
 export function getUploadsLossyDir(): string {
   return path.join(getUploadsDir(), 'lossy');
 }
 
 export function ensureUploadsFinalDirs(): void {
   ensureUploadsDir();
-  const dirs = [getUploadsResizeDir(), getUploadsLossyDir()];
+  const dirs = [
+    getUploadsResizeDir(),
+    getUploadsResizeDesktopDir(),
+    getUploadsResizeMobileDir(),
+    getUploadsLossyDir(),
+  ];
   for (const dir of dirs) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   }
@@ -116,10 +138,11 @@ export interface FileTreeItem {
   meta?: FileMetadata;
 }
 
-export function getImageTree(dirPath: string, webPath: string, imageOnly = false): FileTreeItem[] {
+function getFileTree(dirPath: string, webPath: string, allowedExts?: string[]): FileTreeItem[] {
   const result: FileTreeItem[] = [];
   if (!fs.existsSync(dirPath)) return result;
-  const isImage = (name: string) => IMAGE_EXT.includes(path.extname(name).toLowerCase());
+  const isAllowed = (name: string) =>
+    !allowedExts || allowedExts.includes(path.extname(name).toLowerCase());
   let names: string[];
   try {
     names = fs.readdirSync(dirPath);
@@ -140,9 +163,9 @@ export function getImageTree(dirPath: string, webPath: string, imageOnly = false
         name,
         path: relativeWebPath,
         type: 'dir',
-        children: getImageTree(fullPath, relativeWebPath, imageOnly),
+        children: getFileTree(fullPath, relativeWebPath, allowedExts),
       });
-    } else if (st.isFile() && (!imageOnly || isImage(name))) {
+    } else if (st.isFile() && isAllowed(name)) {
       result.push({
         name,
         path: relativeWebPath,
@@ -156,6 +179,10 @@ export function getImageTree(dirPath: string, webPath: string, imageOnly = false
     }
   }
   return result.sort((a, b) => (a.type !== b.type ? (a.type === 'dir' ? -1 : 1) : a.name.localeCompare(b.name)));
+}
+
+export function getImageTree(dirPath: string, webPath: string, imageOnly = false): FileTreeItem[] {
+  return getFileTree(dirPath, webPath, imageOnly ? IMAGE_EXT : undefined);
 }
 
 export function ensureUploadsDir(): void {
@@ -280,9 +307,13 @@ export type ExportAtlasToTeyvatResult =
   | { ok: true }
   | { error: string; code?: 'NEEDS_OVERWRITE_CONFIRM' };
 
+export type ExportAnimationToTeyvatResult =
+  | { ok: true }
+  | { error: string; code?: 'NEEDS_OVERWRITE_CONFIRM' };
+
 /**
- * Bản sao từ `server/atlas/desktop|mobile` sang `TeyvatCard/public/assets/{desktop|mobile}/atlas`
- * (không đụng tới file trong `server/atlas`). JSON đích: `meta.path` = `assets/{desktop|mobile}/atlas/*.webp`
+ * Bản sao từ `server/atlas/desktop|mobile` sang `TeyvatCard/public/assets/images/{desktop|mobile}/atlas`
+ * (không đụng tới file trong `server/atlas`). JSON đích: `meta.path` = `assets/images/{desktop|mobile}/atlas/*.webp`
  * để client load đúng như các atlas trong `public/data` (AssetManager dùng meta.path làm URL).
  * Nếu đích đã có .webp hoặc .json cùng tên: trả `NEEDS_OVERWRITE_CONFIRM` trừ khi `confirmOverwrite === true`.
  */
@@ -307,7 +338,7 @@ export function exportAtlasVariantToTeyvatPublic(
   }
 
   const teyvatPublic = getTeyvatPublicPath();
-  const destDir = path.join(teyvatPublic, 'assets', variantScope, 'atlas');
+  const destDir = path.join(teyvatPublic, 'assets', 'images', variantScope, 'atlas');
   if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
 
   const destWebp = path.join(destDir, webpName);
@@ -323,7 +354,7 @@ export function exportAtlasVariantToTeyvatPublic(
     };
   }
 
-  const metaPathForClient = `assets/${variantScope}/atlas/${webpName}`;
+  const metaPathForClient = `assets/images/${variantScope}/atlas/${webpName}`;
 
   try {
     fs.copyFileSync(srcWebp, destWebp);
@@ -343,6 +374,42 @@ export function exportAtlasVariantToTeyvatPublic(
     return { error: 'Không xuất được atlas sang TeyvatCard/public' };
   }
 
+  return { ok: true };
+}
+
+export function exportAnimationToTeyvatPublic(
+  webPath: string,
+  confirmOverwrite = false
+): ExportAnimationToTeyvatResult {
+  const normalized = webPath.replace(/\\/g, '/').trim();
+  if (!normalized.toLowerCase().startsWith('/assets/images/animations/')) {
+    return { error: 'Chỉ cho phép file trong /assets/images/animations/' };
+  }
+  const sourcePath = resolveAssetsImageFilePath(normalized);
+  if (!sourcePath || !fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) {
+    return { error: 'File không tồn tại' };
+  }
+  const fileName = safeBasename(path.basename(sourcePath));
+  if (!fileName) return { error: 'Tên file không hợp lệ' };
+
+  const teyvatPublic = getTeyvatPublicPath();
+  const destDir = path.join(teyvatPublic, 'assets', 'images', 'animations');
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+
+  const destPath = path.join(destDir, fileName);
+  if (fs.existsSync(destPath) && !confirmOverwrite) {
+    return {
+      error:
+        'Đã có file cùng tên trong TeyvatCard/public/assets/images/animations. Gửi lại yêu cầu với confirmOverwrite: true để ghi đè.',
+      code: 'NEEDS_OVERWRITE_CONFIRM',
+    };
+  }
+
+  try {
+    fs.copyFileSync(sourcePath, destPath);
+  } catch {
+    return { error: 'Không copy được animation sang TeyvatCard/public' };
+  }
   return { ok: true };
 }
 
@@ -2048,6 +2115,124 @@ export async function exportSpritesheetBestGrid(
     sheetSize: { w: grid.sheetWidth, h: grid.sheetHeight },
     frameCount: totalFrames,
   };
+}
+
+const SPRITESHEET_RESIZE_DESKTOP_W = 210;
+const SPRITESHEET_RESIZE_DESKTOP_H = 360;
+const SPRITESHEET_RESIZE_MOBILE_W = 105;
+const SPRITESHEET_RESIZE_MOBILE_H = 180;
+
+/**
+ * Cắt frame 350×590 từ spritesheet, resize từng frame stretch (`fit: 'fill'`), ghép bestGrid.
+ * Ghi `uploads/resize/desktop/{basename}.webp` và `uploads/resize/mobile/{basename}.webp` (ghi đè nếu đã có).
+ */
+export async function exportSpritesheetResizeVariants(
+  webPath: string
+): Promise<
+  | {
+      desktop: { imageUrl: string; sheetSize: { w: number; h: number }; frameCount: number };
+      mobile: { imageUrl: string; sheetSize: { w: number; h: number }; frameCount: number };
+    }
+  | { error: string }
+> {
+  const normalized = webPath.replace(/\\/g, '/').trim();
+  if (!normalized.toLowerCase().startsWith('/assets/images/spritesheet/')) {
+    return { error: 'Chỉ cho phép file trong /assets/images/Spritesheet/' };
+  }
+  const relative = normalized.replace(/^\/assets\/images\/Spritesheet\/?/i, '');
+  if (!relative || relative.includes('..')) {
+    return { error: 'Đường dẫn không hợp lệ' };
+  }
+  const baseDir = path.normalize(getSpritesheetPublicDir());
+  const fullPath = path.normalize(path.join(baseDir, relative));
+  const relToBase = path.relative(baseDir, fullPath);
+  if (relToBase.startsWith('..') || path.isAbsolute(relToBase)) {
+    return { error: 'Đường dẫn không hợp lệ' };
+  }
+  if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
+    return { error: 'File không tồn tại' };
+  }
+  const ext = path.extname(fullPath).toLowerCase();
+  if (!IMAGE_EXT.includes(ext)) {
+    return { error: 'Định dạng ảnh không hỗ trợ' };
+  }
+
+  const meta = await sharp(fullPath).metadata();
+  const iw = meta.width ?? 0;
+  const ih = meta.height ?? 0;
+  const cols = Math.floor(iw / SPRITESHEET_FRAME_EXPORT_W);
+  const rows = Math.floor(ih / SPRITESHEET_FRAME_EXPORT_H);
+  const totalFrames = cols * rows;
+  if (cols < 1 || rows < 1 || totalFrames < 1) {
+    return { error: 'Ảnh không đủ để cắt các frame 350×590' };
+  }
+
+  const baseName = path.basename(fullPath, ext);
+  const outBaseFile = `${baseName}.webp`;
+
+  const buildOne = async (
+    outW: number,
+    outH: number,
+    variantSubdir: 'desktop' | 'mobile'
+  ): Promise<{ imageUrl: string; sheetSize: { w: number; h: number }; frameCount: number }> => {
+    const grid = bestGrid(totalFrames, outW, outH);
+    const compositeOperations: { input: Buffer; top: number; left: number }[] = [];
+
+    for (let i = 0; i < totalFrames; i++) {
+      const srcCol = i % cols;
+      const srcRow = Math.floor(i / cols);
+      const left = srcCol * SPRITESHEET_FRAME_EXPORT_W;
+      const top = srcRow * SPRITESHEET_FRAME_EXPORT_H;
+
+      const frameBuf = await sharp(fullPath)
+        .extract({
+          left,
+          top,
+          width: SPRITESHEET_FRAME_EXPORT_W,
+          height: SPRITESHEET_FRAME_EXPORT_H,
+        })
+        .resize(outW, outH, { fit: 'fill' })
+        .ensureAlpha()
+        .png()
+        .toBuffer();
+
+      const gCol = i % grid.columns;
+      const gRow = Math.floor(i / grid.columns);
+      compositeOperations.push({
+        input: frameBuf,
+        left: gCol * outW,
+        top: gRow * outH,
+      });
+    }
+
+    const canvas = sharp({
+      create: {
+        width: grid.sheetWidth,
+        height: grid.sheetHeight,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    });
+    const outBuffer = await canvas.composite(compositeOperations).webp({ quality: 90 }).toBuffer();
+
+    ensureUploadsFinalDirs();
+    const destDir =
+      variantSubdir === 'desktop' ? getUploadsResizeDesktopDir() : getUploadsResizeMobileDir();
+    const outPath = path.join(destDir, outBaseFile);
+    await fs.promises.writeFile(outPath, outBuffer);
+
+    const imageUrl = `/uploads/resize/${variantSubdir}/${outBaseFile}`;
+    return {
+      imageUrl,
+      sheetSize: { w: grid.sheetWidth, h: grid.sheetHeight },
+      frameCount: totalFrames,
+    };
+  };
+
+  const desktop = await buildOne(SPRITESHEET_RESIZE_DESKTOP_W, SPRITESHEET_RESIZE_DESKTOP_H, 'desktop');
+  const mobile = await buildOne(SPRITESHEET_RESIZE_MOBILE_W, SPRITESHEET_RESIZE_MOBILE_H, 'mobile');
+
+  return { desktop, mobile };
 }
 
 // (phiên bản mới của getAnimationsPublicDir/saveAnimationSpritesheetFile được định nghĩa phía trên cùng ANIMATION_SPRITESHEET_NAME_RE)

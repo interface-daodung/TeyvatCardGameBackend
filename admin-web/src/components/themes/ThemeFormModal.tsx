@@ -2,16 +2,63 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleInfo, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '../ui/button';
-import { type ThemeColors } from '../../services/themeService';
+import { ImagePickerSurface } from '../ui/ImagePickerSurface';
+import { filesService, type FileTreeItem } from '../../services/filesService';
+import {
+  type ThemeColors,
+  type ThemeAssets,
+  mergeThemeAssets,
+} from '../../services/themeService';
 import { scaleInModal, fadeInOverlay } from '../animations/motionPresets';
 import { ThemePreview } from './ThemePreview';
 import { generateWarmColors } from './themeColorUtils';
 
+function findTreeNode(items: FileTreeItem[] | null, targetPath: string): FileTreeItem | null {
+  if (!items) return null;
+  const normalizePath = (value: string) =>
+    value.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
+  const expected = normalizePath(targetPath);
+  for (const item of items) {
+    const normalized = normalizePath(item.path);
+    if (normalized === expected) return item;
+    if (item.children?.length) {
+      const found = findTreeNode(item.children, targetPath);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function filterTreeByPrefix(items: FileTreeItem[] | null, prefixPath: string): FileTreeItem[] {
+  if (!items) return [];
+  const normalizePath = (value: string) =>
+    value.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
+  const prefix = normalizePath(prefixPath);
+
+  const walk = (nodes: FileTreeItem[]): FileTreeItem[] => {
+    const result: FileTreeItem[] = [];
+    for (const node of nodes) {
+      const normalized = normalizePath(node.path);
+      const children = node.children?.length ? walk(node.children) : [];
+      const keepSelf = normalized === prefix || normalized.startsWith(`${prefix}/`);
+      if (!keepSelf && children.length === 0) continue;
+      result.push({
+        ...node,
+        ...(children.length > 0 ? { children } : {}),
+      });
+    }
+    return result;
+  };
+
+  return walk(items);
+}
+
 export function ThemeFormModal({
   initialName,
   initialColors,
+  initialAssets,
   colorKeys,
   onClose,
   onSave,
@@ -19,19 +66,80 @@ export function ThemeFormModal({
 }: {
   initialName: string;
   initialColors: ThemeColors;
+  initialAssets?: ThemeAssets;
   colorKeys: (keyof ThemeColors)[];
   onClose: () => void;
-  onSave: (name: string, colors: ThemeColors) => Promise<void>;
+  onSave: (name: string, colors: ThemeColors, assets: ThemeAssets) => Promise<void>;
   saveLoading: boolean;
 }) {
+  type AssetTab = 'colors' | 'background' | 'icons';
   const [name, setName] = useState(initialName);
   const [colors, setColors] = useState<ThemeColors>(initialColors);
+  const [assetTab, setAssetTab] = useState<AssetTab>('colors');
+  const [assets, setAssets] = useState<ThemeAssets>(mergeThemeAssets(initialAssets));
+  const [imageTree, setImageTree] = useState<FileTreeItem[] | null>(null);
+  const [treeLoading, setTreeLoading] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [activePicker, setActivePicker] = useState<'bg' | 'compass' | 'equip' | 'library' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [accentWarm2, accentWarm3] = generateWarmColors(colors.accent);
+  const iconRootPath = '/assets/images/ui';
+  const bgRootPath = '/assets/images/ui/background';
+  const iconTreeRoot = findTreeNode(imageTree, iconRootPath);
+  const bgTreeRoot = findTreeNode(imageTree, bgRootPath);
+  const iconTreeFiltered = filterTreeByPrefix(imageTree, iconRootPath);
+  const bgTreeFiltered = filterTreeByPrefix(imageTree, bgRootPath);
+  const iconTreeView = iconTreeRoot?.children?.length
+    ? iconTreeRoot.children
+    : iconTreeRoot
+      ? [iconTreeRoot]
+      : iconTreeFiltered;
+  const bgTreeView = bgTreeRoot?.children?.length
+    ? bgTreeRoot.children
+    : bgTreeRoot
+      ? [bgTreeRoot]
+      : bgTreeFiltered;
 
   const setColor = (key: keyof ThemeColors, value: string) => {
     setColors((prev) => ({ ...prev, [key]: value }));
     setError(null);
+  };
+
+  const ensureTreeLoaded = async () => {
+    if (imageTree || treeLoading) return;
+    setTreeLoading(true);
+    try {
+      const tree = await filesService.getImageTree('assets');
+      setImageTree(tree);
+    } catch {
+      setError('Không tải được cây ảnh assets.');
+    } finally {
+      setTreeLoading(false);
+    }
+  };
+
+  const openPicker = async (picker: 'bg' | 'compass' | 'equip' | 'library') => {
+    await ensureTreeLoaded();
+    setActivePicker(picker);
+  };
+
+  const toggleExpanded = (path: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  };
+
+  const selectAssetPath = (path: string) => {
+    setError(null);
+    if (activePicker === 'bg') {
+      setAssets((prev) => ({ ...prev, background: path }));
+    } else if (activePicker === 'compass' || activePicker === 'equip' || activePicker === 'library') {
+      setAssets((prev) => ({ ...prev, icons: { ...prev.icons, [activePicker]: path } }));
+    }
+    setActivePicker(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,7 +152,7 @@ export function ThemeFormModal({
     }
 
     try {
-      await onSave(name.trim(), colors);
+      await onSave(name.trim(), colors, assets);
       onClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Lưu thất bại.');
@@ -78,38 +186,118 @@ export function ThemeFormModal({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-full">
               <div className="space-y-5 min-w-0">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                    Tên theme
-                    <FontAwesomeIcon icon={faCircleInfo} className="text-slate-400 text-xs cursor-help" title="Tên duy nhất cho bộ màu, ví dụ: default, dark, light." />
-                  </label>
+                  <label className="text-sm font-medium text-slate-700">Tên theme</label>
                   <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800" placeholder="vd: default, dark, light" />
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="block text-sm font-medium text-slate-700">Màu sắc</span>
-                    <FontAwesomeIcon icon={faCircleInfo} className="text-slate-400 text-xs cursor-help" title="Bạn có thể nhập mã hex hoặc chọn trực tiếp bằng color picker." />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-1 border-b border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setAssetTab('colors')}
+                      className={`px-3 py-2 -mb-px text-sm border-b-2 transition-colors ${
+                        assetTab === 'colors'
+                          ? 'border-slate-900 text-slate-900 font-medium'
+                          : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      Màu sắc
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssetTab('background')}
+                      className={`px-3 py-2 -mb-px text-sm border-b-2 transition-colors ${
+                        assetTab === 'background'
+                          ? 'border-slate-900 text-slate-900 font-medium'
+                          : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      Background
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssetTab('icons')}
+                      className={`px-3 py-2 -mb-px text-sm border-b-2 transition-colors ${
+                        assetTab === 'icons'
+                          ? 'border-slate-900 text-slate-900 font-medium'
+                          : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      Icon
+                    </button>
                   </div>
-                  <div className="space-y-2">
-                    {colorKeys.map((key) => (
-                      <div key={key} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5">
-                        <input type="color" value={colors[key]} onChange={(e) => setColor(key, e.target.value)} className="w-10 h-10 rounded cursor-pointer bg-transparent appearance-none" title={`Chọn màu ${key}`} />
-                        <input type="text" value={colors[key]} onChange={(e) => setColor(key, e.target.value)} className="flex-1 rounded-md px-3 py-1.5 text-sm font-mono bg-transparent" placeholder="#000000" title={`Nhập mã hex cho ${key}`} />
-                        <span className="text-slate-500 text-sm w-24 capitalize">{key}</span>
-                      </div>
-                    ))}
-                  </div>
+
+                  {assetTab === 'colors' && (
+                    <div className="space-y-2">
+                      {colorKeys.map((key) => (
+                        <div key={key} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5">
+                          <input type="color" value={colors[key]} onChange={(e) => setColor(key, e.target.value)} className="w-10 h-10 rounded cursor-pointer bg-transparent appearance-none" title={`Chọn màu ${key}`} />
+                          <input type="text" value={colors[key]} onChange={(e) => setColor(key, e.target.value)} className="flex-1 rounded-md px-3 py-1.5 text-sm font-mono bg-transparent" placeholder="#000000" title={`Nhập mã hex cho ${key}`} />
+                          <span className="text-slate-500 text-sm w-24 capitalize">{key}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {assetTab === 'background' && (
+                    <div>
+                      <div className="mb-1 text-xs text-slate-500">bg-image</div>
+                      <ImagePickerSurface
+                        pickerOpen={activePicker === 'bg'}
+                        pickerTitle="Chọn background"
+                        tree={bgTreeView}
+                        treeLoading={treeLoading}
+                        expanded={expanded}
+                        onToggleExpanded={toggleExpanded}
+                        onSelectPath={selectAssetPath}
+                        onOpenPicker={() => void openPicker('bg')}
+                        onClosePicker={() => setActivePicker(null)}
+                        previewAlt="Theme background"
+                        previewSrc={assets.background}
+                        previewWrapperClassName="w-full max-w-[260px] aspect-[7/12] rounded-md border border-slate-200 bg-slate-50"
+                        previewClassName="object-cover"
+                        triggerTitle="Ctrl/Cmd + click để chọn background."
+                        imageFallbackSrc="/assets/images/ui/background/default.webp"
+                      />
+                      <p className="mt-1 text-xs font-mono text-slate-600 break-all">{assets.background}</p>
+                    </div>
+                  )}
+
+                  {assetTab === 'icons' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      {(['compass', 'equip', 'library'] as const).map((key) => (
+                        <div key={key} className="min-w-0">
+                          <div className="mb-1 text-xs text-slate-500">icon {key}</div>
+                          <ImagePickerSurface
+                            pickerOpen={activePicker === key}
+                            pickerTitle={`Chọn icon ${key}`}
+                            tree={iconTreeView}
+                            treeLoading={treeLoading}
+                            expanded={expanded}
+                            onToggleExpanded={toggleExpanded}
+                            onSelectPath={selectAssetPath}
+                            onOpenPicker={() => void openPicker(key)}
+                            onClosePicker={() => setActivePicker(null)}
+                            previewAlt={`Theme icon ${key}`}
+                            previewSrc={assets.icons[key]}
+                            previewWrapperClassName="w-full aspect-square rounded-md border border-slate-200 bg-slate-50"
+                            previewClassName="object-contain p-3"
+                            triggerTitle={`Ctrl/Cmd + click để chọn icon ${key}.`}
+                            imageFallbackSrc="/assets/images/ui/library.webp"
+                          />
+                          <p className="mt-1 text-xs font-mono text-slate-600 break-all">{assets.icons[key]}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {error && <div className="rounded-md bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
               </div>
 
-              <div className="space-y-2 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-medium text-slate-700">Preview trực tiếp</h3>
-                  <FontAwesomeIcon icon={faCircleInfo} className="text-slate-400 text-xs cursor-help" title="Preview này cập nhật ngay khi bạn thay đổi màu trong form." />
-                </div>
-                <ThemePreview colors={colors} />
+              <div className="space-y-2 min-w-0 lg:sticky lg:top-0 self-start">
+                <h3 className="text-sm font-medium text-slate-700">Preview trực tiếp</h3>
+                <ThemePreview colors={colors} assets={assets} />
               </div>
             </div>
           </div>

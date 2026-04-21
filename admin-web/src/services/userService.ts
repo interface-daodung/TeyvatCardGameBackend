@@ -69,4 +69,8 @@ export const userService = {
   verifyEmail: async (userId: string): Promise<void> => {
     await api.post(`/users/${userId}/verify-email`);
   },
+
+  changePassword: async (userId: string, currentPassword: string, newPassword: string): Promise<void> => {
+    await api.post(`/users/${userId}/change-password`, { currentPassword, newPassword });
+  },
 };

@@ -31,11 +31,13 @@ import {
   generateAnimationAtlasHandler,
   getAtlasListHandler,
   exportSpritesheetBestGridHandler,
+  exportSpritesheetResizeVariantsHandler,
   animationSpritesheetSaveMiddleware,
   saveAnimationSpritesheetHandler,
   composeAnimationSpritesheetHandler,
   deleteAtlasHandler,
   exportAtlasToTeyvatHandler,
+  exportAnimationToTeyvatHandler,
 } from '../controllers/filesController.js';
 import {
   buildCardClassTsDocHandler,
@@ -60,6 +62,7 @@ filesRoutes.get('/uploaded-tree', getUploadedTreeHandler);
 filesRoutes.get('/atlas-list', getAtlasListHandler);
 filesRoutes.delete('/atlas', deleteAtlasHandler);
 filesRoutes.post('/atlas/export-to-teyvat', exportAtlasToTeyvatHandler);
+filesRoutes.post('/animations/export-to-teyvat', exportAnimationToTeyvatHandler);
 filesRoutes.get('/metadata', getFileMetadataHandler);
 filesRoutes.post('/generate-atlas', generateCustomAtlasHandler);
 filesRoutes.post('/generate-animation-atlas', generateAnimationAtlasHandler);
@@ -83,6 +86,7 @@ filesRoutes.post('/uploaded/stage/commit', commitStagedPreviewHandler);
 filesRoutes.post('/uploaded/stage/discard', deleteStagedPreviewHandler);
 filesRoutes.post('/generate-all-cards-atlas', generateAllCardsAtlasHandler);
 filesRoutes.post('/spritesheet-best-grid', exportSpritesheetBestGridHandler);
+filesRoutes.post('/spritesheet-resize-exports', exportSpritesheetResizeVariantsHandler);
 
 filesRoutes.post(
   '/animation-spritesheet-save',

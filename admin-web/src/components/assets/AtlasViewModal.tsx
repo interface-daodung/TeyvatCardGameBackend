@@ -292,7 +292,7 @@ export function AtlasViewModal({
       }
       onAtlasExportedToTeyvatSucceeded?.();
       const destList = r.exported
-        .map((s: 'desktop' | 'mobile') => `TeyvatCard/public/assets/${s}/atlas`)
+        .map((s: 'desktop' | 'mobile') => `TeyvatCard/public/assets/images/${s}/atlas`)
         .join(' và ');
       window.alert(
         `Đã tạo bản sao "${entry.name}.webp" + "${entry.name}.json" tại ${destList}. Nguồn chỉ từ server/atlas/desktop và/hoặc server/atlas/mobile (server/atlas gốc không đổi).`
@@ -326,7 +326,7 @@ export function AtlasViewModal({
       setExportOverwriteConfirmOpen(false);
       onAtlasExportedToTeyvatSucceeded?.();
       const destList = r.exported
-        .map((s: 'desktop' | 'mobile') => `TeyvatCard/public/assets/${s}/atlas`)
+        .map((s: 'desktop' | 'mobile') => `TeyvatCard/public/assets/images/${s}/atlas`)
         .join(' và ');
       window.alert(
         `Đã ghi đè "${entry.name}.webp" + "${entry.name}.json" tại ${destList}. (server/atlas không đổi.)`
@@ -398,8 +398,8 @@ export function AtlasViewModal({
               onClick={() => void handleExportAtlasToTeyvat()}
               title={
                 entry.scope === 'default'
-                  ? 'Xuất từ server/atlas/desktop và server/atlas/mobile sang TeyvatCard/public (không đọc file trong server/atlas gốc)'
-                  : 'Xuất bản cùng tên cho cả desktop và mobile sang TeyvatCard/public'
+                  ? 'Xuất từ server/atlas/desktop và server/atlas/mobile sang TeyvatCard/public/assets/images (không đọc file trong server/atlas gốc)'
+                  : 'Xuất bản cùng tên cho cả desktop và mobile sang TeyvatCard/public/assets/images'
               }
               aria-label="Duyệt atlas: xuất bản sao sang TeyvatCard public"
             >

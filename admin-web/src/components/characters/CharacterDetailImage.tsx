@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { FileTreeNode } from '../FileTreeNode';
-import { ImageLightbox, type ImageLightboxOpen, type LightboxImage } from '../ui/ImageLightbox';
+import { ImageLightbox, type ImageLightboxOpen } from '../ui/ImageLightbox';
+import { ImagePickerSurface } from '../ui/ImagePickerSurface';
 import { cn } from '../../lib/utils';
 import {
   CARD_IMAGE_RATIO,
@@ -49,7 +50,6 @@ export function CharacterDetailImage({
   const [spriteLightboxOpen, setSpriteLightboxOpen] = useState(false);
   const [spriteLightboxLoading, setSpriteLightboxLoading] = useState(true);
   const [spriteLightboxError, setSpriteLightboxError] = useState<string | null>(null);
-  const [imageLightbox, setImageLightbox] = useState<LightboxImage | null>(null);
 
   const displaySrc =
     referenceImagePath ?? `/assets/images/cards/character/${character.nameId}.webp`;
@@ -202,35 +202,32 @@ export function CharacterDetailImage({
   }, [spriteLightboxOpen, character.nameId, resolvedSpritesheetUrl]);
 
   const closeLightbox = () => {
-    setImageLightbox(null);
     setSpriteLightboxOpen(false);
   };
 
-  const lightboxPayload: ImageLightboxOpen | null = imageLightbox
-    ? imageLightbox
-    : spriteLightboxOpen
-      ? {
-          type: 'custom',
-          label: 'Ảnh động (spritesheet)',
-          children: (
-            <div className="relative inline-flex max-h-[min(85vh,800px)] max-w-[min(90vw,900px)] flex-col items-center justify-center">
-              <canvas
-                ref={spriteLightboxCanvasRef}
-                className="max-h-[min(85vh,800px)] w-auto max-w-[min(90vw,900px)]"
-              />
-              {spriteLightboxLoading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-900/70">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-transparent" />
-                  <p className="text-sm text-slate-200">Đang tải spritesheet...</p>
-                </div>
-              )}
-              {spriteLightboxError && (
-                <p className="mt-2 max-w-[90vw] text-center text-sm text-red-400">{spriteLightboxError}</p>
-              )}
-            </div>
-          ),
-        }
-      : null;
+  const lightboxPayload: ImageLightboxOpen | null = spriteLightboxOpen
+    ? {
+        type: 'custom',
+        label: 'Ảnh động (spritesheet)',
+        children: (
+          <div className="relative inline-flex max-h-[min(85vh,800px)] max-w-[min(90vw,900px)] flex-col items-center justify-center">
+            <canvas
+              ref={spriteLightboxCanvasRef}
+              className="max-h-[min(85vh,800px)] w-auto max-w-[min(90vw,900px)]"
+            />
+            {spriteLightboxLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-900/70">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-transparent" />
+                <p className="text-sm text-slate-200">Đang tải spritesheet...</p>
+              </div>
+            )}
+            {spriteLightboxError && (
+              <p className="mt-2 max-w-[90vw] text-center text-sm text-red-400">{spriteLightboxError}</p>
+            )}
+          </div>
+        ),
+      }
+    : null;
 
   return (
     <div className="flex flex-col">
@@ -314,82 +311,29 @@ export function CharacterDetailImage({
                   : 'character-image-tab-unlock'
             }
           >
-            {isPickerOpen ? (
-              <div className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-muted">
-                <div className="flex shrink-0 items-center justify-between border-b border-border bg-muted px-2 py-1 text-xs font-medium">
-                  <span className="truncate pr-2">
-                    {imagePickerRoot === 'character-spritesheet'
-                      ? 'Chọn file (assets/images/Spritesheet)'
-                      : imagePickerRoot === 'character-unlock'
-                        ? 'Chọn ảnh (assets/images/cards/unlock)'
-                        : 'Chọn ảnh tham khảo (cards/character)'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClosePicker();
-                    }}
-                    className="shrink-0 rounded px-1.5 py-0.5 hover:bg-muted-foreground/20"
-                  >
-                    Đóng
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-2 text-xs">
-                  {imageTreeLoading ? (
-                    <p className="text-muted-foreground">Đang tải...</p>
-                  ) : characterImageTree && characterImageTree.length > 0 ? (
-                    characterImageTree.map((item) => (
-                      <FileTreeNode
-                        key={item.path}
-                        item={item}
-                        expanded={imageTreeExpanded}
-                        onToggle={onToggleExpanded}
-                        onSelect={onSelectReferenceImage}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground">Không có file trong thư mục này</p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <>
-                {imageTab === 'default' && (
-                  <div
-                    className="relative h-full w-full cursor-default"
-                    role="button"
-                    tabIndex={0}
-                    title="Ctrl+click: chọn ảnh (cards/character). Double-click: xem toàn màn hình."
-                    onDoubleClick={(e) => {
-                      e.preventDefault();
-                      setImageLightbox({ src: displaySrc, alt: character.name });
-                    }}
-                    onClick={(e) => {
-                      if (e.ctrlKey || e.metaKey) {
-                        e.preventDefault();
-                        onOpenPicker('character');
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if ((e.ctrlKey || e.metaKey) && (e.key === 'Enter' || e.key === ' ')) {
-                        e.preventDefault();
-                        onOpenPicker('character');
-                      }
-                    }}
-                  >
-                    <img
-                      src={displaySrc}
-                      alt={character.name}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = EMPTY_CARD_WEBP;
-                      }}
-                    />
-                  </div>
-                )}
+            <>
+              {imageTab === 'default' && (
+                <ImagePickerSurface
+                  pickerOpen={isPickerOpen && imagePickerRoot === 'character'}
+                  pickerTitle="Chọn ảnh"
+                  pickerEmptyText="Không có file trong thư mục này"
+                  tree={characterImageTree}
+                  treeLoading={imageTreeLoading}
+                  expanded={imageTreeExpanded}
+                  onToggleExpanded={onToggleExpanded}
+                  onSelectPath={onSelectReferenceImage}
+                  onOpenPicker={() => onOpenPicker('character')}
+                  onClosePicker={onClosePicker}
+                  previewAlt={character.name}
+                  previewSrc={displaySrc}
+                  previewWrapperClassName="h-full w-full"
+                  triggerTitle="Ctrl+click: chọn ảnh (cards/character). Double-click: xem toàn màn hình."
+                  imageFallbackSrc={EMPTY_CARD_WEBP}
+                />
+              )}
 
-                {imageTab === 'animated' && (
+              {imageTab === 'animated' && (
+                <>
                   <div
                     className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-muted/40 p-1"
                     role="button"
@@ -430,43 +374,63 @@ export function CharacterDetailImage({
                       </p>
                     )}
                   </div>
-                )}
+                  {isPickerOpen && imagePickerRoot === 'character-spritesheet' && (
+                    <div className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-muted">
+                      <div className="flex shrink-0 items-center justify-between border-b border-border bg-muted px-2 py-1 text-xs font-medium">
+                        <span className="truncate pr-2">Chọn ảnh</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onClosePicker();
+                          }}
+                          className="shrink-0 rounded px-1.5 py-0.5 hover:bg-muted-foreground/20"
+                        >
+                          Đóng
+                        </button>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-2 text-xs">
+                        {imageTreeLoading ? (
+                          <p className="text-muted-foreground">Đang tải...</p>
+                        ) : characterImageTree && characterImageTree.length > 0 ? (
+                          characterImageTree.map((item) => (
+                            <FileTreeNode
+                              key={item.path}
+                              item={item}
+                              expanded={imageTreeExpanded}
+                              onToggle={onToggleExpanded}
+                              onSelect={onSelectReferenceImage}
+                            />
+                          ))
+                        ) : (
+                          <p className="text-muted-foreground">Không có file trong thư mục này</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
 
-                {imageTab === 'unlock' && (
-                  <div
-                    className="relative h-full w-full cursor-default"
-                    role="button"
-                    tabIndex={0}
-                    title="Ctrl+click: chọn ảnh (assets/images/cards/unlock). Double-click: xem toàn màn hình."
-                    onDoubleClick={(e) => {
-                      e.preventDefault();
-                      setImageLightbox({ src: unlockDisplaySrc, alt: `${character.name} unlock` });
-                    }}
-                    onClick={(e) => {
-                      if (e.ctrlKey || e.metaKey) {
-                        e.preventDefault();
-                        onOpenPicker('character-unlock');
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if ((e.ctrlKey || e.metaKey) && (e.key === 'Enter' || e.key === ' ')) {
-                        e.preventDefault();
-                        onOpenPicker('character-unlock');
-                      }
-                    }}
-                  >
-                    <img
-                      src={unlockDisplaySrc}
-                      alt={`${character.name} unlock`}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = EMPTY_CARD_WEBP;
-                      }}
-                    />
-                  </div>
-                )}
-              </>
-            )}
+              {imageTab === 'unlock' && (
+                <ImagePickerSurface
+                  pickerOpen={isPickerOpen && imagePickerRoot === 'character-unlock'}
+                  pickerTitle="Chọn ảnh"
+                  pickerEmptyText="Không có file trong thư mục này"
+                  tree={characterImageTree}
+                  treeLoading={imageTreeLoading}
+                  expanded={imageTreeExpanded}
+                  onToggleExpanded={onToggleExpanded}
+                  onSelectPath={onSelectReferenceImage}
+                  onOpenPicker={() => onOpenPicker('character-unlock')}
+                  onClosePicker={onClosePicker}
+                  previewAlt={`${character.name} unlock`}
+                  previewSrc={unlockDisplaySrc}
+                  previewWrapperClassName="h-full w-full"
+                  triggerTitle="Ctrl+click: chọn ảnh (assets/images/cards/unlock). Double-click: xem toàn màn hình."
+                  imageFallbackSrc={EMPTY_CARD_WEBP}
+                />
+              )}
+            </>
           </div>
         </div>
       </div>

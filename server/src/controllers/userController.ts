@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import * as userService from '../services/userService.js';
 import { AuthRequest } from '../types/index.js';
-import { banUserSchema, updateUserXuSchema, banCardSchema } from '../validators/users.js';
+import { banUserSchema, updateUserXuSchema, banCardSchema, changeUserPasswordSchema } from '../validators/users.js';
 import { createAuditLog } from '../utils/auditLog.js';
 
 export const getUsers = async (req: AuthRequest, res: Response) => {
@@ -128,5 +128,29 @@ export const verifyUserEmail = async (req: AuthRequest, res: Response) => {
     const err = error as { message?: string };
     console.error('verifyUserEmail error:', err?.message || error);
     res.status(500).json({ error: 'Failed to verify email' });
+  }
+};
+
+export const changeUserPassword = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admin can change user password here' });
+    }
+    const { currentPassword, newPassword } = changeUserPasswordSchema.parse(req.body);
+    const result = await userService.changeUserPassword(req.params.id, currentPassword, newPassword);
+    if (!result) return res.status(404).json({ error: 'User not found' });
+    if (result === 'no_password') {
+      return res.status(400).json({ error: 'Account does not have a password yet' });
+    }
+    if (result === 'invalid_current_password') {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+    await createAuditLog(req, 'change_user_password', 'user', req.params.id, { email: result.email }, undefined, 'warning');
+    res.json({ message: 'Password updated successfully' });
+  } catch (error: unknown) {
+    const err = error as { name?: string; errors?: unknown; message?: string };
+    if (err.name === 'ZodError') return res.status(400).json({ error: err.errors });
+    console.error('changeUserPassword error:', err?.message || error);
+    res.status(500).json({ error: 'Failed to change user password' });
   }
 };

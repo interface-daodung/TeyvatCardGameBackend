@@ -9,8 +9,10 @@ import {
   updateTheme,
   deleteTheme,
   defaultThemeColors,
+  mergeThemeAssets,
   type Theme,
   type ThemeColors,
+  type ThemeAssets,
 } from '../services/themeService';
 import { fadeSlideCard } from '../components/animations/motionPresets';
 import { ThemePreview } from '../components/themes/ThemePreview';
@@ -41,11 +43,13 @@ export default function Themes() {
   const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
   const [previewColors, setPreviewColors] = useState<ThemeColors>(defaultThemeColors());
   const [previewThemeId, setPreviewThemeId] = useState<string>('default');
+  const [previewAssets, setPreviewAssets] = useState<ThemeAssets>(mergeThemeAssets(undefined));
   const [saveLoading, setSaveLoading] = useState(false);
 
   const setPreviewByTheme = useCallback((theme: Theme) => {
     setPreviewThemeId(theme._id);
     setPreviewColors(theme.colors);
+    setPreviewAssets(mergeThemeAssets(theme.assets));
   }, []);
 
   const syncPreviewByList = useCallback(
@@ -53,15 +57,20 @@ export default function Themes() {
       if (list.length === 0) {
         setPreviewThemeId('default');
         setPreviewColors(defaultThemeColors());
+        setPreviewAssets(mergeThemeAssets(undefined));
         return;
       }
       const current = list.find((theme) => theme._id === previewThemeId);
       if (current) {
         setPreviewColors(current.colors);
+        setPreviewAssets(mergeThemeAssets(current.assets));
         return;
       }
-      setPreviewThemeId(getPreviewThemeId(list));
+      const nextPreviewId = getPreviewThemeId(list);
+      const nextTheme = list.find((theme) => theme._id === nextPreviewId);
+      setPreviewThemeId(nextPreviewId);
       setPreviewColors(getDefaultPreviewColors(list));
+      setPreviewAssets(mergeThemeAssets(nextTheme?.assets));
     },
     [previewThemeId]
   );
@@ -94,11 +103,11 @@ export default function Themes() {
     setModalOpen(true);
   };
 
-  const handleSave = async (name: string, colors: ThemeColors) => {
+  const handleSave = async (name: string, colors: ThemeColors, assets: ThemeAssets) => {
     setSaveLoading(true);
     try {
-      if (editingTheme) await updateTheme(editingTheme._id, { name, colors });
-      else await createTheme({ name, colors });
+      if (editingTheme) await updateTheme(editingTheme._id, { name, colors, assets });
+      else await createTheme({ name, colors, assets });
 
       await fetchThemes();
       setModalOpen(false);
@@ -170,9 +179,9 @@ export default function Themes() {
             )}
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-slate-700">Xem trước bộ màu</h3>
-            <ThemePreview colors={previewColors} />
+          <div className="space-y-4 lg:sticky lg:top-4 self-start">
+            <h3 className="text-lg font-medium text-slate-700">Preview</h3>
+            <ThemePreview colors={previewColors} assets={previewAssets} />
           </div>
         </div>
       )}
@@ -181,6 +190,7 @@ export default function Themes() {
         <ThemeFormModal
           initialName={editingTheme?.name ?? ''}
           initialColors={editingTheme?.colors ?? defaultThemeColors()}
+          initialAssets={editingTheme?.assets}
           colorKeys={COLOR_KEYS}
           onClose={() => {
             setModalOpen(false);

@@ -76,29 +76,6 @@ export default function Users() {
     fetchUsers(page);
   }, [page, fetchUsers]);
 
-  if (loading) {
-    return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-32" />
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 space-y-6">
       <PageHeader
@@ -165,7 +142,23 @@ export default function Users() {
         <Card className="border-0 shadow-lg">
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              {users.length === 0 ? (
+              {loading ? (
+                <div className="space-y-3 p-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Card key={i}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-4">
+                          <Skeleton className="h-12 w-12 rounded-full" />
+                          <div className="space-y-2 flex-1">
+                            <Skeleton className="h-4 w-48" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : users.length === 0 ? (
                 <div className="p-12 text-center text-muted-foreground">No users found</div>
               ) : (
                 users.map((user, index) => <UserRow key={user._id} user={user} index={index} />)

@@ -13,7 +13,9 @@
     "migrate:remove-adventure-card-appearanceRate": "tsx src/scripts/migrate-remove-adventure-card-appearanceRate.ts",
     "migrate:seed-maps-demo": "tsx src/scripts/migrate-seed-maps-demo.ts",
     "migrate:locales-to-db": "tsx src/scripts/migrate-locales-to-db.ts",
-    "migrate:item-i18n-to-db": "tsx src/scripts/migrate-item-i18n-to-db.ts"
+    "migrate:item-i18n-to-db": "tsx src/scripts/migrate-item-i18n-to-db.ts",
+    "migrate:remove-theme-background-image": "tsx src/scripts/migrate-remove-theme-background-image.ts",
+    "migrate:attached-metadata": "tsx src/scripts/migrate-attached-metadata.ts"
   },
   "dependencies": {
     "@payos/node": "^2.0.4",

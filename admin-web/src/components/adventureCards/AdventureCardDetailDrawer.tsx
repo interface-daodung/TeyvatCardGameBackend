@@ -94,6 +94,21 @@ export function AdventureCardDetailDrawer({
     editLang === 'en' ? descI18nEn : editLang === 'vi' ? descI18nVi : descI18nJa;
 
   const cardType = (form.type ?? editCard.type) as string;
+  const cardCategory = (form.category ?? editCard.category ?? '').trim();
+  const cardClan = (form.clan ?? editCard.clan ?? '').trim();
+  const cardElement = (form.element ?? editCard.element ?? '').trim();
+  const cardMetaTags = [
+    { kind: 'type', label: cardType },
+    { kind: 'category', label: cardCategory },
+    { kind: 'clan', label: cardClan },
+    { kind: 'element', label: cardElement },
+  ].filter((tag): tag is { kind: 'type' | 'category' | 'clan' | 'element'; label: string } => Boolean(tag.label));
+  const cardTagClassByKind: Record<'type' | 'category' | 'clan' | 'element', string> = {
+    type: 'border-violet-300/80 bg-violet-500/90 hover:bg-violet-500',
+    category: 'border-amber-300/80 bg-amber-500/90 hover:bg-amber-500',
+    clan: 'border-emerald-300/80 bg-emerald-500/90 hover:bg-emerald-500',
+    element: 'border-cyan-300/80 bg-cyan-500/90 hover:bg-cyan-500',
+  };
   const rawClassName = (form.className ?? editCard.className ?? '').trim();
   const classStem = rawClassName.replace(/\.ts$/i, '').split('/').pop() ?? '';
   /** Đường dẫn đầy đủ dưới models/cards khi DB lưu dạng weapon/catalyst/CatalystForest */
@@ -292,6 +307,18 @@ export function AdventureCardDetailDrawer({
               {error && (
                 <div className="mb-4 rounded bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>
               )}
+              {cardMetaTags.length > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  {cardMetaTags.map((tag) => (
+                    <div
+                      key={`${tag.kind}-${tag.label}`}
+                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-white transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${cardTagClassByKind[tag.kind]}`}
+                    >
+                      {tag.label}
+                    </div>
+                  ))}
+                </div>
+              )}
               {classCodeOpen ? (
                 <motion.div
                   className="space-y-4 rounded-xl border border-slate-200 bg-white p-3 md:p-4 dark:border-border dark:bg-background"
@@ -318,6 +345,8 @@ export function AdventureCardDetailDrawer({
                   attached={form.attached ?? editCard.attached}
                   saveLoading={saveLoading}
                   context="adventureCard"
+                  assetType={form.type ?? editCard.type}
+                  assetCategory={form.category ?? editCard.category}
                   onPersistAttached={(next) => setForm((p) => ({ ...p, attached: next }))}
                 />
               ) : (

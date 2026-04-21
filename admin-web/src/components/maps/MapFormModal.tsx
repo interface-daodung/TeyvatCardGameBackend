@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
     gameDataService,
@@ -17,17 +17,35 @@ import {
     DEFAULT_TYPE_RATIOS,
     MAP_STATUSES,
     deckContainsDisabledAdventureCard,
+    getCardImageUrl,
     getFormTypeRatios,
     getFreeRatio,
     isAdventureCardShownInDeckSource,
     normalizeMapStatus,
     type MapStatus,
 } from './mapUtils';
+import { AtlasBuilderModal } from '../assets/AtlasBuilderModal';
 import type { FileTreeItem } from '../../services/filesService';
 import { UnsavedChangesDialog, useUnsavedBaseline } from '../share';
 import { ImageLightbox, type LightboxImage } from '../ui/ImageLightbox';
 
 const LANG_OPTIONS: EditLang[] = ['en', 'vi', 'ja'];
+
+/** Chuẩn hóa tên map → tên atlas (a–z, A–Z, 0-9, -, _, tối đa 50 ký tự) giống AtlasBuilderModal. */
+function defaultAtlasNameFromMap(mapName: string, nameId: string): string {
+    const tryName = mapName.trim();
+    if (/^[a-zA-Z0-9_-]{1,50}$/.test(tryName)) return tryName;
+    const tryId = nameId.trim();
+    if (/^[a-zA-Z0-9_-]{1,50}$/.test(tryId)) return tryId;
+    const slug = tryName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9_-]+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '')
+        .slice(0, 50);
+    return slug.length >= 1 ? slug : 'map-atlas';
+}
 
 type I18nNameSnapshot = { en: string; vi: string; ja: string };
 
@@ -107,6 +125,7 @@ export function MapFormModal({
     const [mapBackgroundTreeExpanded, setMapBackgroundTreeExpanded] = useState<Set<string>>(new Set());
     const [mapBackgroundLightbox, setMapBackgroundLightbox] = useState<LightboxImage | null>(null);
     const [showDisabledDeckBlockDialog, setShowDisabledDeckBlockDialog] = useState(false);
+    const [atlasBuilderOpen, setAtlasBuilderOpen] = useState(false);
 
     // ── Sync form when modal opens or editing target changes ──
     useEffect(() => {
@@ -146,6 +165,7 @@ export function MapFormModal({
             setShowUnsavedConfirm(false);
             setShowI18nUnsavedConfirm(false);
             setShowDisabledDeckBlockDialog(false);
+            setAtlasBuilderOpen(false);
         }
     }, [open]);
 
@@ -305,6 +325,41 @@ export function MapFormModal({
     const canSaveRatios = freeRatio === 0;
     const deckHasDisabledCards = deckContainsDisabledAdventureCard(form.deckIds, adventureCards);
 
+    const deckAtlasImages = useMemo(() => {
+        const seen = new Set<string>();
+        const result: { path: string; name: string }[] = [];
+        const cardById = new Map(adventureCards.map((card) => [card._id, card]));
+
+        const addImage = (card: AdventureCard, fallbackName: string) => {
+            const path = getCardImageUrl(card);
+            if (!path || seen.has(path)) return;
+            seen.add(path);
+            result.push({
+                path,
+                name: card.name || card.nameId || fallbackName,
+            });
+        };
+
+        for (const id of form.deckIds) {
+            const card = cardById.get(id);
+            if (!card) continue;
+            addImage(card, id);
+
+            if (card.type !== 'treasure' || !Array.isArray(card.contents)) continue;
+            const contentIds = card.contents
+                .map((content) => (typeof content === 'string' ? content : content?._id))
+                .filter((contentId): contentId is string => Boolean(contentId));
+            for (const contentId of contentIds) {
+                const contentCard = cardById.get(contentId);
+                if (!contentCard) continue;
+                addImage(contentCard, contentId);
+            }
+        }
+        return result;
+    }, [form.deckIds, adventureCards]);
+
+    const deckAtlasInitialName = defaultAtlasNameFromMap(form.name, form.nameId);
+
     // ── Submit / Delete ──
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -375,6 +430,7 @@ export function MapFormModal({
         setMapBackgroundTreeExpanded(new Set());
         setMapBackgroundLightbox(null);
         setShowDisabledDeckBlockDialog(false);
+        setAtlasBuilderOpen(false);
         onClose();
     };
 
@@ -745,8 +801,18 @@ export function MapFormModal({
                                 )}
                             </div>
                             <div className="flex gap-2">
-                                <Button type="button" variant="outline" onClick={requestClose}>
-                                    Hủy
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setAtlasBuilderOpen(true)}
+                                    disabled={deckAtlasImages.length === 0}
+                                    title={
+                                        deckAtlasImages.length === 0
+                                            ? 'Thêm ít nhất một thẻ vào deck để tạo atlas'
+                                            : undefined
+                                    }
+                                >
+                                    Tạo atlas
                                 </Button>
                                 <Button type="submit" disabled={submitLoading || !canSaveRatios}>
                                     {submitLoading ? 'Đang xử lý...' : editingMap ? 'Lưu' : 'Thêm'}
@@ -827,6 +893,16 @@ export function MapFormModal({
                         </div>
                     </div>
                 </div>
+            ) : null}
+
+            {atlasBuilderOpen ? (
+                <AtlasBuilderModal
+                    images={deckAtlasImages}
+                    initialAtlasName={deckAtlasInitialName}
+                    initialSelectedPaths={deckAtlasImages.map((i) => i.path)}
+                    onClose={() => setAtlasBuilderOpen(false)}
+                    onCreated={() => setAtlasBuilderOpen(false)}
+                />
             ) : null}
         </div>,
         document.body

@@ -1,17 +1,28 @@
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPalette, faLayerGroup, faCircleInfo, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { type ThemeColors } from '../../services/themeService';
+import { faPalette, faCircleInfo, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { type ThemeColors, type ThemeAssets, mergeThemeAssets } from '../../services/themeService';
 import { generateWarmColors } from './themeColorUtils';
 
-export function ThemePreview({ colors }: { colors: ThemeColors }) {
+export function ThemePreview({ colors, assets }: { colors: ThemeColors; assets?: ThemeAssets }) {
   const [hoveredAction, setHoveredAction] = useState<string | null>(null);
   const [warmColor2, warmColor3] = generateWarmColors(colors.accent);
+  const resolvedAssets = mergeThemeAssets(assets);
+  const surfaceWithOpacity = `${colors.surface}80`;
+  const previewIcons = [
+    { key: 'compass', label: 'Compass', src: resolvedAssets.icons.compass },
+    { key: 'equip', label: 'Equip', src: resolvedAssets.icons.equip },
+    { key: 'library', label: 'Library', src: resolvedAssets.icons.library },
+  ] as const;
 
   return (
     <div
       className="rounded-xl overflow-hidden border shadow-lg"
-      style={{ backgroundColor: colors.background, color: colors.text, borderColor: colors.secondary }}
+      style={{
+        backgroundColor: colors.background,
+        color: colors.text,
+        borderColor: colors.secondary,
+      }}
     >
       <div className="border-b p-3 flex items-center justify-between" style={{ borderColor: colors.secondary }}>
         <div className="flex items-center gap-2 text-sm font-semibold">
@@ -27,8 +38,14 @@ export function ThemePreview({ colors }: { colors: ThemeColors }) {
         </button>
       </div>
 
-      <div className="p-4 space-y-4" style={{ backgroundColor: colors.background }}>
-        <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: colors.secondary, backgroundColor: colors.surface }}>
+      <div
+        className="p-4 space-y-4 bg-cover bg-center"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url(${resolvedAssets.background})`,
+          backgroundColor: colors.background,
+        }}
+      >
+        <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: colors.secondary, backgroundColor: surfaceWithOpacity }}>
           <div
             className="gradient-text leading-none mb-2 pb-2"
             style={{
@@ -67,25 +84,7 @@ export function ThemePreview({ colors }: { colors: ThemeColors }) {
           </div>
         </div>
 
-        <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: colors.secondary, backgroundColor: colors.surface }}>
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <FontAwesomeIcon icon={faLayerGroup} />
-            Khung kiểu tranh
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {['Chi tiết', 'Khung viền', 'Nội dung'].map((label) => (
-              <div
-                key={label}
-                className="rounded-md border p-2 text-xs text-center"
-                style={{ borderColor: colors.secondary, backgroundColor: colors.surface, color: colors.text }}
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-lg border p-3" style={{ borderColor: colors.secondary, backgroundColor: colors.surface }}>
+        <div className="rounded-lg border p-3" style={{ borderColor: colors.secondary, backgroundColor: surfaceWithOpacity }}>
           <div className="flex items-start gap-2 text-sm">
             <FontAwesomeIcon icon={faCircleInfo} style={{ color: colors.primary }} className="mt-0.5" />
             <div>
@@ -94,6 +93,24 @@ export function ThemePreview({ colors }: { colors: ThemeColors }) {
                 Đây là ví dụ popup khi nhấn thao tác trong giao diện.
               </p>
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border p-3" style={{ borderColor: colors.secondary, backgroundColor: surfaceWithOpacity }}>
+          <div className="text-sm font-medium mb-2">Asset icon preview</div>
+          <div className="flex items-center gap-2">
+            {previewIcons.map((icon) => (
+              <img
+                key={icon.key}
+                src={icon.src}
+                alt={icon.label}
+                title={icon.label}
+                className="w-10 h-10 object-contain"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/assets/images/ui/library.webp';
+                }}
+              />
+            ))}
           </div>
         </div>
       </div>

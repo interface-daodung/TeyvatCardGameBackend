@@ -6,11 +6,27 @@ export interface IVersion {
   patch: number;
 }
 
+/** Snapshot theme trong `configuration.themeData.themes` — JSON dùng `assets.background` (không dùng `backgroundImage`). */
+export interface IThemeSnapshotAssets {
+  background: string;
+  icons: {
+    compass: string;
+    equip: string;
+    library: string;
+  };
+}
+
+export interface IThemeSnapshot {
+  name: string;
+  colors: Record<string, unknown>;
+  assets: IThemeSnapshotAssets;
+}
+
 export interface IConfiguration {
   CardsData?: Record<string, unknown>;
   MapsData?: Record<string, unknown>;
   CharacterData?: Record<string, unknown>;
-  themeData?: Record<string, unknown>;
+  themeData?: { themes?: IThemeSnapshot[] };
   itemData?: Record<string, unknown>;
   localizations?: {
     en?: Record<string, unknown>;

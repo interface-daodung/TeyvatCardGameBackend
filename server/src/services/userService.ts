@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 import { User } from '../models/User.js';
 
 export interface GetUsersFilters {
@@ -99,4 +100,18 @@ export async function verifyUserEmail(userId: string) {
     { new: true },
   ).select('email isVerified');
   return user;
+}
+
+export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await User.findById(userId);
+  if (!user) return null;
+  if (!user.password) return 'no_password';
+
+  const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isCurrentPasswordValid) return 'invalid_current_password';
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  await user.save();
+  return { email: user.email };
 }

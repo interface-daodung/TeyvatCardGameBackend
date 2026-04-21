@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { ImageLightbox, type LightboxImage } from '../ui/ImageLightbox';
-import { FileTreeNode } from '../FileTreeNode';
+import { ImagePickerSurface } from '../ui/ImagePickerSurface';
 import { getAdventureCardImageUrl } from './adventureCardUtils';
 import type { AdventureCard } from '../../services/gameDataService';
 import type { FileTreeItem } from '../../services/filesService';
@@ -30,84 +28,25 @@ export function AdventureCardImagePicker({
   onSelectImage,
   onCloseTree,
 }: AdventureCardImagePickerProps) {
-  const [imageLightbox, setImageLightbox] = useState<LightboxImage | null>(null);
   const displayCard = { ...card, image: formImage ?? card.image };
   const imageUrl = getAdventureCardImageUrl(displayCard);
-  const openImageTree = () => {
-    if (!isTreeOpen) onToggleTree();
-  };
 
   return (
-    <>
-      <div className="w-full max-w-[200px] mx-auto aspect-[420/720] rounded-xl overflow-hidden bg-muted relative border border-border">
-        {isTreeOpen ? (
-          <div className="absolute inset-0 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-2 py-1 bg-muted border-b border-border text-xs font-medium shrink-0">
-              <span>Chọn ảnh</span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCloseTree();
-                }}
-                className="px-1.5 py-0.5 rounded hover:bg-muted-foreground/20"
-              >
-                Đóng
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-2 text-xs">
-              {imageTreeLoading ? (
-                <p className="text-muted-foreground">Đang tải...</p>
-              ) : imageTree && imageTree.length > 0 ? (
-                imageTree.map((item) => (
-                  <FileTreeNode
-                    key={item.path}
-                    item={item}
-                    expanded={imageTreeExpanded}
-                    onToggle={onToggleExpanded}
-                    onSelect={onSelectImage}
-                  />
-                ))
-              ) : (
-                <p className="text-muted-foreground">Không có ảnh</p>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div
-            className="absolute inset-0 cursor-default"
-            role="button"
-            tabIndex={0}
-            title="Ctrl+click: chọn ảnh. Double-click: xem toàn màn hình."
-            onDoubleClick={(e) => {
-              e.preventDefault();
-              setImageLightbox({ src: imageUrl, alt: card.name });
-            }}
-            onClick={(e) => {
-              if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                openImageTree();
-              }
-            }}
-            onKeyDown={(e) => {
-              if ((e.ctrlKey || e.metaKey) && (e.key === 'Enter' || e.key === ' ')) {
-                e.preventDefault();
-                openImageTree();
-              }
-            }}
-          >
-            <img
-              src={imageUrl}
-              alt={card.name}
-              className="pointer-events-none absolute inset-0 w-full h-full object-cover"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = '/assets/images/cards/empty.webp';
-              }}
-            />
-          </div>
-        )}
-      </div>
-      <ImageLightbox open={imageLightbox} onClose={() => setImageLightbox(null)} />
-    </>
+    <ImagePickerSurface
+      pickerOpen={isTreeOpen}
+      pickerTitle="Chọn ảnh"
+      tree={imageTree}
+      treeLoading={imageTreeLoading}
+      expanded={imageTreeExpanded}
+      onToggleExpanded={onToggleExpanded}
+      onSelectPath={onSelectImage}
+      onOpenPicker={onToggleTree}
+      onClosePicker={onCloseTree}
+      previewAlt={card.name}
+      previewSrc={imageUrl}
+      previewWrapperClassName="w-full max-w-[200px] mx-auto aspect-[420/720] rounded-xl bg-muted border border-border"
+      triggerTitle="Ctrl+click: chọn ảnh. Double-click: xem toàn màn hình."
+      imageFallbackSrc="/assets/images/cards/empty.webp"
+    />
   );
 }

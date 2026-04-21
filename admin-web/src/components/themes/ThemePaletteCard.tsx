@@ -45,7 +45,7 @@ export function ThemePaletteCard({
             <span className="text-[15px] font-medium text-slate-800">{theme.name}</span>
             {isDefault && (
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                mac dinh
+                mặc định
               </span>
             )}
           </div>

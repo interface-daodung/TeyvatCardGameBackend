@@ -26,6 +26,11 @@ export default function UserDetail() {
   const [items, setItems] = useState<Item[]>([]);
   const [payosIframeOpen, setPayosIframeOpen] = useState(false);
   const [verifyingEmail, setVerifyingEmail] = useState(false);
+  const [passwordFormOpen, setPasswordFormOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const embedPaymentLinkSrc =
     id && typeof window !== 'undefined'
@@ -132,6 +137,37 @@ export default function UserDetail() {
       alert('Không thể thu hồi refresh token.');
     } finally {
       setRevoking(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!id) return;
+    if (!currentPassword.trim()) {
+      alert('Vui lòng nhập mật khẩu cũ.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      alert('Mật khẩu phải có ít nhất 6 ký tự.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      alert('Mật khẩu xác nhận không khớp.');
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      await userService.changePassword(id, currentPassword, newPassword);
+      alert('Đổi mật khẩu thành công.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordFormOpen(false);
+    } catch (error: any) {
+      console.error('Failed to change password:', error);
+      alert(error?.response?.data?.error || 'Không thể đổi mật khẩu.');
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -300,31 +336,105 @@ export default function UserDetail() {
             </div>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
-            <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-slate-100">
-              <p className="text-xs font-medium tracking-wide text-slate-500 uppercase shrink-0">
-                Xác nhận email
-              </p>
-              {user.isVerified ? (
-                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                  Đã xác nhận
-                </Badge>
-              ) : (
-                <>
-                  <Badge variant="outline" className="border-amber-400 text-amber-800 bg-amber-50/80">
-                    Chưa xác nhận
-                  </Badge>
+            {user.role === 'admin' ? (
+              <div className="space-y-4 pb-4 border-b border-slate-100">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium tracking-wide text-slate-500 uppercase shrink-0">
+                      Đổi mật khẩu
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Yêu cầu nhập mật khẩu cũ trước khi cập nhật.
+                    </p>
+                  </div>
                   <Button
                     type="button"
                     size="sm"
-                    onClick={handleVerifyEmail}
-                    disabled={verifyingEmail}
-                    className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white shadow-sm"
+                    onClick={() => setPasswordFormOpen((open) => !open)}
+                    className="rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 px-4 hover:from-sky-700 hover:to-indigo-700 text-white shadow-sm"
                   >
-                    {verifyingEmail ? 'Đang xử lý…' : 'Xác nhận email (admin)'}
+                    {passwordFormOpen ? 'Ẩn form' : 'Đổi mật khẩu'}
                   </Button>
-                </>
-              )}
-            </div>
+                </div>
+                {passwordFormOpen && (
+                  <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Mật khẩu cũ"
+                        className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                      />
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Mật khẩu mới"
+                        className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                      />
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Nhập lại mật khẩu mới"
+                        className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                      />
+                    </div>
+                    <div className="mt-3 flex flex-col sm:flex-row sm:justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setCurrentPassword('');
+                          setNewPassword('');
+                          setConfirmPassword('');
+                          setPasswordFormOpen(false);
+                        }}
+                        disabled={changingPassword}
+                        className="rounded-lg"
+                      >
+                        Hủy
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleChangePassword}
+                        disabled={changingPassword}
+                        className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md"
+                      >
+                        {changingPassword ? 'Đang xử lý…' : 'Lưu mật khẩu'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-slate-100">
+                <p className="text-xs font-medium tracking-wide text-slate-500 uppercase shrink-0">
+                  Xác nhận email
+                </p>
+                {user.isVerified ? (
+                  <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                    Đã xác nhận
+                  </Badge>
+                ) : (
+                  <>
+                    <Badge variant="outline" className="border-amber-400 text-amber-800 bg-amber-50/80">
+                      Chưa xác nhận
+                    </Badge>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleVerifyEmail}
+                      disabled={verifyingEmail}
+                      className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white shadow-sm"
+                    >
+                      {verifyingEmail ? 'Đang xử lý…' : 'Xác nhận email (admin)'}
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">

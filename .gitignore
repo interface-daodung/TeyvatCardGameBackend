@@ -12,6 +12,8 @@ coverage/
 dist/
 build/
 
+server/atlas/
+
 # Uploaded assets (REST + Multer)
 server/uploads/
 

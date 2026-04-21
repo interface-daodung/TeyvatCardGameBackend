@@ -55,14 +55,17 @@ export async function getImageTreeHandler(req: Request, res: Response) {
     // Map scope -> basePath + webRoot so `FileTreeItem.path` is always correct.
     // - `map-background`: assets/images/ui/background
     // - `item`: assets/images/item
-    // - `manager-assets`: assets/images
+    // - `assets` / `manager-assets`: assets/images
+    // - `sound-effects`: assets/sounds/SE
     // - `cards-assets` (default): assets/images/cards
     const normalizedScope =
       scopeFromQuery === 'map-background'
         ? 'map-background'
         : scopeFromQuery === 'item'
           ? 'item'
-          : scopeFromQuery === 'manager-assets'
+          : scopeFromQuery === 'sound-effects'
+            ? 'sound-effects'
+          : scopeFromQuery === 'manager-assets' || scopeFromQuery === 'assets'
             ? 'manager-assets'
             : 'cards-assets';
 
@@ -71,6 +74,8 @@ export async function getImageTreeHandler(req: Request, res: Response) {
         ? filesService.getMapBackgroundImageTree()
         : normalizedScope === 'item'
           ? filesService.getItemImageTree()
+          : normalizedScope === 'sound-effects'
+            ? filesService.getSoundEffectsTree()
           : filesService.getImageTree(
               normalizedScope === 'manager-assets' ? filesService.getImagesRootPath() : filesService.getImagesBasePath(),
               normalizedScope === 'manager-assets' ? '/assets/images' : '/assets/images/cards',
@@ -164,6 +169,37 @@ export async function exportAtlasToTeyvatHandler(req: Request, res: Response) {
   } catch (err) {
     console.error('Failed to export atlas to TeyvatCard/public:', err);
     res.status(500).json({ error: 'Xuất atlas sang TeyvatCard thất bại' });
+  }
+}
+
+export async function exportAnimationToTeyvatHandler(req: Request, res: Response) {
+  try {
+    const { path: webPath, confirmOverwrite } = req.body as {
+      path?: string;
+      confirmOverwrite?: boolean;
+    };
+    if (!webPath || typeof webPath !== 'string') {
+      res.status(400).json({ error: 'Thiếu path' });
+      return;
+    }
+    const result = filesService.exportAnimationToTeyvatPublic(
+      webPath,
+      Boolean(confirmOverwrite)
+    );
+    if ('error' in result) {
+      if (result.code === 'NEEDS_OVERWRITE_CONFIRM') {
+        return res.status(409).json({
+          error: result.error,
+          code: result.code,
+        });
+      }
+      const status = result.error === 'File không tồn tại' ? 404 : 400;
+      return res.status(status).json({ error: result.error });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Failed to export animation to TeyvatCard/public:', err);
+    res.status(500).json({ error: 'Xuất animation sang TeyvatCard thất bại' });
   }
 }
 
@@ -681,6 +717,24 @@ export async function exportSpritesheetBestGridHandler(req: Request, res: Respon
     res.json(result);
   } catch (err) {
     console.error('Spritesheet bestGrid export failed:', err);
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Xuất thất bại' });
+  }
+}
+
+export async function exportSpritesheetResizeVariantsHandler(req: Request, res: Response) {
+  try {
+    const bodyPath = (req.body as { path?: string })?.path;
+    if (typeof bodyPath !== 'string' || !bodyPath.trim()) {
+      res.status(400).json({ error: 'Thiếu path' });
+      return;
+    }
+    const result = await filesService.exportSpritesheetResizeVariants(bodyPath.trim());
+    if ('error' in result) {
+      return res.status(400).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Spritesheet resize export failed:', err);
     res.status(500).json({ error: err instanceof Error ? err.message : 'Xuất thất bại' });
   }
 }
