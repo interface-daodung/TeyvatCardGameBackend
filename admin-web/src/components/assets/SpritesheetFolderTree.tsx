@@ -192,11 +192,11 @@ export function SpritesheetFolderTree({
         className
       )}
     >
-      <TabPanelLoading show={Boolean(loading)} label="Đang tải danh sách…" />
+      <TabPanelLoading show={Boolean(loading)} label="Loading list…" />
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {!loading && tree.length === 0 && (
           <p className="text-xs text-muted-foreground">
-            {emptyMessage ?? 'Chưa có file trong Spritesheet.'}
+            {emptyMessage ?? 'No files in Spritesheet yet.'}
           </p>
         )}
         {!loading && tree.length > 0 && (

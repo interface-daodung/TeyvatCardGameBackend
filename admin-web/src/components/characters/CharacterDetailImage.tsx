@@ -124,7 +124,7 @@ export function CharacterDetailImage({
     image.onerror = () => {
       if (cancelled) return;
       setSpriteLoading(false);
-      setSpriteError('Không load được spritesheet.');
+      setSpriteError('Cannot load spritesheet.');
     };
     image.crossOrigin = 'anonymous';
     image.src = spritesheetUrl;
@@ -190,7 +190,7 @@ export function CharacterDetailImage({
     image.onerror = () => {
       if (cancelled) return;
       setSpriteLightboxLoading(false);
-      setSpriteLightboxError('Không load được spritesheet.');
+      setSpriteLightboxError('Cannot load spritesheet.');
     };
     image.crossOrigin = 'anonymous';
     image.src = spritesheetUrl;
@@ -208,7 +208,7 @@ export function CharacterDetailImage({
   const lightboxPayload: ImageLightboxOpen | null = spriteLightboxOpen
     ? {
         type: 'custom',
-        label: 'Ảnh động (spritesheet)',
+        label: 'Animated image (spritesheet)',
         children: (
           <div className="relative inline-flex max-h-[min(85vh,800px)] max-w-[min(90vw,900px)] flex-col items-center justify-center">
             <canvas
@@ -218,7 +218,7 @@ export function CharacterDetailImage({
             {spriteLightboxLoading && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-900/70">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-transparent" />
-                <p className="text-sm text-slate-200">Đang tải spritesheet...</p>
+                <p className="text-sm text-slate-200">Loading spritesheet...</p>
               </div>
             )}
             {spriteLightboxError && (
@@ -232,16 +232,16 @@ export function CharacterDetailImage({
   return (
     <div className="flex flex-col">
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        Ảnh
+        Images
       </h2>
       <p className="sr-only">
-        Tab Mặc định: chọn ảnh trong cards/character. Tab Động: spritesheet trong assets/images/Spritesheet.
-        Tab Unlock: ảnh trong assets/images/cards/unlock. Ctrl hoặc Cmd click để mở chọn file.
-        Double-click để xem toàn màn hình (ảnh tĩnh hoặc spritesheet động).
+        Default tab: select image from cards/character. Animated tab: spritesheet in assets/images/Spritesheet.
+        Unlock tab: image in assets/images/cards/unlock. Ctrl or Cmd click to open the file picker.
+        Double-click to view fullscreen (static image or animated spritesheet).
       </p>
 
       <div className="w-full max-w-[280px] overflow-hidden rounded-lg border border-border bg-muted/50 text-card-foreground shadow-sm">
-        <div className="flex" role="tablist" aria-label="Loại hiển thị ảnh">
+        <div className="flex" role="tablist" aria-label="Image display type">
           <button
             type="button"
             role="tab"
@@ -258,7 +258,7 @@ export function CharacterDetailImage({
               if (isPickerOpen) onClosePicker();
             }}
           >
-            Mặc định
+            Default
           </button>
           <button
             type="button"
@@ -276,7 +276,7 @@ export function CharacterDetailImage({
               if (isPickerOpen) onClosePicker();
             }}
           >
-            Động
+            Animated
           </button>
           <button
             type="button"
@@ -315,8 +315,8 @@ export function CharacterDetailImage({
               {imageTab === 'default' && (
                 <ImagePickerSurface
                   pickerOpen={isPickerOpen && imagePickerRoot === 'character'}
-                  pickerTitle="Chọn ảnh"
-                  pickerEmptyText="Không có file trong thư mục này"
+                  pickerTitle="Select image"
+                  pickerEmptyText="No files in this folder"
                   tree={characterImageTree}
                   treeLoading={imageTreeLoading}
                   expanded={imageTreeExpanded}
@@ -327,7 +327,7 @@ export function CharacterDetailImage({
                   previewAlt={character.name}
                   previewSrc={displaySrc}
                   previewWrapperClassName="h-full w-full"
-                  triggerTitle="Ctrl+click: chọn ảnh (cards/character). Double-click: xem toàn màn hình."
+                  triggerTitle="Ctrl+click: select image (cards/character). Double-click: view fullscreen."
                   imageFallbackSrc={EMPTY_CARD_WEBP}
                 />
               )}
@@ -338,7 +338,7 @@ export function CharacterDetailImage({
                     className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-muted/40 p-1"
                     role="button"
                     tabIndex={0}
-                    title="Ctrl+click: chọn file (assets/images/Spritesheet). Double-click: xem toàn màn hình."
+                    title="Ctrl+click: select file (assets/images/Spritesheet). Double-click: view fullscreen."
                     onDoubleClick={(e) => {
                       e.preventDefault();
                       setSpriteLightboxOpen(true);
@@ -364,7 +364,7 @@ export function CharacterDetailImage({
                       {spriteLoading && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-slate-900/60">
                           <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-transparent" />
-                          <p className="text-xs text-slate-200">Đang tải spritesheet...</p>
+                          <p className="text-xs text-slate-200">Loading spritesheet...</p>
                         </div>
                       )}
                     </div>
@@ -377,7 +377,7 @@ export function CharacterDetailImage({
                   {isPickerOpen && imagePickerRoot === 'character-spritesheet' && (
                     <div className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-muted">
                       <div className="flex shrink-0 items-center justify-between border-b border-border bg-muted px-2 py-1 text-xs font-medium">
-                        <span className="truncate pr-2">Chọn ảnh</span>
+                        <span className="truncate pr-2">Select image</span>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -386,12 +386,12 @@ export function CharacterDetailImage({
                           }}
                           className="shrink-0 rounded px-1.5 py-0.5 hover:bg-muted-foreground/20"
                         >
-                          Đóng
+                          Close
                         </button>
                       </div>
                       <div className="flex-1 overflow-y-auto p-2 text-xs">
                         {imageTreeLoading ? (
-                          <p className="text-muted-foreground">Đang tải...</p>
+                          <p className="text-muted-foreground">Loading...</p>
                         ) : characterImageTree && characterImageTree.length > 0 ? (
                           characterImageTree.map((item) => (
                             <FileTreeNode
@@ -403,7 +403,7 @@ export function CharacterDetailImage({
                             />
                           ))
                         ) : (
-                          <p className="text-muted-foreground">Không có file trong thư mục này</p>
+                          <p className="text-muted-foreground">No files in this folder</p>
                         )}
                       </div>
                     </div>
@@ -414,8 +414,8 @@ export function CharacterDetailImage({
               {imageTab === 'unlock' && (
                 <ImagePickerSurface
                   pickerOpen={isPickerOpen && imagePickerRoot === 'character-unlock'}
-                  pickerTitle="Chọn ảnh"
-                  pickerEmptyText="Không có file trong thư mục này"
+                  pickerTitle="Select image"
+                  pickerEmptyText="No files in this folder"
                   tree={characterImageTree}
                   treeLoading={imageTreeLoading}
                   expanded={imageTreeExpanded}
@@ -426,7 +426,7 @@ export function CharacterDetailImage({
                   previewAlt={`${character.name} unlock`}
                   previewSrc={unlockDisplaySrc}
                   previewWrapperClassName="h-full w-full"
-                  triggerTitle="Ctrl+click: chọn ảnh (assets/images/cards/unlock). Double-click: xem toàn màn hình."
+                  triggerTitle="Ctrl+click: select image (assets/images/cards/unlock). Double-click: view fullscreen."
                   imageFallbackSrc={EMPTY_CARD_WEBP}
                 />
               )}

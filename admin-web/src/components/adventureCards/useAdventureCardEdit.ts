@@ -188,7 +188,7 @@ export function useAdventureCardEdit(
         ? (editLang === 'en' ? nameI18nEn : editLang === 'vi' ? nameI18nVi : nameI18nJa).trim()
         : (editLang === 'en' ? descI18nEn : editLang === 'vi' ? descI18nVi : descI18nJa).trim();
     if (!sourceText) {
-      setErr('Vui lòng nhập nội dung gốc trước khi dịch');
+      setErr('Please enter source text before translating');
       return;
     }
     setErr(null);
@@ -208,7 +208,7 @@ export function useAdventureCardEdit(
       }
       await Promise.all(promises);
     } catch {
-      setErr('Lỗi gọi dịch máy, hãy thử lại');
+      setErr('Translation service error, please try again');
     } finally {
       setLoading(false);
     }
@@ -293,7 +293,7 @@ export function useAdventureCardEdit(
         try {
           await localizationService.createLocalization(keyBase, translations);
         } catch {
-          setErr('Không lưu được bản dịch, hãy thử lại');
+          setErr('Cannot save translation, please try again');
           return;
         }
       }
@@ -458,7 +458,7 @@ export function useAdventureCardEdit(
       closeEdit();
     } catch (e: unknown) {
       setError(
-        e && typeof e === 'object' && 'message' in e ? String((e as Error).message) : 'Không xóa được thẻ'
+        e && typeof e === 'object' && 'message' in e ? String((e as Error).message) : 'Cannot delete card'
       );
       throw e;
     } finally {
@@ -506,7 +506,7 @@ export function useAdventureCardEdit(
     const name = (formCreate.name ?? '').trim();
     const type = formCreate.type ?? 'weapon';
     if (!nameId || !name) {
-      setError('Vui lòng nhập Name ID và Name');
+      setError('Please enter Name ID and Name');
       return;
     }
     setSaveLoading(true);

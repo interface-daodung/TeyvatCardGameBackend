@@ -27,7 +27,7 @@ export function DeckDropZone({
     onAdd,
     onRemove,
     getImageUrl = getCardImageUrl,
-    emptyMessage = 'Kéo thẻ từ danh sách bên phải vào đây',
+    emptyMessage = 'Drag cards from the list on the right into here',
 }: DeckDropZoneProps) {
     const [isDragOver, setIsDragOver] = useState(false);
 
@@ -80,7 +80,7 @@ export function DeckDropZone({
                             className={`absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-sm font-bold transition-opacity shadow hover:bg-red-600 ${
                                 isDisabled ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                             }`}
-                            aria-label="Bỏ thẻ khỏi deck"
+                            aria-label="Remove card from deck"
                         >
                             −
                         </button>

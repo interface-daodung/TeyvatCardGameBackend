@@ -17,7 +17,7 @@ export interface ConfirmDangerDialogProps {
   overlayClassName?: string;
 }
 
-const defaultTitle = 'Xác nhận?';
+const defaultTitle = 'Confirm?';
 
 /**
  * Popup xác nhận hành động nguy hiểm (xóa, gỡ, v.v.), dùng chung admin.
@@ -30,9 +30,9 @@ export function ConfirmDangerDialog({
   confirmLoading = false,
   title = defaultTitle,
   description,
-  cancelLabel = 'Hủy',
-  confirmLabel = 'Xóa',
-  confirmLoadingLabel = 'Đang xử lý…',
+  cancelLabel = 'Cancel',
+  confirmLabel = 'Delete',
+  confirmLoadingLabel = 'Processing…',
   /** Trên header (z-40) và vùng #admin-main-scroll (z-30); portal ra body để không bị kẹt stacking context */
   overlayClassName = 'z-[10050]',
 }: ConfirmDangerDialogProps) {
@@ -62,7 +62,7 @@ export function ConfirmDangerDialog({
             onClick={onCancel}
             disabled={confirmLoading}
             className="shrink-0 rounded-md p-1.5 text-xl leading-none text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
-            aria-label="Đóng"
+            aria-label="Close"
           >
             ✕
           </button>

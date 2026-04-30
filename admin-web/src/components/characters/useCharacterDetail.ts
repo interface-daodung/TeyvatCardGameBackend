@@ -236,7 +236,7 @@ export function useCharacterDetail(
   const handleI18nTranslate = async () => {
     const sourceText = getFormI18n(editLang).trim();
     if (!sourceText) {
-      setI18nError(`Vui lòng nhập ${editLang} trước (ngôn ngữ base để dịch)`);
+      setI18nError(`Please enter ${editLang} first (base language for translation)`);
       return;
     }
     setI18nError(null);
@@ -260,7 +260,7 @@ export function useCharacterDetail(
       }
       await Promise.all(promises);
     } catch {
-      setI18nError('Lỗi kết nối dịch máy, vui lòng thử lại');
+      setI18nError('Translation service connection error, please try again');
     } finally {
       setTranslateLoading(false);
     }
@@ -290,7 +290,7 @@ export function useCharacterDetail(
         else setDescriptionTranslations(translations);
         closeI18nPopup();
       } catch {
-        setI18nError('Lỗi lưu localization');
+        setI18nError('Localization save error');
       }
     }
   };

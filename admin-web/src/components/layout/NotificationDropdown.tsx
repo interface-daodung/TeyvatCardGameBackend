@@ -103,7 +103,7 @@ export const NotificationDropdown = forwardRef<HTMLDivElement, NotificationDropd
                 'text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed'
               )}
             >
-              {loadingMore ? 'Đang tải...' : 'Xem thêm'}
+              {loadingMore ? 'Loading...' : 'Load more'}
             </button>
           </div>
         )}

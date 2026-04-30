@@ -49,10 +49,10 @@ function formatTimeAgo(dateStr: string): string {
   const diffH = Math.floor(diffMin / 60);
   const diffD = Math.floor(diffH / 24);
 
-  if (diffMin < 1) return 'vừa xong';
-  if (diffMin < 60) return `${diffMin} phút trước`;
-  if (diffH < 24) return `${diffH} giờ trước`;
-  if (diffD < 7) return `${diffD} ngày trước`;
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin} minutes ago`;
+  if (diffH < 24) return `${diffH} hours ago`;
+  if (diffD < 7) return `${diffD} days ago`;
   return then.toLocaleDateString();
 }
 
@@ -274,20 +274,20 @@ export default function Dashboard() {
 
   const quickActions = [
     {
-      label: 'Tạo link thanh toán',
-      description: 'Tạo nhanh link thanh toán mới',
+      label: 'Create payment link',
+      description: 'Quickly create a new payment link',
       icon: '⚡',
       onClick: () => navigate('/payment-link'),
     },
     {
-      label: 'Quản lý Users',
-      description: 'Xem và quản lý người dùng',
+      label: 'Manage Users',
+      description: 'View and manage users',
       icon: '👥',
       onClick: () => navigate('/users'),
     },
     {
       label: 'Xem Logs',
-      description: 'Theo dõi hoạt động hệ thống',
+      description: 'Monitor system activity',
       icon: '📝',
       onClick: () => navigate('/logs'),
     },
@@ -430,7 +430,7 @@ export default function Dashboard() {
             <div className="p-4 space-y-2">
               {recentLinks.length === 0 ? (
                 <p className="text-sm text-slate-500">
-                  Chưa có lịch sử gần đây. Hãy mở vài trang để hiển thị tại đây.
+                  No recent history yet. Open a few pages to see them here.
                 </p>
               ) : (
                 recentLinks.map((link) => (
@@ -487,7 +487,7 @@ export default function Dashboard() {
             <div>
               <h2 className="text-lg font-semibold text-slate-800">Server Configuration Snapshot</h2>
               <p className="text-sm text-slate-500 mt-0.5">
-                Snapshot từ DB: Maps, Cards, Characters, Items, Themes, Localizations
+                Snapshot from DB: Maps, Cards, Characters, Items, Themes, Localizations
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -500,7 +500,7 @@ export default function Dashboard() {
                   disabled={checkStatus === 'checking' || checkCooldown > 0}
                 >
                   {checkStatus === 'checking'
-                    ? 'Đang kiểm tra…'
+                    ? 'Checking…'
                     : checkCooldown > 0
                       ? `Check update (${checkCooldown}s)`
                       : 'Check update'}
@@ -510,7 +510,7 @@ export default function Dashboard() {
                 <Button
                   size="sm"
                   onClick={() => {
-                    if (window.confirm('Xác nhận đồng bộ server config? Dữ liệu từ DB sẽ được snapshot và export xuống TeyvatCard/public/data.')) {
+                    if (window.confirm('Confirm sync server config? Data from DB will be snapshotted and exported to TeyvatCard/public/data.')) {
                       handleSyncServerConfig();
                     }
                   }}
@@ -524,15 +524,15 @@ export default function Dashboard() {
           {(checkStatus === 'no_update' || checkStatus === 'has_update') && (
             <p className="text-sm mt-2 text-slate-600">
               {checkStatus === 'no_update' ? (
-                <span className="text-amber-600 font-medium">Chưa có cập nhật</span>
+                <span className="text-amber-600 font-medium">No updates</span>
               ) : (
-                <span className="text-green-600 font-medium">Có cập nhật – bấm &quot;Update server config&quot; để đồng bộ</span>
+                <span className="text-green-600 font-medium">Updates available - click &quot;Update server config&quot; to sync</span>
               )}
             </p>
           )}
           {checkStatus === 'has_update' && checkChanges && Object.keys(checkChanges).length > 0 && (
             <div className="mt-3 rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm space-y-2">
-              <p className="font-medium text-slate-700">Thay đổi:</p>
+              <p className="font-medium text-slate-700">Changes:</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {Object.entries(checkChanges).map(([cat, { added, updated, removed }]) => (
                   <div key={cat} className="rounded bg-white p-2 border border-slate-100">
@@ -541,19 +541,19 @@ export default function Dashboard() {
                     </p>
                     {added.length > 0 && (
                       <p className="text-xs text-green-700">
-                        <span className="font-medium">Thêm mới ({added.length}):</span>{' '}
+                        <span className="font-medium">Added ({added.length}):</span>{' '}
                         <span className="text-slate-600">{added.slice(0, 5).join(', ')}{added.length > 5 ? ` +${added.length - 5}` : ''}</span>
                       </p>
                     )}
                     {updated.length > 0 && (
                       <p className="text-xs text-blue-700 mt-0.5">
-                        <span className="font-medium">Cập nhật ({updated.length}):</span>{' '}
+                        <span className="font-medium">Updated ({updated.length}):</span>{' '}
                         <span className="text-slate-600">{updated.slice(0, 5).join(', ')}{updated.length > 5 ? ` +${updated.length - 5}` : ''}</span>
                       </p>
                     )}
                     {(removed?.length ?? 0) > 0 && (
                       <p className="text-xs text-red-700 mt-0.5">
-                        <span className="font-medium">Đã xóa ({removed.length}):</span>{' '}
+                        <span className="font-medium">Removed ({removed.length}):</span>{' '}
                         <span className="text-slate-600">{removed.slice(0, 5).join(', ')}{removed.length > 5 ? ` +${removed.length - 5}` : ''}</span>
                       </p>
                     )}
@@ -563,7 +563,7 @@ export default function Dashboard() {
             </div>
           )}
           {checkError && (
-            <p className="text-sm mt-2 text-red-600">Check lỗi: {checkError}</p>
+            <p className="text-sm mt-2 text-red-600">Check error: {checkError}</p>
           )}
         </div>
         <div className="p-6 space-y-4">
@@ -582,11 +582,11 @@ export default function Dashboard() {
                       dateStyle: 'short',
                       timeStyle: 'short',
                     })
-                  : 'Chưa có'}
+                  : 'Not available'}
               </p>
             </div>
             <div className="rounded-lg bg-slate-50/80 p-3">
-              <p className="text-xs text-slate-500 uppercase tracking-wider">Đã cập nhật</p>
+              <p className="text-xs text-slate-500 uppercase tracking-wider">Updated</p>
               <p className="text-sm font-medium text-blue-600 mt-0.5">
                 {latestConfig?.createdAt ? formatTimeAgo(latestConfig.createdAt) : '—'}
               </p>
@@ -601,7 +601,7 @@ export default function Dashboard() {
 
           {snapshotCounts && (
             <div className="flex flex-wrap gap-2">
-              <span className="text-xs text-slate-500">Nội dung snapshot:</span>
+              <span className="text-xs text-slate-500">Snapshot contents:</span>
               <div className="flex flex-wrap gap-2">
                 {[
                   { label: 'Maps', value: snapshotCounts.maps, icon: '🗺️' },
@@ -629,7 +629,7 @@ export default function Dashboard() {
               <p className="font-medium text-slate-700">
                 Export TeyvatCard/public/data:{' '}
                 <span className={lastExportResult.success ? 'text-green-600' : 'text-amber-600'}>
-                  {lastExportResult.success ? '✓ Thành công' : '⚠ Một số file lỗi'}
+                  {lastExportResult.success ? '✓ Success' : '⚠ Some files failed'}
                 </span>
               </p>
               <div className="flex flex-wrap gap-2">

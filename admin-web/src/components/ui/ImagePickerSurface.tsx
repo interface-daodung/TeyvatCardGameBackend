@@ -30,7 +30,7 @@ interface ImagePickerSurfaceProps {
 export function ImagePickerSurface({
   pickerOpen,
   pickerTitle,
-  pickerEmptyText = 'Không có ảnh',
+  pickerEmptyText = 'No images',
   tree,
   treeLoading,
   expanded,

@@ -133,7 +133,7 @@ export function AtlasViewModal({
       })
       .catch((err: unknown) => {
         if (err instanceof Error && err.name === 'AbortError') return;
-        setJsonError(err instanceof Error ? err.message : 'Không đọc được JSON');
+        setJsonError(err instanceof Error ? err.message : 'Cannot read JSON');
       })
       .finally(() => {
         setJsonLoading(false);
@@ -269,7 +269,7 @@ export function AtlasViewModal({
 
   const imageFileSizeLabel = useMemo(
     () =>
-      entry ? `Dung lượng file: ${formatFileSize(entry.imageMeta?.size ?? 0)}` : '',
+      entry ? `File size: ${formatFileSize(entry.imageMeta?.size ?? 0)}` : '',
     [entry]
   );
 
@@ -293,14 +293,14 @@ export function AtlasViewModal({
       onAtlasExportedToTeyvatSucceeded?.();
       const destList = r.exported
         .map((s: 'desktop' | 'mobile') => `TeyvatCard/public/assets/images/${s}/atlas`)
-        .join(' và ');
+        .join(' and ');
       window.alert(
-        `Đã tạo bản sao "${entry.name}.webp" + "${entry.name}.json" tại ${destList}. Nguồn chỉ từ server/atlas/desktop và/hoặc server/atlas/mobile (server/atlas gốc không đổi).`
+        `Created copies "${entry.name}.webp" + "${entry.name}.json" at ${destList}. Source is only from server/atlas/desktop and/or server/atlas/mobile (original server/atlas remains unchanged).`
       );
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to export atlas to TeyvatCard/public', err);
-      window.alert(`Xuất atlas thất bại: ${exportAtlasErrorMessage(err)}`);
+      window.alert(`Atlas export failed: ${exportAtlasErrorMessage(err)}`);
     } finally {
       setExportTeyvatLoading(false);
     }
@@ -327,14 +327,14 @@ export function AtlasViewModal({
       onAtlasExportedToTeyvatSucceeded?.();
       const destList = r.exported
         .map((s: 'desktop' | 'mobile') => `TeyvatCard/public/assets/images/${s}/atlas`)
-        .join(' và ');
+        .join(' and ');
       window.alert(
-        `Đã ghi đè "${entry.name}.webp" + "${entry.name}.json" tại ${destList}. (server/atlas không đổi.)`
+        `Overwrote "${entry.name}.webp" + "${entry.name}.json" at ${destList}. (server/atlas unchanged.)`
       );
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to overwrite export atlas', err);
-      window.alert(`Ghi đè thất bại: ${exportAtlasErrorMessage(err)}`);
+      window.alert(`Overwrite failed: ${exportAtlasErrorMessage(err)}`);
     } finally {
       setExportTeyvatLoading(false);
     }
@@ -366,7 +366,7 @@ export function AtlasViewModal({
         error: err instanceof Error ? err.message : 'unknown',
       });
       onDeleteFailed?.(deletingName);
-      window.alert(`Xóa atlas "${deletingName}" thất bại ở server.`);
+      window.alert(`Failed to delete atlas "${deletingName}" on server.`);
     } finally {
       setDeleteLoading(false);
     }
@@ -398,13 +398,13 @@ export function AtlasViewModal({
               onClick={() => void handleExportAtlasToTeyvat()}
               title={
                 entry.scope === 'default'
-                  ? 'Xuất từ server/atlas/desktop và server/atlas/mobile sang TeyvatCard/public/assets/images (không đọc file trong server/atlas gốc)'
-                  : 'Xuất bản cùng tên cho cả desktop và mobile sang TeyvatCard/public/assets/images'
+                  ? 'Export from server/atlas/desktop and server/atlas/mobile to TeyvatCard/public/assets/images (without reading files in original server/atlas)'
+                  : 'Export same-name versions for both desktop and mobile to TeyvatCard/public/assets/images'
               }
-              aria-label="Duyệt atlas: xuất bản sao sang TeyvatCard public"
+              aria-label="Browse atlas: export copies to TeyvatCard public"
             >
               <FontAwesomeIcon icon={faFolder as IconProp} className="h-3.5 w-3.5" />
-              {exportTeyvatLoading ? 'Đang xuất…' : 'Duyệt atlas'}
+              {exportTeyvatLoading ? 'Exporting…' : 'Browse atlas'}
             </Button>
             <Button
               type="button"
@@ -412,8 +412,8 @@ export function AtlasViewModal({
               size="icon"
               className="h-9 w-9 shrink-0"
               onClick={() => setDeleteConfirmOpen(true)}
-              title="Xóa atlas này"
-              aria-label="Xóa atlas này"
+              title="Delete this atlas"
+              aria-label="Delete this atlas"
             >
               <FontAwesomeIcon icon={faTrashCan as IconProp} className="h-4 w-4" />
             </Button>
@@ -423,15 +423,15 @@ export function AtlasViewModal({
               size="icon"
               className="h-9 w-9 shrink-0"
               onClick={() => setCanvasBgMode((prev) => (prev === 'dark' ? 'light' : 'dark'))}
-              title={isCanvasLight ? 'Chuyển nền preview tối' : 'Chuyển nền preview sáng'}
-              aria-label={isCanvasLight ? 'Chuyển nền preview tối' : 'Chuyển nền preview sáng'}
+              title={isCanvasLight ? 'Switch preview background to dark' : 'Switch preview background to light'}
+              aria-label={isCanvasLight ? 'Switch preview background to dark' : 'Switch preview background to light'}
             >
               <FontAwesomeIcon
                 icon={(isCanvasLight ? faLightbulbRegular : faLightbulbSolid) as IconProp}
                 className="h-4 w-4"
               />
             </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={onClose} aria-label="Đóng">
+            <Button type="button" variant="ghost" size="sm" onClick={onClose} aria-label="Close">
               ✕
             </Button>
           </div>
@@ -448,7 +448,7 @@ export function AtlasViewModal({
             <canvas
               ref={canvasRef}
               className="block max-h-full max-w-full"
-              aria-label={`Atlas ${entry.name}: bấm dòng key trong JSON để highlight frame`}
+              aria-label={`Atlas ${entry.name}: click JSON key lines to highlight frame`}
             />
             <div className="pointer-events-none absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-[11px] font-medium text-white shadow-sm">
               {imageFileSizeLabel}
@@ -456,7 +456,7 @@ export function AtlasViewModal({
           </div>
           <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-t border-border lg:border-l lg:border-t-0">
             {jsonLoading && (
-              <p className="p-4 text-sm text-muted-foreground">Đang tải JSON…</p>
+              <p className="p-4 text-sm text-muted-foreground">Loading JSON...</p>
             )}
             {jsonError && (
               <p className="p-4 text-sm text-destructive">{jsonError}</p>
@@ -492,10 +492,10 @@ export function AtlasViewModal({
                             Reset
                           </Button>
                           <p className="text-[11px] text-muted-foreground">
-                            Frame hiện tại: <span className="font-semibold text-foreground">{currentFrame}</span>
+                            Current frame: <span className="font-semibold text-foreground">{currentFrame}</span>
                           </p>
                           <p className="text-[11px] text-muted-foreground">
-                            Tổng frame: <span className="font-semibold text-foreground">{totalAnimFrames}</span>
+                            Total frames: <span className="font-semibold text-foreground">{totalAnimFrames}</span>
                           </p>
                         </div>
                         <div className="grid gap-2 sm:grid-cols-3">
@@ -564,10 +564,10 @@ export function AtlasViewModal({
         }}
         onConfirm={handleDeleteConfirm}
         confirmLoading={deleteLoading}
-        title="Xóa atlas?"
-        description={`Xóa atlas "${entry.name}"? Thao tác này không thể hoàn tác.`}
-        confirmLabel="Xóa atlas"
-        confirmLoadingLabel="Đang xóa…"
+        title="Delete atlas?"
+        description={`Delete atlas "${entry.name}"? This action cannot be undone.`}
+        confirmLabel="Delete atlas"
+        confirmLoadingLabel="Deleting…"
         overlayClassName="z-[10060]"
       />
       <ConfirmDangerDialog
@@ -578,11 +578,11 @@ export function AtlasViewModal({
         }}
         onConfirm={() => void handleExportOverwriteConfirm()}
         confirmLoading={exportTeyvatLoading}
-        title="Ghi đè file trong TeyvatCard?"
-        description={`Đã có file cùng tên trong TeyvatCard/public (desktop và/hoặc mobile). Ghi đè các bản sao tương ứng?`}
-        confirmLabel="Ghi đè"
-        confirmLoadingLabel="Đang ghi đè…"
-        cancelLabel="Hủy"
+        title="Overwrite files in TeyvatCard?"
+        description={`Files with the same name already exist in TeyvatCard/public (desktop and/or mobile). Overwrite corresponding copies?`}
+        confirmLabel="Overwrite"
+        confirmLoadingLabel="Overwriting…"
+        cancelLabel="Cancel"
         overlayClassName="z-[10062]"
       />
     </div>,

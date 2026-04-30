@@ -206,9 +206,9 @@ export default function AdventureCards() {
   }
 
   const adventureToolbar = (
-    <div className="flex flex-wrap items-center gap-2" aria-label="Thao tác nhanh Adventure Cards">
+    <div className="flex flex-wrap items-center gap-2" aria-label="Adventure Cards quick actions">
       <Button onClick={edit.handleOpenCreate} className="bg-primary-600 hover:bg-primary-700">
-        Thêm mới
+        Add new
       </Button>
       <LangDropdown
         value={edit.editLang}
@@ -229,8 +229,8 @@ export default function AdventureCards() {
               onDiscard={edit.confirmDiscardEdit}
               onSave={edit.confirmSaveEdit}
               saveLoading={edit.saveLoading}
-              title="Lưu thay đổi?"
-              description="Bạn đã chỉnh sửa thẻ. Bạn có muốn lưu trước khi đóng không?"
+              title="Save changes?"
+              description="You have edited this card. Do you want to save before closing?"
             />
             <UnsavedChangesDialog
               open={edit.showUnsavedConfirmI18n}
@@ -239,13 +239,13 @@ export default function AdventureCards() {
               onSave={edit.confirmSaveI18n}
               saveLoading={edit.i18nSaveLoading}
               overlayClassName="z-[10001]"
-              title="Lưu thay đổi?"
+              title="Save changes?"
               description={
                 edit.i18nField === 'name'
-                  ? 'Bạn đã chỉnh sửa tên (i18n). Bạn có muốn lưu trước khi đóng không?'
+                  ? 'You have edited the name (i18n). Save before closing?'
                   : edit.i18nField === 'description'
-                    ? 'Bạn đã chỉnh sửa mô tả (i18n). Bạn có muốn lưu trước khi đóng không?'
-                    : 'Bạn đã chỉnh sửa bản dịch. Bạn có muốn lưu trước khi đóng không?'
+                    ? 'You have edited the description (i18n). Save before closing?'
+                    : 'You have edited translations. Save before closing?'
               }
             />
           </>,
@@ -437,9 +437,9 @@ export default function AdventureCards() {
           field={edit.i18nField}
           title={
             edit.i18nField === 'name'
-              ? 'Sửa Name (i18n)'
+              ? 'Edit Name (i18n)'
               : edit.i18nField === 'description'
-                ? 'Sửa Description (i18n)'
+                ? 'Edit Description (i18n)'
                 : ''
           }
           editLang={edit.editLang}

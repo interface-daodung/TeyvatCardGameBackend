@@ -226,8 +226,8 @@ export default function ManagerAssets() {
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Không tải được danh sách atlas';
-      setAtlasListError(msg || 'Không tải được danh sách atlas');
+          : 'Failed to load atlas list';
+      setAtlasListError(msg || 'Failed to load atlas list');
       setAtlasList([]);
     } finally {
       setAtlasListLoading(false);
@@ -312,8 +312,8 @@ export default function ManagerAssets() {
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-        : 'Upload thất bại';
-      setUploadError(msg || 'Upload thất bại');
+        : 'Upload failed';
+      setUploadError(msg || 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -379,7 +379,7 @@ export default function ManagerAssets() {
   const normalizedRenameTarget = editPath ? getNormalizedRenameTarget(editPath, editName) : null;
   const renameNameError =
     editPath && editName.trim().length > 0 && !normalizedRenameTarget
-      ? 'Tên file chỉ được chứa chữ, số, dấu chấm, gạch ngang, gạch dưới.'
+      ? 'Filename can only contain letters, numbers, dots, hyphens, and underscores.'
       : null;
 
   const closeEditModal = () => {
@@ -396,7 +396,7 @@ export default function ManagerAssets() {
     const current = basename(editPath);
     const newName = getNormalizedRenameTarget(editPath, editName);
     if (!newName) {
-      setEditError('Tên file mới không hợp lệ.');
+      setEditError('New filename is invalid.');
       return;
     }
     if (newName === current) {
@@ -415,7 +415,7 @@ export default function ManagerAssets() {
         await fetchTrees();
         if (selectedPath === editPath) setSelectedPath(res.imageUrl);
       } else {
-        setEditError('Chỉ có thể đổi tên file trong thư mục uploaded hoặc assets/images.');
+        setEditError('Can only rename files in uploaded or assets/images directories.');
         setEditSaving(false);
         return;
       }
@@ -424,8 +424,8 @@ export default function ManagerAssets() {
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Đổi tên thất bại';
-      setEditError(msg || 'Đổi tên thất bại');
+          : 'Rename failed';
+      setEditError(msg || 'Rename failed');
     } finally {
       setEditSaving(false);
     }
@@ -442,7 +442,7 @@ export default function ManagerAssets() {
       } else if (isCardFile(editPath)) {
         await filesService.deleteCardFile(editPath);
       } else {
-        setEditError('Chỉ có thể xóa file trong thư mục uploaded hoặc cards.');
+        setEditError('Can only delete files in uploaded or cards directories.');
         setEditSaving(false);
         setDeleteConfirmOpen(false);
         return;
@@ -454,8 +454,8 @@ export default function ManagerAssets() {
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Xóa file thất bại';
-      setEditError(msg || 'Xóa file thất bại');
+          : 'Delete file failed';
+      setEditError(msg || 'Delete file failed');
     } finally {
       setEditSaving(false);
       setDeleteConfirmOpen(false);
@@ -512,8 +512,8 @@ export default function ManagerAssets() {
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Di chuyển thất bại';
-      setMoveError(msg || 'Di chuyển thất bại');
+          : 'Move failed';
+      setMoveError(msg || 'Move failed');
     } finally {
       setMoveLoading(false);
     }
@@ -532,7 +532,7 @@ export default function ManagerAssets() {
       ? 'Uploaded'
       : isCardFile(selectedPath)
         ? 'Card'
-        : 'Khác'
+        : 'Other'
     : '';
 
   const formatDateTime = (ms?: number) => {
@@ -565,8 +565,8 @@ export default function ManagerAssets() {
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Đọc metadata thất bại';
-      setFullMetaError(msg || 'Đọc metadata thất bại');
+          : 'Failed to read metadata';
+      setFullMetaError(msg || 'Failed to read metadata');
     } finally {
       setFullMetaLoading(false);
     }
@@ -672,7 +672,7 @@ export default function ManagerAssets() {
       await filesService.exportAnimationToTeyvat(selectedPath, false);
       setExportAnimationOverwriteConfirmOpen(false);
       window.alert(
-        `Đã tạo bản copy "${basename(selectedPath)}" vào TeyvatCard/public/assets/images/animations.`
+        `Created copy "${basename(selectedPath)}" in TeyvatCard/public/assets/images/animations.`
       );
     } catch (err: unknown) {
       const needsOverwrite =
@@ -683,7 +683,7 @@ export default function ManagerAssets() {
         setExportAnimationOverwriteConfirmOpen(true);
         return;
       }
-      window.alert(`Duyệt animation thất bại: ${exportAnimationErrorMessage(err)}`);
+      window.alert(`Browse animation failed: ${exportAnimationErrorMessage(err)}`);
     } finally {
       setExportAnimationLoading(false);
     }
@@ -696,10 +696,10 @@ export default function ManagerAssets() {
       await filesService.exportAnimationToTeyvat(selectedPath, true);
       setExportAnimationOverwriteConfirmOpen(false);
       window.alert(
-        `Đã ghi đè bản copy "${basename(selectedPath)}" tại TeyvatCard/public/assets/images/animations.`
+        `Overwrote copy "${basename(selectedPath)}" in TeyvatCard/public/assets/images/animations.`
       );
     } catch (err: unknown) {
-      window.alert(`Ghi đè animation thất bại: ${exportAnimationErrorMessage(err)}`);
+      window.alert(`Overwrite animation failed: ${exportAnimationErrorMessage(err)}`);
     } finally {
       setExportAnimationLoading(false);
     }
@@ -930,7 +930,7 @@ export default function ManagerAssets() {
     >
       <PageHeader
         title="Manager Assets"
-        description="Quản lý file ảnh: xem cây thư mục và upload ảnh lên thư mục uploaded (REST + Multer)"
+        description="Manage image files: browse folder tree and upload images to uploaded directory (REST + Multer)"
       />
 
       <motion.div
@@ -1038,8 +1038,8 @@ export default function ManagerAssets() {
                     className="h-9 w-9 shrink-0"
                     onClick={() => void handleExportAnimationToTeyvat()}
                     disabled={exportAnimationLoading}
-                    title="Duyệt animation"
-                    aria-label="Duyệt animation"
+                    title="Browse animation"
+                    aria-label="Browse animation"
                   >
                     <FontAwesomeIcon icon={faFolder} className="h-4 w-4" />
                   </Button>
@@ -1184,10 +1184,10 @@ export default function ManagerAssets() {
                         <span className="text-2xl leading-none">🖼️</span>
                       </div>
                       <p className="font-medium">
-                        Chưa có ảnh được chọn
+                        No image selected
                       </p>
                       <p className="max-w-xs text-xs">
-                        Chọn một file ở cây thư mục bên cạnh hoặc upload ảnh mới để xem preview tại đây.
+                        Select a file from the tree on the side or upload a new image to preview here.
                       </p>
                     </div>
                   )}
@@ -1197,7 +1197,7 @@ export default function ManagerAssets() {
                       previewImageLoading &&
                       (Boolean(hasPendingUpload && pendingUploadUrl) || Boolean(selectedIsImage && selectedPath))
                     }
-                    label="Đang tải ảnh..."
+                    label="Loading image..."
                   />
                 </div>
               )}
@@ -1293,7 +1293,7 @@ export default function ManagerAssets() {
                     />
                   )}
                   </div>
-                  <TabPanelLoading show={animationTabBusy} label="Đang tải animation..." />
+                  <TabPanelLoading show={animationTabBusy} label="Loading animation..." />
                 </div>
               )}
 
@@ -1304,11 +1304,11 @@ export default function ManagerAssets() {
                   aria-labelledby="manager-assets-tab-metadata"
                   className="relative min-h-0 w-full flex-1 space-y-3 rounded-xl border border-border bg-muted p-4"
                 >
-                <TabPanelLoading show={loading} label="Đang tải cây thư mục..." />
+                <TabPanelLoading show={loading} label="Loading folder tree..." />
                 {hasPendingUpload && pendingUpload ? (
                   <div className="space-y-3 text-xs">
                     <div className="space-y-1">
-                      <p className="text-[11px] font-medium text-muted-foreground">Tên file (chưa upload)</p>
+                      <p className="text-[11px] font-medium text-muted-foreground">Filename (not uploaded)</p>
                       <p className="truncate rounded-md border border-border bg-card px-2 py-1 font-mono text-[11px] text-foreground">
                         {pendingUpload.name}
                       </p>
@@ -1316,13 +1316,13 @@ export default function ManagerAssets() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <p className="text-[11px] font-medium text-muted-foreground">Dung lượng</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Size</p>
                         <p className="rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground">
                           {(pendingUpload.size / 1024).toFixed(1)} KB
                         </p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[11px] font-medium text-muted-foreground">Kích thước ảnh</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Image dimensions</p>
                         <p className="rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground">
                           {imageMeta
                             ? `${imageMeta.width} × ${imageMeta.height}px`
@@ -1338,7 +1338,7 @@ export default function ManagerAssets() {
                 ) : selectedIsImage && selectedPath ? (
                   <div className="space-y-3 text-xs">
                     <div className="space-y-1">
-                      <p className="text-[11px] font-medium text-muted-foreground">Tên file</p>
+                      <p className="text-[11px] font-medium text-muted-foreground">Filename</p>
                       <p className="truncate rounded-md border border-border bg-card px-2 py-1 font-mono text-[11px] text-foreground">
                         {selectedFileName}
                       </p>
@@ -1346,28 +1346,28 @@ export default function ManagerAssets() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <p className="text-[11px] font-medium text-muted-foreground">Thư mục</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Directory</p>
                         <p className="line-clamp-2 rounded-md border border-border bg-card px-2 py-1 font-mono text-[11px] text-foreground break-all">
                           {selectedFolder}
                         </p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[11px] font-medium text-muted-foreground">Loại</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Type</p>
                         <p className="rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground">
-                          {selectedKind || 'Không rõ'}
+                          {selectedKind || 'Unknown'}
                         </p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <p className="text-[11px] font-medium text-muted-foreground">Định dạng</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Format</p>
                         <p className="rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground uppercase">
                           {selectedExtension || '—'}
                         </p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[11px] font-medium text-muted-foreground">Kích thước ảnh</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Image dimensions</p>
                         <p className="rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground">
                           {imageMeta
                             ? `${imageMeta.width} × ${imageMeta.height}px`
@@ -1378,13 +1378,13 @@ export default function ManagerAssets() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <p className="text-[11px] font-medium text-muted-foreground">Dung lượng file</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">File size</p>
                         <p className="rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground">
                           {formatSize(selectedFileMeta?.size)}
                         </p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[11px] font-medium text-muted-foreground">Sửa lần cuối</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Last modified</p>
                         <p className="rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground">
                           {formatDateTime(selectedFileMeta?.mtimeMs)}
                         </p>
@@ -1392,14 +1392,14 @@ export default function ManagerAssets() {
                     </div>
 
                     <div className="space-y-1">
-                      <p className="text-[11px] font-medium text-muted-foreground">Tạo lúc</p>
+                      <p className="text-[11px] font-medium text-muted-foreground">Created at</p>
                       <p className="rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground">
                         {formatDateTime(selectedFileMeta?.ctimeMs)}
                       </p>
                     </div>
 
                     <div className="space-y-1">
-                      <p className="text-[11px] font-medium text-muted-foreground">Đường dẫn đầy đủ</p>
+                      <p className="text-[11px] font-medium text-muted-foreground">Full path</p>
                       <p className="line-clamp-2 rounded-md border border-border bg-card px-2 py-1 font-mono text-[11px] text-muted-foreground break-all">
                         {selectedPath}
                       </p>
@@ -1412,7 +1412,7 @@ export default function ManagerAssets() {
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Khi bạn chọn một ảnh, thông tin chi tiết sẽ hiển thị tại đây.
+                    When you select an image, detailed information will appear here.
                   </p>
                 )}
                 </div>
@@ -1427,7 +1427,7 @@ export default function ManagerAssets() {
                 >
                   {!canFetchRawMeta ? (
                     <p className="text-sm text-muted-foreground">
-                      Chọn một file ảnh đã lưu trên server (không dùng ảnh chờ upload) để xem JSON raw.
+                      Select an image file stored on the server (not a pending upload) to view raw JSON.
                     </p>
                   ) : (
                     <>
@@ -1437,9 +1437,9 @@ export default function ManagerAssets() {
                       {fullMeta && fullMetaPath === selectedPath && fullMeta.image !== undefined ? (
                         <JsonRawHighlight data={fullMeta.image} />
                       ) : !fullMetaLoading && !fullMetaError ? (
-                        <p className="text-sm text-muted-foreground">Không có dữ liệu raw.</p>
+                        <p className="text-sm text-muted-foreground">No raw data.</p>
                       ) : null}
-                      <TabPanelLoading show={fullMetaLoading} label="Đang đọc metadata..." />
+                      <TabPanelLoading show={fullMetaLoading} label="Reading metadata..." />
                     </>
                   )}
                 </div>
@@ -1468,7 +1468,7 @@ export default function ManagerAssets() {
           >
             <CardHeader className="space-y-2 pb-2">
               <div className="flex flex-row items-start justify-between gap-2">
-                <CardTitle className="text-lg font-semibold tracking-tight">Cây thư mục</CardTitle>
+                <CardTitle className="text-lg font-semibold tracking-tight">Folder tree</CardTitle>
                 <div className="flex shrink-0 items-center gap-2">
                   <Button
                     type="button"
@@ -1477,8 +1477,8 @@ export default function ManagerAssets() {
                     className="h-9 w-9 shrink-0"
                     disabled={loading}
                     onClick={handleResetTree}
-                    title="Tải lại cây thư mục"
-                    aria-label="Tải lại cây thư mục"
+                    title="Reload folder tree"
+                    aria-label="Reload folder tree"
                   >
                     <FontAwesomeIcon icon={faArrowsRotate} className="h-4 w-4" />
                   </Button>
@@ -1489,8 +1489,8 @@ export default function ManagerAssets() {
                       size="icon"
                       className="h-9 w-9 shrink-0"
                       onClick={() => setTreeExpanded(true)}
-                      title="Mở rộng cây thư mục (ẩn Image preview)"
-                      aria-label="Mở rộng cây thư mục"
+                      title="Expand folder tree (hide image preview)"
+                      aria-label="Expand folder tree"
                     >
                       <FontAwesomeIcon icon={faExpand} className="h-4 w-4" />
                     </Button>
@@ -1501,8 +1501,8 @@ export default function ManagerAssets() {
                       size="icon"
                       className="h-9 w-9 shrink-0"
                       onClick={collapseTree}
-                      title="Thu nhỏ cây thư mục (hiện lại Image preview)"
-                      aria-label="Thu nhỏ cây thư mục"
+                      title="Collapse folder tree (show image preview)"
+                      aria-label="Collapse folder tree"
                     >
                       <FontAwesomeIcon icon={faCompress} className="h-4 w-4" />
                     </Button>
@@ -1515,10 +1515,10 @@ export default function ManagerAssets() {
                 <p className="mb-2 text-sm text-red-400">{moveError}</p>
               )}
               {moveLoading && (
-                <p className="mb-2 text-sm text-amber-400">Đang di chuyển...</p>
+                <p className="mb-2 text-sm text-amber-400">Moving...</p>
               )}
               {loading ? (
-                <p className="text-sm text-muted-foreground">Đang tải cây thư mục...</p>
+                <p className="text-sm text-muted-foreground">Loading folder tree...</p>
               ) : combinedTree?.children ? (
                 <div
                   className={cn(
@@ -1546,7 +1546,7 @@ export default function ManagerAssets() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Không có dữ liệu.</p>
+                <p className="text-sm text-muted-foreground">No data.</p>
               )}
             </CardContent>
           </Card>
@@ -1586,14 +1586,14 @@ export default function ManagerAssets() {
                   ))}
                 </div>
                 {atlasListLoading ? (
-                  <p className="text-sm text-muted-foreground">Đang tải danh sách atlas…</p>
+                  <p className="text-sm text-muted-foreground">Loading atlas list…</p>
                 ) : atlasList.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Chưa có cặp file .webp + .json trong{' '}
+                    No .webp + .json file pairs in{' '}
                     <span className="font-mono text-xs">
                       {atlasListScope === 'default' ? 'server/atlas' : `server/atlas/${atlasListScope}`}
-                    </span>. Dùng
-                    Atlas Builder hoặc (sau này) các nút animation / spritesheet.
+                    </span>. Use
+                    Atlas Builder or (later) the animation / spritesheet buttons.
                   </p>
                 ) : (
                   <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
@@ -1634,7 +1634,7 @@ export default function ManagerAssets() {
               </div>
               <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
                 <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Thao tác
+                  Actions
                 </p>
                 <div className="flex flex-col gap-2">
                   <div>
@@ -1648,7 +1648,7 @@ export default function ManagerAssets() {
                       variant="outline"
                       className="w-full"
                       disabled={animationPickerFiles.length === 0}
-                      title={animationPickerFiles.length === 0 ? 'Chưa có ảnh trong public/assets/images/animations' : undefined}
+                      title={animationPickerFiles.length === 0 ? 'No images in public/assets/images/animations' : undefined}
                       onClick={() => setAtlasAnimationOpen(true)}
                     >
                       Atlas Animation
@@ -1662,8 +1662,8 @@ export default function ManagerAssets() {
                       disabled={animationPickerFiles.length === 0}
                       title={
                         animationPickerFiles.length === 0
-                          ? 'Chưa có ảnh trong public/assets/images/animations'
-                          : 'Chọn frame 192×192, ghép spritesheet mới'
+                          ? 'No images in public/assets/images/animations'
+                          : 'Select 192x192 frames to build a new spritesheet'
                       }
                       onClick={() => setAnimationEditOpen(true)}
                     >
@@ -1678,7 +1678,7 @@ export default function ManagerAssets() {
                       disabled={spritesheetPickerFiles.length === 0}
                       title={
                         spritesheetPickerFiles.length === 0
-                          ? 'Chưa có ảnh trong public/assets/images/Spritesheet'
+                          ? 'No images in public/assets/images/Spritesheet'
                           : undefined
                       }
                       onClick={() => setSpritesheetEditOpen(true)}
@@ -1737,7 +1737,7 @@ export default function ManagerAssets() {
             onClick={(e) => e.stopPropagation()}
           >
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Chỉnh sửa</CardTitle>
+              <CardTitle>Edit</CardTitle>
               <Button type="button" variant="ghost" size="sm" onClick={closeEditModal}>
                 ✕
               </Button>
@@ -1756,7 +1756,7 @@ export default function ManagerAssets() {
                     <div className="space-y-3">
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-destructive">
-                          Xóa file?
+                          Delete file?
                         </p>
                         <p className="text-xs text-muted-foreground break-all">
                           {editPath}
@@ -1764,7 +1764,7 @@ export default function ManagerAssets() {
                       </div>
                       <div className="space-y-2 rounded-lg border border-amber-300/70 bg-amber-950/40 p-3">
                         <p className="text-sm font-medium text-amber-100">
-                          Bạn có chắc muốn xóa file này? Hành động này không thể hoàn tác.
+                          Are you sure you want to delete this file? This action cannot be undone.
                         </p>
                         <div className="flex gap-2">
                           <Button
@@ -1774,7 +1774,7 @@ export default function ManagerAssets() {
                             onClick={handleDeleteConfirm}
                             disabled={editSaving}
                           >
-                            Có, xóa vĩnh viễn
+                            Yes, delete permanently
                           </Button>
                           <Button
                             type="button"
@@ -1783,7 +1783,7 @@ export default function ManagerAssets() {
                             onClick={() => setDeleteConfirmOpen(false)}
                             disabled={editSaving}
                           >
-                            Hủy, giữ lại file
+                            Cancel, keep file
                           </Button>
                         </div>
                       </div>
@@ -1800,12 +1800,12 @@ export default function ManagerAssets() {
                   >
                     {!canRename && !canDelete && (
                       <p className="text-sm text-muted-foreground">
-                        Có thể đổi tên file trong thư mục <strong>uploaded</strong> hoặc <strong>assets/images</strong>.
-                        Xóa file chỉ hỗ trợ trong <strong>uploaded</strong> hoặc <strong>cards</strong>.
+                        You can rename files in <strong>uploaded</strong> or <strong>assets/images</strong>.
+                        File deletion is only supported in <strong>uploaded</strong> or <strong>cards</strong>.
                       </p>
                     )}
                     <div>
-                      <label className="text-sm font-medium">Tên</label>
+                      <label className="text-sm font-medium">Name</label>
                       <input
                         type="text"
                         value={editName}
@@ -1818,7 +1818,7 @@ export default function ManagerAssets() {
                     {editError && <p className="text-sm text-destructive">{editError}</p>}
                     <div className="flex flex-wrap gap-2">
                       <Button onClick={handleRename} disabled={editSaving || !canRename || !!renameNameError}>
-                        Lưu tên
+                        Save name
                       </Button>
                       <Button
                         type="button"
@@ -1826,10 +1826,10 @@ export default function ManagerAssets() {
                         onClick={handleDeleteClick}
                         disabled={editSaving || !canDelete}
                       >
-                        Xóa file
+                        Delete file
                       </Button>
                       <Button type="button" variant="ghost" onClick={closeEditModal}>
-                        Đóng
+                        Close
                       </Button>
                     </div>
                   </motion.div>
@@ -1912,7 +1912,7 @@ export default function ManagerAssets() {
               onClick={(e) => e.stopPropagation()}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-lg">Xác nhận di chuyển file</CardTitle>
+                <CardTitle className="text-lg">Confirm file move</CardTitle>
                 <Button
                   type="button"
                   variant="ghost"
@@ -1921,7 +1921,7 @@ export default function ManagerAssets() {
                     if (!moveLoading) setMoveConfirm(null);
                   }}
                   disabled={moveLoading}
-                  aria-label="Đóng"
+                  aria-label="Close"
                 >
                   ✕
                 </Button>
@@ -1933,13 +1933,13 @@ export default function ManagerAssets() {
                     <p className="break-all font-mono text-xs text-foreground">{moveConfirm.fileName}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[11px] font-medium text-muted-foreground">Thư mục hiện tại</p>
+                    <p className="text-[11px] font-medium text-muted-foreground">Current directory</p>
                     <p className="break-all rounded-md border border-border bg-muted px-2 py-1.5 font-mono text-xs text-foreground">
                       {moveConfirm.from}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[11px] font-medium text-muted-foreground">Thư mục đích</p>
+                    <p className="text-[11px] font-medium text-muted-foreground">Target directory</p>
                     <p className="break-all rounded-md border border-border bg-muted px-2 py-1.5 font-mono text-xs text-foreground">
                       {moveConfirm.to}
                     </p>
@@ -1948,7 +1948,7 @@ export default function ManagerAssets() {
                 {moveError && <p className="text-sm text-destructive">{moveError}</p>}
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" onClick={() => void executeConfirmedMove()} disabled={moveLoading}>
-                    {moveLoading ? 'Đang di chuyển…' : 'Xác nhận di chuyển'}
+                    {moveLoading ? 'Moving…' : 'Confirm move'}
                   </Button>
                   <Button
                     type="button"
@@ -1956,7 +1956,7 @@ export default function ManagerAssets() {
                     onClick={() => setMoveConfirm(null)}
                     disabled={moveLoading}
                   >
-                    Hủy
+                    Cancel
                   </Button>
                 </div>
               </CardContent>
@@ -1972,11 +1972,11 @@ export default function ManagerAssets() {
         }}
         onConfirm={() => void handleExportAnimationOverwriteConfirm()}
         confirmLoading={exportAnimationLoading}
-        title="Ghi đè animation trong TeyvatCard?"
-        description="Đã có file cùng tên trong TeyvatCard/public/assets/images/animations. Bạn có muốn ghi đè không?"
-        confirmLabel="Ghi đè"
-        confirmLoadingLabel="Đang ghi đè…"
-        cancelLabel="Hủy"
+        title="Overwrite animation in TeyvatCard?"
+        description="A file with the same name already exists in TeyvatCard/public/assets/images/animations. Do you want to overwrite it?"
+        confirmLabel="Overwrite"
+        confirmLoadingLabel="Overwriting…"
+        cancelLabel="Cancel"
         overlayClassName="z-[10062]"
       />
     </div>

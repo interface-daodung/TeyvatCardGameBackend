@@ -127,7 +127,7 @@ export function EquipmentCreateModal({
             type="button"
             onClick={onClose}
             className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors text-2xl font-light leading-none"
-            aria-label="Đóng"
+            aria-label="Close"
           >
             ×
           </button>
@@ -300,7 +300,7 @@ export function EquipmentCreateModal({
               Hủy
             </Button>
             <Button type="submit" disabled={loading || !canSubmit}>
-              {loading ? 'Đang tạo…' : 'Tạo item'}
+              {loading ? 'Creating…' : 'Create item'}
             </Button>
           </div>
         </form>

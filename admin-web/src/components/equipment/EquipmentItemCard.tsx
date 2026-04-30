@@ -63,7 +63,7 @@ export function EquipmentItemCard({
               <div className="absolute top-0.5 right-0.5 z-20">
                 <span
                   role="status"
-                  aria-label={`Trạng thái: ${item.status}`}
+                  aria-label={`Status: ${item.status}`}
                   className={cn(
                     'inline-flex items-center rounded-full border-0 text-[9px] px-1 py-0 font-semibold',
                     enabledDisabledStatusPillClass(item.status)

@@ -41,7 +41,7 @@ export function I18nDescriptionModal({
             type="button"
             onClick={onClose}
             className="p-1 hover:bg-blue-500 rounded transition-colors text-xl leading-none"
-            aria-label="Đóng"
+            aria-label="Close"
           >
             ✕
           </button>
@@ -74,7 +74,7 @@ export function I18nDescriptionModal({
             disabled={translateLoading || !getValue(editLang).trim()}
             className="border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-400 text-sm"
           >
-            {translateLoading ? 'Đang dịch...' : 'Gợi ý dịch máy'}
+            {translateLoading ? 'Translating...' : 'Suggest machine translation'}
           </Button>
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>

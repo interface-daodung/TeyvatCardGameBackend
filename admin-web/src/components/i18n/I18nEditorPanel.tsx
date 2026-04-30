@@ -69,7 +69,7 @@ export function I18nEditorPanel({
             'p-1 rounded transition-colors text-xl leading-none',
             isInline ? 'hover:bg-muted text-muted-foreground hover:text-foreground' : 'hover:bg-blue-500',
           )}
-          aria-label="Đóng"
+          aria-label="Close"
         >
           ✕
         </button>
@@ -121,7 +121,7 @@ export function I18nEditorPanel({
                 : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-400',
             )}
           >
-            {translateLoading ? 'Đang dịch...' : 'Gợi ý dịch máy'}
+            {translateLoading ? 'Translating...' : 'Suggest machine translation'}
           </Button>
           {error && (
             <p className={cn('text-sm', isInline ? 'text-destructive' : 'text-red-200')}>{error}</p>
@@ -134,7 +134,7 @@ export function I18nEditorPanel({
           disabled={translateLoading || saveLoading}
           className={cn('w-full', !isInline && 'bg-blue-600 hover:bg-blue-700')}
         >
-          {saveLoading ? 'Đang lưu...' : 'Lưu i18n'}
+          {saveLoading ? 'Saving...' : 'Save i18n'}
         </Button>
       </div>
     </div>

@@ -100,7 +100,7 @@ export function AIChatBubble() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Không gọi được AI. Kiểm tra server backend và Ollama (localhost:11434).'
+          : 'Cannot call AI. Check backend server and Ollama (localhost:11434).'
       );
     } finally {
       setLoading(false);
@@ -141,7 +141,7 @@ export function AIChatBubble() {
                     type="button"
                     onClick={() => setOpen(false)}
                     className="ml-3 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                    aria-label="Đóng chat AI"
+                    aria-label="Close AI chat"
                   >
                     <span className="text-sm leading-none">✕</span>
                   </button>
@@ -203,8 +203,8 @@ export function AIChatBubble() {
                           rows={2}
                           placeholder={
                             loading
-                              ? 'Đang chờ AI trả lời...'
-                              : 'Hỏi nhanh AI (Enter để gửi, Shift+Enter xuống dòng)…'
+                              ? 'Waiting for AI response...'
+                              : 'Ask AI quickly (Enter to send, Shift+Enter for new line)…'
                           }
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -218,7 +218,7 @@ export function AIChatBubble() {
                           type="submit"
                           disabled={loading || !input.trim()}
                           className="absolute right-1.5 bottom-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                          aria-label="Gửi câu hỏi"
+                          aria-label="Send prompt"
                         >
                           <FontAwesomeIcon
                             icon={loading ? faCircleNotch : faArrowUp}
@@ -238,7 +238,7 @@ export function AIChatBubble() {
           type="button"
           onClick={handleToggleOpen}
           className="relative inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-sky-500 to-blue-500 text-white shadow-lg shadow-indigo-500/40 hover:shadow-xl hover:shadow-indigo-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400"
-          aria-label={open ? 'Ẩn chat AI' : 'Mở chat AI'}
+          aria-label={open ? 'Hide AI chat' : 'Open AI chat'}
         >
           <FontAwesomeIcon icon={faRobot} className="w-5 h-5" />
           {!open && messages.length > lastReadCount && (

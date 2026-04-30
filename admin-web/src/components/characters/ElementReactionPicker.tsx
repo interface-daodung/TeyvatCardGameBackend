@@ -98,7 +98,7 @@ export function ElementReactionPicker({
   selectedElement,
   onSelect,
   includeNoneInRail = false,
-  emptyLabel = 'Không',
+  emptyLabel = 'None',
 }: ElementReactionPickerProps) {
   const current = includeNoneInRail
     ? normalizeAdventureEnemyElement(selectedElement)

@@ -61,8 +61,8 @@ export function CharacterDetailInfo({
 
   const normalizeHpDigits = (raw: string) => raw.replace(/\D/g, '');
 
-  const hpInvalidMsg = `HP chỉ nhận số nguyên từ ${HP_MIN} đến ${HP_MAX}.`;
-  const hpSaveFailMsg = 'Không lưu được. Kiểm tra kết nối hoặc thử lại.';
+  const hpInvalidMsg = `HP only accepts integers from ${HP_MIN} to ${HP_MAX}.`;
+  const hpSaveFailMsg = 'Cannot save. Check connection or try again.';
 
   const commitHpDraft = async () => {
     const t = hpDraft.trim();
@@ -97,7 +97,7 @@ export function CharacterDetailInfo({
   return (
     <div className="flex flex-col">
       <h2 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-        Chi tiết
+        Details
       </h2>
       <Card className="border-0 shadow-lg">
         <CardHeader>

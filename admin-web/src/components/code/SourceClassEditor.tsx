@@ -95,7 +95,7 @@ export function SourceClassEditor({
         setEditableClassCode(data.sourceText);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : 'Không đọc được source class từ server';
+          error instanceof Error ? error.message : 'Cannot read source class from server';
         setClassCodeError(message);
       } finally {
         setClassCodeLoading(false);
@@ -188,7 +188,7 @@ export function SourceClassEditor({
       setEditableClassCode(data.sourceText);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Không tạo được TSDoc bằng ts-morph';
+        error instanceof Error ? error.message : 'Cannot generate TSDoc with ts-morph';
       setClassCodeError(message);
     } finally {
       setClassCodeActionLoading(false);
@@ -209,7 +209,7 @@ export function SourceClassEditor({
       setClassCodeHistory([]);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Không lưu được source xuống file .ts';
+        error instanceof Error ? error.message : 'Cannot save source to .ts file';
       setClassCodeError(message);
     } finally {
       setClassCodeSaveLoading(false);
@@ -223,7 +223,7 @@ export function SourceClassEditor({
       await navigator.clipboard.writeText(editableClassCode);
       setCopySuccess(true);
     } catch {
-      setClassCodeError('Không copy được code vào clipboard');
+      setClassCodeError('Cannot copy code to clipboard');
       setCopySuccess(false);
     }
   };
@@ -233,7 +233,7 @@ export function SourceClassEditor({
       if (!document.fullscreenElement) await fullscreenContainerRef.current?.requestFullscreen();
       else await document.exitFullscreen();
     } catch {
-      setClassCodeError('Không chuyển được chế độ toàn màn hình');
+      setClassCodeError('Cannot toggle fullscreen mode');
     }
   };
 
@@ -286,7 +286,7 @@ export function SourceClassEditor({
           {displayPath}
         </a>
       </div>
-      {classCodeLoading && <p className="text-sm text-slate-500">Đang tải source class...</p>}
+      {classCodeLoading && <p className="text-sm text-slate-500">Loading source class...</p>}
       {classCodeError && <p className="text-sm text-red-600">{classCodeError}</p>}
       {!classCodeLoading && !classCodeError && editableClassCode && (
         <div
@@ -305,13 +305,13 @@ export function SourceClassEditor({
               className="bg-violet-700 hover:bg-violet-800 text-white"
               disabled={classCodeLoading || classCodeActionLoading || classCodeSaveLoading}
             >
-              {classCodeActionLoading ? 'Đang tạo...' : 'Tạo TSDoc'}
+              {classCodeActionLoading ? 'Creating...' : 'Generate TSDoc'}
             </Button>
             <div className="flex items-center gap-2">
               <Button
                 onClick={toggleCodeFullscreen}
                 className="bg-zinc-600 hover:bg-zinc-700 text-white"
-                title={isCodeFullscreen ? 'Thoát toàn màn hình' : 'Mở toàn màn hình'}
+                title={isCodeFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                 disabled={classCodeSaveLoading || classCodeActionLoading}
               >
                 <FontAwesomeIcon icon={isCodeFullscreen ? faCompress : faExpand} />
@@ -319,7 +319,7 @@ export function SourceClassEditor({
               <Button
                 onClick={copyClassCode}
                 className="bg-sky-600 hover:bg-sky-700 text-white"
-                title={copySuccess ? 'Đã copy' : 'Copy code'}
+                title={copySuccess ? 'Copied' : 'Copy code'}
                 disabled={!editableClassCode || classCodeSaveLoading || classCodeActionLoading}
               >
                 <FontAwesomeIcon icon={copySuccess ? faCheck : faCopy} />
@@ -335,7 +335,7 @@ export function SourceClassEditor({
               <Button
                 onClick={() => setSaveConfirmOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
-                title="Lưu .ts"
+                title="Save .ts"
                 disabled={classCodeSaveLoading || classCodeActionLoading}
               >
                 <FontAwesomeIcon icon={faFloppyDisk} />
@@ -380,7 +380,7 @@ export function SourceClassEditor({
                               });
                             }
                           }}
-                          placeholder="/* nhập comment */"
+                          placeholder="/* enter comment */"
                           className="w-full bg-[#0f172a] px-0 py-0.5 font-mono text-base text-[#8aa549] outline-none border-none shadow-none"
                         />
                       </div>
@@ -390,7 +390,7 @@ export function SourceClassEditor({
                         {...getLineProps({ line })}
                         onClick={() => insertCommentAtLine(i)}
                         className="cursor-pointer hover:bg-slate-800/70"
-                        title="Click để nhập và chèn comment trước dòng này"
+                        title="Click to enter and insert comment before this line"
                       >
                         {line.map((token, key) => (
                           <span key={key} {...getTokenProps({ token })} />
@@ -431,7 +431,7 @@ export function SourceClassEditor({
                           });
                         }
                       }}
-                      placeholder="/* nhập comment */"
+                      placeholder="/* enter comment */"
                       className="w-full bg-[#0f172a] px-0 py-0.5 font-mono text-base text-[#8aa549] outline-none border-none shadow-none"
                     />
                   </div>
@@ -460,14 +460,14 @@ export function SourceClassEditor({
               exit="exit"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold text-white">Xác nhận lưu file .ts</h3>
+              <h3 className="text-lg font-semibold text-white">Confirm save .ts file</h3>
               <p className="mt-2 text-sm text-slate-300 break-all">
-                Bạn sắp ghi đè file:
+                You are about to overwrite file:
                 <br />
                 <span className="font-mono text-sky-300">{displayPath}</span>
               </p>
               <p className="mt-2 text-xs text-amber-300">
-                Thao tác này sẽ lưu vĩnh viễn nội dung code hiện tại.
+                This action will permanently save the current code content.
               </p>
               <div className="mt-5 flex justify-end gap-2">
                 <Button
@@ -475,14 +475,14 @@ export function SourceClassEditor({
                   className="bg-slate-600 hover:bg-slate-700 text-white"
                   disabled={classCodeSaveLoading}
                 >
-                  Hủy
+                  Cancel
                 </Button>
                 <Button
                   onClick={saveClassSource}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={classCodeSaveLoading}
                 >
-                  {classCodeSaveLoading ? 'Đang lưu...' : 'Xác nhận lưu'}
+                  {classCodeSaveLoading ? 'Saving...' : 'Save'}
                 </Button>
               </div>
             </motion.div>

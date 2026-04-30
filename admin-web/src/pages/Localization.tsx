@@ -6,7 +6,7 @@ import {
   LocalizationSortField,
   LocalizationSortOrder,
 } from '../services/localizationService';
-import { Card } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 import { PageHeader } from '../components/PageHeader';
@@ -58,7 +58,7 @@ export default function LocalizationPage() {
   const handleSuggestTranslation = async () => {
     const sourceText = formEn.trim();
     if (!sourceText) {
-      setError('Vui lòng nhập English trước (đầu vào mặc định để dịch)');
+      setError('Please enter English first (default input for translation)');
       return;
     }
     setError(null);
@@ -73,7 +73,7 @@ export default function LocalizationPage() {
       }
       await Promise.all(promises);
     } catch {
-      setError('Lỗi kết nối dịch máy, vui lòng thử lại');
+      setError('Translation service connection error, please try again');
     } finally {
       setTranslateLoading(false);
     }
@@ -156,7 +156,7 @@ export default function LocalizationPage() {
         await localizationService.updateLocalization(formKey, translations);
       } else {
         if (!formKey.trim()) {
-          setError('Key không được để trống');
+          setError('Key cannot be empty');
           setSubmitLoading(false);
           return;
         }
@@ -168,7 +168,7 @@ export default function LocalizationPage() {
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Có lỗi xảy ra';
+          : 'An error occurred';
       setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
     } finally {
       setSubmitLoading(false);
@@ -176,35 +176,22 @@ export default function LocalizationPage() {
   };
 
   const handleDelete = async (loc: Localization) => {
-    if (!window.confirm(`Bạn có chắc muốn xóa "${loc.key}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete "${loc.key}"?`)) return;
     try {
       await localizationService.deleteLocalization(loc.key);
       await loadData();
     } catch (err) {
       console.error('Failed to delete:', err);
-      alert('Xóa thất bại');
+      alert('Delete failed');
     }
   };
-
-  if (loading) {
-    return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Card>
-          <div className="p-6">
-            <Skeleton className="h-64 w-full" />
-          </div>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <PageHeader title="Localization" description="Manage multi-language translations" />
         <Button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700">
-          + Thêm mới
+          + Add new
         </Button>
       </div>
 
@@ -223,13 +210,21 @@ export default function LocalizationPage() {
 
       <motion.div variants={fadeSlideCard} initial="hidden" animate="visible">
         <Card className="border-0 shadow-lg overflow-hidden">
-          <LocalizationTable
-          items={localizations}
-          expandedKeys={expandedKeys}
-          onToggleExpand={toggleExpand}
-          onEdit={openEditModal}
-          onDelete={handleDelete}
-        />
+          {loading ? (
+            <CardContent className="p-6 space-y-3">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </CardContent>
+          ) : (
+            <LocalizationTable
+              items={localizations}
+              expandedKeys={expandedKeys}
+              onToggleExpand={toggleExpand}
+              onEdit={openEditModal}
+              onDelete={handleDelete}
+            />
+          )}
         </Card>
       </motion.div>
 

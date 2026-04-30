@@ -111,7 +111,7 @@ export default function ServerConfigurationVersions() {
   if (loading && !data) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Server configuration" description="Config JSON hiện tại và thay đổi so với bản trước" />
+        <PageHeader title="Server configuration" description="Current config JSON and changes from previous version" />
         <Skeleton className="h-64 w-full rounded-lg" />
         <Skeleton className="h-48 w-full rounded-lg" />
       </div>
@@ -121,12 +121,12 @@ export default function ServerConfigurationVersions() {
   if (error) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Server configuration" description="Config JSON hiện tại và thay đổi so với bản trước" />
+        <PageHeader title="Server configuration" description="Current config JSON and changes from previous version" />
         <Card>
           <CardContent className="pt-6">
             <p className="text-destructive">{error}</p>
             <Button variant="outline" className="mt-4" onClick={fetchCompare}>
-              Thử lại
+              Retry
             </Button>
           </CardContent>
         </Card>
@@ -146,10 +146,10 @@ export default function ServerConfigurationVersions() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <PageHeader
           title="Server configuration"
-          description="Config JSON hiện tại và thay đổi so với bản trước"
+          description="Current config JSON and changes from previous version"
         />
         <Button variant="outline" size="sm" onClick={fetchCompare} disabled={loading}>
-          {loading ? 'Đang tải...' : 'Làm mới'}
+          {loading ? 'Loading...' : 'Refresh'}
         </Button>
       </div>
 
@@ -157,18 +157,18 @@ export default function ServerConfigurationVersions() {
       {!latest ? (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-muted-foreground">Chưa có bản config nào. Thực hiện sync từ Dashboard để tạo bản đầu tiên.</p>
+            <p className="text-muted-foreground">No config versions yet. Run sync from Dashboard to create the first version.</p>
           </CardContent>
         </Card>
       ) : (
         <>
           <div className="flex flex-wrap gap-2 items-center">
             <Badge variant="default" className="text-sm">
-              Config hiện tại: {versionStr(latest.version)}
+              Current config: {versionStr(latest.version)}
             </Badge>
             {previous && (
               <Badge variant="secondary">
-                So với bản trước: {versionStr(previous.version)}
+                Compared to previous: {versionStr(previous.version)}
               </Badge>
             )}
             <span className="text-sm text-muted-foreground">
@@ -180,7 +180,7 @@ export default function ServerConfigurationVersions() {
           {Object.keys(changes).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Thay đổi so với bản trước</CardTitle>
+                <CardTitle>Changes from previous version</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {Object.entries(changes).map(([category, diff]) => (
@@ -189,39 +189,39 @@ export default function ServerConfigurationVersions() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                       {diff.added.length > 0 && (
                         <div>
-                          <span className="text-green-600 font-medium">Thêm ({diff.added.length})</span>
+                          <span className="text-green-600 font-medium">Added ({diff.added.length})</span>
                           <ul className="mt-1 list-disc list-inside text-slate-600 max-h-32 overflow-y-auto">
                             {diff.added.slice(0, 20).map((id) => (
                               <li key={id} className="truncate" title={id}>{id}</li>
                             ))}
                             {diff.added.length > 20 && (
-                              <li className="text-muted-foreground">... và {diff.added.length - 20} khác</li>
+                              <li className="text-muted-foreground">... and {diff.added.length - 20} more</li>
                             )}
                           </ul>
                         </div>
                       )}
                       {diff.updated.length > 0 && (
                         <div>
-                          <span className="text-amber-600 font-medium">Cập nhật ({diff.updated.length})</span>
+                          <span className="text-amber-600 font-medium">Updated ({diff.updated.length})</span>
                           <ul className="mt-1 list-disc list-inside text-slate-600 max-h-32 overflow-y-auto">
                             {diff.updated.slice(0, 20).map((id) => (
                               <li key={id} className="truncate" title={id}>{id}</li>
                             ))}
                             {diff.updated.length > 20 && (
-                              <li className="text-muted-foreground">... và {diff.updated.length - 20} khác</li>
+                              <li className="text-muted-foreground">... and {diff.updated.length - 20} more</li>
                             )}
                           </ul>
                         </div>
                       )}
                       {diff.removed.length > 0 && (
                         <div>
-                          <span className="text-red-600 font-medium">Xóa ({diff.removed.length})</span>
+                          <span className="text-red-600 font-medium">Removed ({diff.removed.length})</span>
                           <ul className="mt-1 list-disc list-inside text-slate-600 max-h-32 overflow-y-auto">
                             {diff.removed.slice(0, 20).map((id) => (
                               <li key={id} className="truncate" title={id}>{id}</li>
                             ))}
                             {diff.removed.length > 20 && (
-                              <li className="text-muted-foreground">... và {diff.removed.length - 20} khác</li>
+                              <li className="text-muted-foreground">... and {diff.removed.length - 20} more</li>
                             )}
                           </ul>
                         </div>
@@ -236,7 +236,7 @@ export default function ServerConfigurationVersions() {
           {previous && Object.keys(changes).length === 0 && (
             <Card>
               <CardContent className="pt-6">
-                <p className="text-muted-foreground">Không có thay đổi so với bản trước.</p>
+                <p className="text-muted-foreground">No changes compared to previous version.</p>
               </CardContent>
             </Card>
           )}
@@ -244,7 +244,7 @@ export default function ServerConfigurationVersions() {
           {/* Config JSON hiện tại theo từng section */}
           <Card>
             <CardHeader>
-              <CardTitle>JSON config hiện tại ({versionStr(latest.version)})</CardTitle>
+              <CardTitle>Current JSON config ({versionStr(latest.version)})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {configKeys.map((key) => {
@@ -264,7 +264,7 @@ export default function ServerConfigurationVersions() {
                     >
                       <span>{key}</span>
                       <span className="text-sm text-muted-foreground font-normal">
-                        {isExpanded ? '▼ Thu gọn' : '▶ Mở'} · {(size / 1024).toFixed(1)} KB
+                        {isExpanded ? '▼ Collapse' : '▶ Expand'} · {(size / 1024).toFixed(1)} KB
                       </span>
                     </button>
                     {isExpanded && (

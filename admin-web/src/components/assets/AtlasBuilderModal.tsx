@@ -74,8 +74,8 @@ export function AtlasBuilderModal({
   const previewWrapRef = useRef<HTMLDivElement>(null);
 
   const addAllShortcutHint =
-    'Phím tắt: Ctrl/Cmd + Enter để thêm tất cả ảnh trong tab đang chọn.\n' +
-    'Chỉ hoạt động khi đang ở panel Collection và không áp dụng cho tab Other.';
+    'Shortcut: Ctrl/Cmd + Enter to add all images in the current tab.\n' +
+    'Only works in Collection panel and does not apply to the Other tab.';
 
   const dimsRef = useRef(dims);
   dimsRef.current = dims;
@@ -126,7 +126,7 @@ export function AtlasBuilderModal({
           recordDims(path, w, h, setDims);
           resolve({ w, h });
         };
-        im.onerror = () => reject(new Error('Không tải được ảnh'));
+        im.onerror = () => reject(new Error('Cannot load image'));
         im.src = path;
       });
     },
@@ -384,7 +384,7 @@ export function AtlasBuilderModal({
 
       const uniqueMatchedPaths = Array.from(new Set(matchedPaths));
       if (uniqueMatchedPaths.length === 0) {
-        setError('Không tìm thấy ảnh card nào khớp để thêm vào atlas.');
+        setError('No matching card images found to add into atlas.');
         return;
       }
 
@@ -394,7 +394,7 @@ export function AtlasBuilderModal({
       setAtlasPanelTab('collection');
       setAtlasNameEnterError(null);
     } catch {
-      setError('Không tải được danh sách cards.');
+      setError('Failed to load card list.');
     } finally {
       setLoadingCardsPreset(false);
     }
@@ -461,12 +461,12 @@ export function AtlasBuilderModal({
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
-      setAtlasNameEnterError('Nhập tên atlas.');
+      setAtlasNameEnterError('Enter atlas name.');
       return;
     }
     if (!/^[a-zA-Z0-9_-]{1,50}$/.test(trimmed)) {
       setAtlasNameEnterError(
-        'Tên chỉ gồm chữ Latin (a–z, A–Z), số, dấu gạch ngang (-) và gạch dưới (_), tối đa 50 ký tự.'
+        'Name can only include Latin letters (a-z, A-Z), numbers, hyphen (-), and underscore (_), max 50 characters.'
       );
       return;
     }
@@ -477,11 +477,11 @@ export function AtlasBuilderModal({
   const handleCreate = async () => {
     const trimmed = name.trim();
     if (!trimmed || !isValidName) {
-      setError('Tên atlas không hợp lệ (chỉ a-z, A-Z, 0-9, -, _)');
+      setError('Invalid atlas name (only a-z, A-Z, 0-9, -, _)');
       return;
     }
     if (selected.length === 0) {
-      setError('Hãy chọn ít nhất một ảnh để tạo atlas.');
+      setError('Please select at least one image to create atlas.');
       return;
     }
     try {
@@ -495,8 +495,8 @@ export function AtlasBuilderModal({
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Tạo atlas thất bại';
-      setError(msg || 'Tạo atlas thất bại');
+          : 'Create atlas failed';
+      setError(msg || 'Create atlas failed');
     } finally {
       setSubmitting(false);
     }
@@ -504,11 +504,11 @@ export function AtlasBuilderModal({
 
   const tabLockTitle =
     tabsLocked && firstAtlasKind === null
-      ? 'Đang xác định loại ảnh trong atlas — không đổi tab cho đến khi tải xong'
+      ? 'Detecting image type in atlas - do not switch tabs until loading completes'
       : tabsLocked && firstAtlasKind === 'card'
-        ? 'Atlas đang dùng ảnh card (7:12) — chỉ xem tab Card hoặc xóa hết ảnh (nút hoàn tác)'
+        ? 'Atlas is using card images (7:12) - only Card tab is available or clear all images (undo button)'
         : tabsLocked && firstAtlasKind === 'square'
-          ? 'Atlas đang dùng ảnh vuông — chỉ xem tab Item hoặc xóa hết ảnh'
+          ? 'Atlas is using square images - only Item tab is available or clear all images'
           : undefined;
 
   useEffect(() => {
@@ -541,7 +541,7 @@ export function AtlasBuilderModal({
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
             <CardTitle className="text-lg font-semibold tracking-tight">
-              Tạo Atlas tùy chỉnh
+              Create custom atlas
             </CardTitle>
           </div>
           <Button variant="ghost" size="sm" type="button" disabled={submitting} onClick={onClose}>
@@ -552,13 +552,13 @@ export function AtlasBuilderModal({
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="flex-1 min-w-0">
               <label className="mb-1 block text-sm font-medium">
-                Ảnh trong atlas ({selected.length})
+                Images in atlas ({selected.length})
               </label>
               <div className="mb-2 flex flex-wrap items-end justify-between gap-x-2 gap-y-1 border-b border-border">
                 <div
                   className="flex min-w-0 flex-wrap gap-0"
                   role="tablist"
-                  aria-label="Ảnh trong atlas"
+                  aria-label="Images in atlas"
                 >
                   <button
                     type="button"
@@ -606,7 +606,7 @@ export function AtlasBuilderModal({
                 <div className="ml-auto flex shrink-0 items-center gap-1">
                   <button
                     type="button"
-                    title="Lấy toàn bộ ảnh từ danh sách cards"
+                    title="Get all images from cards list"
                     disabled={loadingCardsPreset || submitting}
                     onClick={() => {
                       void handleApplyCardsPreset();
@@ -620,7 +620,7 @@ export function AtlasBuilderModal({
                   </button>
                   <button
                     type="button"
-                    title="Xóa hết ảnh trong atlas để đổi tab"
+                    title="Clear all atlas images to switch tabs"
                     disabled={selected.length === 0 || loadingCardsPreset || submitting}
                     onClick={handleClearAtlas}
                     className={cn(
@@ -650,7 +650,7 @@ export function AtlasBuilderModal({
                   >
                     {selected.length === 0 && (
                       <p className="text-xs text-muted-foreground">
-                        Kéo ảnh từ danh sách bên phải hoặc click để thêm.
+                        Drag images from the list on the right or click to add.
                       </p>
                     )}
                     {selected.map((path) => {
@@ -696,18 +696,18 @@ export function AtlasBuilderModal({
                   >
                     {selected.length === 0 ? (
                       <p className="text-xs text-muted-foreground px-2 text-center">
-                        Thêm ảnh vào collection để xem preview sprite sheet (cùng thuật toán lưới và
-                        cover như server).
+                        Add images to the collection to preview the sprite sheet (same grid and
+                        cover algorithm as server).
                       </p>
                     ) : !simulatedAtlas ? (
                       <p className="text-xs text-muted-foreground px-2 text-center">
-                        Đang tải kích thước ảnh đầu tiên để tính lưới…
+                        Loading first image dimensions to calculate grid...
                       </p>
                     ) : (
                       <canvas
                         ref={previewCanvasRef}
                         className="max-h-[280px] w-auto max-w-full rounded border border-border bg-black/20"
-                        aria-label="Preview atlas giả lập"
+                        aria-label="Simulated atlas preview"
                       />
                     )}
                   </div>
@@ -717,11 +717,11 @@ export function AtlasBuilderModal({
                   <div className="flex flex-1 min-h-0 flex-col overflow-hidden p-2">
                     {selected.length === 0 ? (
                       <p className="text-xs text-muted-foreground">
-                        Chưa có ảnh — JSON sẽ khớp file .json khi tạo atlas (giả lập).
+                        No images yet — JSON will match the .json file when creating atlas (simulated).
                       </p>
                     ) : !simulatedAtlas ? (
                       <p className="text-xs text-muted-foreground">
-                        Cần kích thước ảnh đầu tiên để dựng meta.size và frames.
+                        First image dimensions are required to build meta.size and frames.
                       </p>
                     ) : (
                       <JsonRawHighlight
@@ -737,13 +737,13 @@ export function AtlasBuilderModal({
             <div className="w-full md:w-72 shrink-0">
               <div className="mb-1 flex items-center gap-2">
                 <label className="block text-sm font-medium">
-                  Ảnh có sẵn ({images.length})
+                  Available images ({images.length})
                 </label>
                 <button
                   type="button"
                   className="rounded border border-border bg-background px-1.5 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
                   title={addAllShortcutHint}
-                  aria-label="Gợi ý phím tắt"
+                  aria-label="Shortcut hints"
                 >
                   ?
                 </button>
@@ -751,7 +751,7 @@ export function AtlasBuilderModal({
               <div
                 className="flex flex-wrap gap-0 border-b border-border mb-2"
                 role="tablist"
-                aria-label="Lọc ảnh theo loại"
+                aria-label="Filter images by type"
               >
                 <button
                   type="button"
@@ -811,8 +811,8 @@ export function AtlasBuilderModal({
                 {listForActiveTab.length === 0 && (
                   <p className="text-xs text-muted-foreground">
                     {availableTab === 'other'
-                      ? 'Không có ảnh ở mục này.'
-                      : 'Không còn ảnh loại này ngoài atlas.'}
+                      ? 'No images in this section.'
+                      : 'No remaining images of this type outside atlas.'}
                   </p>
                 )}
                 <div className="grid grid-cols-3 gap-2">
@@ -878,7 +878,7 @@ export function AtlasBuilderModal({
                             </p>
                             {availableTab === 'other' && (
                               <p className="text-[9px] text-muted-foreground/80">
-                                Chỉ xem
+                                View only
                               </p>
                             )}
                           </div>
@@ -916,7 +916,7 @@ export function AtlasBuilderModal({
                       setAtlasNameEnterError(null);
                     }}
                     onKeyDown={handleAtlasNameKeyDown}
-                    placeholder="vd: my-custom-atlas"
+                    placeholder="e.g.: my-custom-atlas"
                     aria-invalid={Boolean(atlasNameEnterError)}
                     aria-describedby={atlasNameEnterError ? 'atlas-name-enter-error' : undefined}
                     className={cn(
@@ -928,10 +928,10 @@ export function AtlasBuilderModal({
               </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onClose}>
-                  Hủy
+                  Cancel
                 </Button>
                 <Button type="button" onClick={handleCreate} disabled={!canSubmit}>
-                  {submitting ? 'Đang tạo...' : 'Tạo atlas'}
+                  {submitting ? 'Creating...' : 'Create atlas'}
                 </Button>
               </div>
             </div>
@@ -944,8 +944,8 @@ export function AtlasBuilderModal({
         <AssetLoadingOverlay
           show={submitting}
           variant="modal"
-          label="Đang build atlas trên server…"
-          subLabel="Vui lòng chờ phản hồi."
+          label="Building atlas on server…"
+          subLabel="Please wait for response."
         />
       </Card>
     </div>

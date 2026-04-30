@@ -38,7 +38,7 @@ export function EquipmentItemClassCodePanel({
               className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               onClick={() => onChangePath('')}
             >
-              Bỏ liên kết
+              Unlink
             </button>
           ) : null}
         </div>
@@ -64,7 +64,7 @@ export function EquipmentItemClassCodePanel({
           >
             <code className="block text-base text-muted-foreground/90">ts-morph edit</code>
             <span className="mt-3 block max-w-sm text-xs font-sans leading-relaxed text-muted-foreground">
-              Chọn file class trong <span className="font-mono">models/items</span>
+              Select class file in <span className="font-mono">models/items</span>
             </span>
           </button>
         )}
@@ -83,7 +83,7 @@ export function EquipmentItemClassCodePanel({
                 modelsScope="items"
                 selectionMode="relativePath"
                 currentValue={trimmed}
-                title="Chọn class item"
+                title="Select item class"
                 onSelect={(path) => {
                   onChangePath(path);
                 }}

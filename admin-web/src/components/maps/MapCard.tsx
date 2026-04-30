@@ -93,7 +93,7 @@ export function MapCard({ map, onEdit }: MapCardProps) {
                                     )}
                                     onClick={() => onEdit(map)}
                                 >
-                                    Sửa
+                                    Edit
                                 </Button>
                             </div>
                         </div>
@@ -140,7 +140,7 @@ export function MapCard({ map, onEdit }: MapCardProps) {
                                     hasBg ? 'text-white' : 'text-foreground'
                                 )}
                             >
-                                📚 Deck ({map.deck?.length ?? 0} thẻ):
+                                📚 Deck ({map.deck?.length ?? 0} cards):
                             </span>
                         </div>
                         <div

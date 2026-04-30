@@ -10,10 +10,10 @@ import { QRCodeSVG } from 'qrcode.react';
 import { fadeSlideCard } from '../components/animations/motionPresets';
 
 const PACKAGES = [
-  { name: 'Gói tân thủ', label: 'Gói tân thủ (2.000₫ → 20.000 xu)' },
-  { name: 'Gói 10k', label: 'Gói 10k (10.000₫ → 10.000 xu)' },
-  { name: 'Gói 20k', label: 'Gói 20k (20.000₫ → 25.000 xu)' },
-  { name: 'Gói 50k', label: 'Gói 50k (50.000₫ → 75.000 xu)' },
+  { name: 'Starter Pack', label: 'Starter Pack (2,000 VND -> 20,000 Xu)' },
+  { name: '10k Pack', label: '10k Pack (10,000 VND -> 10,000 Xu)' },
+  { name: '20k Pack', label: '20k Pack (20,000 VND -> 25,000 Xu)' },
+  { name: '50k Pack', label: '50k Pack (50,000 VND -> 75,000 Xu)' },
 ];
 
 export default function CreatePaymentLink() {
@@ -47,8 +47,8 @@ export default function CreatePaymentLink() {
       } catch {
         setError(
           routeUserId
-            ? 'Không tìm thấy người chơi hoặc không tải được dữ liệu'
-            : 'Không thể tải danh sách người chơi',
+            ? 'Player not found or failed to load data'
+            : 'Failed to load player list',
         );
       } finally {
         setLoading(false);
@@ -77,7 +77,7 @@ export default function CreatePaymentLink() {
 
   const handleCreatePayment = async () => {
     if (!selectedUid) {
-      setError('Vui lòng chọn người chơi');
+      setError('Please select a player');
       return;
     }
     setCreating(true);
@@ -89,10 +89,10 @@ export default function CreatePaymentLink() {
         setPaymentData(res.data);
         setShowForm(false);
       } else {
-        setError(res.message || 'Tạo link thất bại');
+        setError(res.message || 'Failed to create payment link');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Lỗi kết nối');
+      setError(err.response?.data?.message || err.message || 'Connection error');
     } finally {
       setCreating(false);
     }
@@ -129,8 +129,8 @@ export default function CreatePaymentLink() {
     <div className="p-6 space-y-6">
       {!playerFromRouteLocked && (
         <PageHeader
-          title="Tạo link thanh toán"
-          description="Dành cho Admin/Mod: tạo link thanh toán PayOS khi người chơi yêu cầu hỗ trợ nạp tiền."
+          title="Create payment link"
+          description="For Admin/Mod: create a PayOS payment link when a player asks for top-up support."
         />
       )}
 
@@ -139,21 +139,21 @@ export default function CreatePaymentLink() {
       <Card className="border border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-white max-w-2xl shadow-sm">
         <CardContent className="p-6">
           <h3 className="text-lg font-semibold text-slate-800 mb-1">
-            Tạo link thanh toán hỗ trợ
+            Create support payment link
           </h3>
           <p className="text-sm text-slate-500 mb-4">
             {playerFromRouteLocked
-              ? 'Người chơi đã được chọn từ trang chi tiết user. Chọn gói nạp và tạo link.'
-              : 'Chọn người chơi và gói nạp, sau đó gửi link thanh toán cho họ qua tin nhắn hỗ trợ.'}
+              ? 'The player is pre-selected from the user detail page. Choose a package and create the link.'
+              : 'Select a player and a top-up package, then send them the payment link via support message.'}
           </p>
           <div className="flex flex-col gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Người chơi (user cần hỗ trợ)
+                Player (user needing support)
               </label>
               {playerFromRouteLocked && (
                 <p className="text-xs text-slate-500 mb-1.5">
-                  Đã cố định theo user mở từ URL — không thể đổi tại đây.
+                  Locked to the user from URL - cannot be changed here.
                 </p>
               )}
               <div className="relative">
@@ -168,7 +168,7 @@ export default function CreatePaymentLink() {
                   }}
                   onFocus={() => !playerFromRouteLocked && setIsUserInputFocused(true)}
                   onBlur={() => setIsUserInputFocused(false)}
-                  placeholder="Nhập email người chơi để tìm kiếm..."
+                  placeholder="Enter player email to search..."
                   className={`w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 ${
                     playerFromRouteLocked
                       ? 'bg-slate-100 text-slate-800 cursor-not-allowed'
@@ -198,7 +198,7 @@ export default function CreatePaymentLink() {
                     ))}
                     {users.length > filteredUsers.length && (
                       <div className="px-3 py-1 text-xs text-slate-400 border-t border-slate-100">
-                        Đang hiển thị {filteredUsers.length} / {users.length} users (lọc theo email)
+                        Showing {filteredUsers.length} / {users.length} users (filtered by email)
                       </div>
                     )}
                   </div>
@@ -207,7 +207,7 @@ export default function CreatePaymentLink() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Gói nạp
+                Top-up package
               </label>
               <select
                 value={selectedPackage}
@@ -226,7 +226,7 @@ export default function CreatePaymentLink() {
               disabled={creating}
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              {creating ? 'Đang tạo...' : 'Tạo link thanh toán'}
+              {creating ? 'Creating...' : 'Create payment link'}
             </Button>
             {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
@@ -241,10 +241,10 @@ export default function CreatePaymentLink() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-800 mb-1">
-                  Link thanh toán đã tạo
+                  Payment link created
                 </h3>
                 <p className="text-sm text-slate-600">
-                  Gửi link hoặc hướng dẫn người chơi quét mã VietQR / chuyển khoản theo thông tin bên dưới.
+                  Send this link or guide the player to scan VietQR / transfer using the details below.
                 </p>
               </div>
               <Button
@@ -254,7 +254,7 @@ export default function CreatePaymentLink() {
                 className="shrink-0 border-slate-300 text-slate-700 hover:bg-slate-50"
                 onClick={handleCreateAnother}
               >
-                Tạo thêm link khác
+                Create another link
               </Button>
             </div>
             <div className="flex flex-col sm:flex-row gap-6">
@@ -271,79 +271,79 @@ export default function CreatePaymentLink() {
               </div>
               <div className="flex-1 space-y-3">
                 <div className="flex justify-between items-center gap-2">
-                  <span className="text-sm text-slate-600">Chủ tài khoản:</span>
+                  <span className="text-sm text-slate-600">Account name:</span>
                   <div className="flex gap-1 items-center">
                     <span className="font-semibold">{paymentData.accountName}</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 px-2 text-xs"
-                      onClick={() => handleCopy(paymentData.accountName, 'Chủ TK')}
+                      onClick={() => handleCopy(paymentData.accountName, 'Account Name')}
                     >
                       Copy
                     </Button>
                   </div>
                 </div>
                 <div className="flex justify-between items-center gap-2">
-                  <span className="text-sm text-slate-600">Số tài khoản:</span>
+                  <span className="text-sm text-slate-600">Account number:</span>
                   <div className="flex gap-1 items-center">
                     <span className="font-semibold">{paymentData.accountNumber}</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 px-2 text-xs"
-                      onClick={() => handleCopy(paymentData.accountNumber, 'STK')}
+                      onClick={() => handleCopy(paymentData.accountNumber, 'Account Number')}
                     >
                       Copy
                     </Button>
                   </div>
                 </div>
                 <div className="flex justify-between items-center gap-2">
-                  <span className="text-sm text-slate-600">Số tiền:</span>
+                  <span className="text-sm text-slate-600">Amount:</span>
                   <div className="flex gap-1 items-center">
                     <span className="font-semibold">{paymentData.amount.toLocaleString('vi-VN')} VND</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 px-2 text-xs"
-                      onClick={() => handleCopy(String(paymentData.amount), 'Số tiền')}
+                      onClick={() => handleCopy(String(paymentData.amount), 'Amount')}
                     >
                       Copy
                     </Button>
                   </div>
                 </div>
                 <div className="flex justify-between items-start gap-2">
-                  <span className="text-sm text-slate-600">Nội dung:</span>
+                  <span className="text-sm text-slate-600">Description:</span>
                   <div className="flex gap-1 items-center">
                     <span className="font-semibold text-sm break-all">{paymentData.description}</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-6 px-2 text-xs flex-shrink-0"
-                      onClick={() => handleCopy(paymentData.description, 'Nội dung')}
+                      onClick={() => handleCopy(paymentData.description, 'Description')}
                     >
                       Copy
                     </Button>
                   </div>
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
-                  Mã đơn: #{paymentData.orderCode} • Gói: {paymentData.packageName} ({paymentData.xuReceived} xu)
+                  Order code: #{paymentData.orderCode} - Package: {paymentData.packageName} ({paymentData.xuReceived} Xu)
                 </p>
                 <div className="flex flex-wrap gap-2 mt-3">
                   <Button
                     variant="outline"
                     size="sm"
                     className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                    onClick={() => handleCopy(paymentData.checkoutUrl, 'Link thanh toán')}
+                    onClick={() => handleCopy(paymentData.checkoutUrl, 'Payment Link')}
                   >
-                    {copiedLabel === 'Link thanh toán' ? '✓ Đã copy!' : 'Sao chép link thanh toán'}
+                    {copiedLabel === 'Payment Link' ? 'Copied!' : 'Copy payment link'}
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => window.open(paymentData.checkoutUrl, '_blank')}
                   >
-                    Mở trang thanh toán PayOS
+                    Open PayOS checkout page
                   </Button>
                 </div>
               </div>

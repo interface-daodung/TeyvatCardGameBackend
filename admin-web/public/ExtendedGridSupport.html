@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -1027,7 +1027,7 @@
     <div class="hdr">
       <div class="hdr-left">
         <h1>calculateMovement — Extended Grid Support</h1>
-        <p>Hàm tổng quát cho mọi lưới cols×rows, kiểm tra tự động với MOVEMENT_TABLE (3×3)</p>
+        <p>General function for all cols×rows grids, auto-validated with MOVEMENT_TABLE (3×3)</p>
         <div class="badge-row">
           <span class="badge badge-blue">2×2</span>
           <span class="badge badge-green">3×2</span>
@@ -1053,21 +1053,21 @@
           <div class="panel-body">
 
             <div style="margin-bottom:10px;">
-              <div class="ctrl-lbl" style="margin-bottom:5px;">Chọn lưới</div>
+              <div class="ctrl-lbl" style="margin-bottom:5px;">Select grid</div>
               <div class="grid-dim-controls">
                 <div class="dim-group">
-                  <span>Rộng</span>
+                  <span>Width</span>
                   <button class="dim-btn" type="button" id="cols-dec">−</button>
                   <span class="dim-value" id="cols-val">3</span>
                   <button class="dim-btn" type="button" id="cols-inc">+</button>
                 </div>
                 <div class="dim-group">
-                  <span>Cao</span>
+                  <span>Height</span>
                   <button class="dim-btn" type="button" id="rows-dec">−</button>
                   <span class="dim-value" id="rows-val">3</span>
                   <button class="dim-btn" type="button" id="rows-inc">+</button>
                 </div>
-                <button class="size-btn" type="button" id="size-apply-btn">mở</button>
+                <button class="size-btn" type="button" id="size-apply-btn">open</button>
               </div>
               <div class="grid-size-row" id="size-btns">
               </div>
@@ -1075,11 +1075,11 @@
 
             <div class="ctrl-row">
               <div class="ctrl-box">
-                <div class="ctrl-lbl">from (ô trống)</div>
+                <div class="ctrl-lbl">from (empty slot)</div>
                 <div class="ctrl-val cv-from" id="dsp-from">—</div>
               </div>
               <div class="ctrl-box">
-                <div class="ctrl-lbl">to (thẻ di chuyển)</div>
+                <div class="ctrl-lbl">to (moving card)</div>
                 <div class="ctrl-val cv-to" id="dsp-to">—</div>
               </div>
             </div>
@@ -1087,11 +1087,11 @@
             <div id="grid-vis"></div>
 
             <div class="formula-box" id="formula-box">
-              <span class="fc">// Click ô để chọn from, sau đó chọn to</span>
+              <span class="fc">// Click a cell to select from, then select to</span>
             </div>
 
             <div class="chain-row" id="chain-row">
-              <span style="font-size:10px;font-family:var(--mono);color:var(--t4)">chuỗi di chuyển sẽ hiện ở đây</span>
+              <span style="font-size:10px;font-family:var(--mono);color:var(--t4)">movement chain will appear here</span>
             </div>
 
             <div class="legend">
@@ -1144,10 +1144,10 @@
         <div class="panel">
           <div class="panel-hdr">
             <div class="panel-title">
-              <div class="dot" style="background:var(--green2)"></div>Bảng kiểm tra
+              <div class="dot" style="background:var(--green2)"></div>Validation table
             </div>
             <div class="tbl-hdr-actions">
-              <button class="autoplay-btn" id="autoplay-btn" type="button" title="Chạy lần lượt các case (0.5s)">
+              <button class="autoplay-btn" id="autoplay-btn" type="button" title="Run test cases sequentially (0.5s)">
                 <span id="autoplay-icon">▶</span>
                 <span id="autoplay-label">Play</span>
               </button>
@@ -1159,7 +1159,7 @@
 
             <div style="padding:0 12px 10px;">
               <div class="tab-row">
-                <button class="tab-btn active" id="tab-all" onclick="setTab('all')">Tất cả</button>
+                <button class="tab-btn active" id="tab-all" onclick="setTab('all')">All</button>
                 <button class="tab-btn" id="tab-corner" onclick="setTab('corner')">Corner</button>
                 <button class="tab-btn" id="tab-edge" onclick="setTab('edge')">Edge</button>
                 <button class="tab-btn" id="tab-inner" onclick="setTab('inner')">Inner</button>
@@ -1168,8 +1168,8 @@
             </div>
 
             <div id="table-notice" class="notice" style="margin:0 12px 10px;display:none">
-              <span>Lưu ý:</span> Lưới này không có MOVEMENT_TABLE ground truth.
-              Cột "Kết quả" kiểm tra tính nhất quán nội tại (chain in-bounds + first là lân cận hợp lệ của from).
+              <span>Note:</span> This grid has no MOVEMENT_TABLE ground truth.
+              The "Result" column checks internal consistency (chain in-bounds + first is a valid adjacent node of from).
             </div>
 
             <div class="tbl-wrap">
@@ -1181,15 +1181,15 @@
                     <th>type</th>
                     <th>to</th>
                     <th>to type</th>
-                    <th>chuỗi di chuyển</th>
+                    <th>movement chain</th>
                     <th>chain length</th>
-                    <th>công thức</th>
-                    <th>kết quả</th>
+                    <th>formula</th>
+                    <th>result</th>
                   </tr>
                 </thead>
                 <tbody id="tbody"></tbody>
               </table>
-              <div id="no-rows" class="no-table" style="display:none">Không có case nào trong filter này</div>
+              <div id="no-rows" class="no-table" style="display:none">No test cases in this filter</div>
             </div>
 
           </div>
@@ -1251,7 +1251,7 @@
     }
 
     /**
-     * Hàm tính toán tổng quát cho mọi lưới cols×rows.
+     * General movement calculator for any cols×rows grid.
      *
      * Quy tắc:
      *   - corner:  first = lân cận còn lại của from (adj \ {to})
@@ -1382,7 +1382,7 @@
             const calcChain = calcResult.chain;
             pass = JSON.stringify(groundTruth) === JSON.stringify(calcChain);
           } else {
-            // Kiểm tra tính nhất quán nội tại:
+            // Internal consistency check:
             // 1. first phải là lân cận hợp lệ của from
             // 2. tất cả chain items phải in-bounds
             // 3. chain không rỗng
@@ -1584,8 +1584,8 @@
         document.getElementById('dsp-from').textContent = idx;
         document.getElementById('dsp-to').textContent = '—';
         updateCellStyles(null);
-        document.getElementById('formula-box').innerHTML = `<span class="fc">// from = ${idx} (${getNodeType(idx, cols, rows)})</span><br><span class="fc">// Chọn ô to liền kề...</span>`;
-        document.getElementById('chain-row').innerHTML = '<span style="font-size:10px;font-family:var(--mono);color:var(--t4)">chờ chọn to...</span>';
+        document.getElementById('formula-box').innerHTML = `<span class="fc">// from = ${idx} (${getNodeType(idx, cols, rows)})</span><br><span class="fc">// Select an adjacent to cell...</span>`;
+        document.getElementById('chain-row').innerHTML = '<span style="font-size:10px;font-family:var(--mono);color:var(--t4)">waiting for to selection...</span>';
         clearActiveRow();
         return;
       }
@@ -1654,7 +1654,7 @@
       const dcol = toPos.col - fromPos.col;
 
       let lines = [];
-      lines.push(`<span class="fc">// from=${from} (${fromType}), to=${to} (${toType}), lưới ${cols}×${rows}</span>`);
+      lines.push(`<span class="fc">// from=${from} (${fromType}), to=${to} (${toType}), grid ${cols}×${rows}</span>`);
 
       if (fromType === 'corner') {
         const adj = getAdjacentPositions(from, cols, rows);
@@ -1674,11 +1674,11 @@
         lines.push(`rotated = (<span class="fn">${r2}</span>, <span class="fn">${c2}</span>)`);
         lines.push(`first = from + r×cols + c = <span class="fn">${from}</span> + <span class="fn">${r2}</span>×<span class="fn">${cols}</span> + <span class="fn">${c2}</span> <span class="fo">= ${chain[0]}</span>`);
       } else {
-        lines.push(`<span class="fc">// Công thức chung: đối diện với to qua from</span>`);
+        lines.push(`<span class="fc">// General formula: opposite of to through from</span>`);
         lines.push(`first = 2 × from − to = 2×<span class="fn">${from}</span> − <span class="fn">${to}</span> <span class="fo">= ${chain[0]}</span>`);
         if (chain.length > 1) {
           for (let i = 1; i < chain.length; i++) {
-            lines.push(`<span class="fc">// chain tiếp tục cùng hướng</span>`);
+            lines.push(`<span class="fc">// chain continues in same direction</span>`);
             lines.push(`chain[${i}] = 2×<span class="fn">${chain[i - 1]}</span> − <span class="fn">${i === 1 ? from : chain[i - 2]}</span> <span class="fo">= ${chain[i]}</span>`);
           }
         }
@@ -1747,8 +1747,8 @@
       activeRowIdx = null;
       document.getElementById('dsp-from').textContent = '—';
       document.getElementById('dsp-to').textContent = '—';
-      document.getElementById('formula-box').innerHTML = `<span class="fc">// Lưới ${cols}×${rows} — Click ô để bắt đầu</span>`;
-      document.getElementById('chain-row').innerHTML = '<span style="font-size:10px;font-family:var(--mono);color:var(--t4)">chuỗi di chuyển sẽ hiện ở đây</span>';
+      document.getElementById('formula-box').innerHTML = `<span class="fc">// Grid ${cols}×${rows} — Click a cell to start</span>`;
+      document.getElementById('chain-row').innerHTML = '<span style="font-size:10px;font-family:var(--mono);color:var(--t4)">movement chain will appear here</span>';
     }
 
     function setActiveSizeButton(cols, rows) {
@@ -1788,7 +1788,7 @@
         lessBtn.className = 'size-btn';
         lessBtn.type = 'button';
         lessBtn.dataset.action = 'collapse-size-btns';
-        lessBtn.textContent = 'ẩn bớt';
+        lessBtn.textContent = 'show less';
         wrap.appendChild(lessBtn);
       }
     }

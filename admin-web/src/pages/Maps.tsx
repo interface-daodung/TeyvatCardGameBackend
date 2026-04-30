@@ -32,7 +32,7 @@ export default function Maps() {
       setMaps(data);
     } catch (err) {
       console.error('Failed to fetch maps:', err);
-      setError('Không tải được danh sách maps');
+      setError('Failed to load map list');
     } finally {
       setLoading(false);
     }
@@ -109,9 +109,9 @@ export default function Maps() {
   return (
     <div className="relative z-0 p-6 space-y-6 bg-gradient-to-br from-background to-slate-50/50 min-h-screen">
       <div className="flex items-center justify-between">
-        <PageHeader title="Maps" description="Quản lý map dungeon và deck thẻ" />
+        <PageHeader title="Maps" description="Manage dungeon maps and card decks" />
         <Button onClick={openCreateModal} className="bg-primary-600 hover:bg-primary-700">
-          Thêm map
+          Add map
         </Button>
       </div>
 

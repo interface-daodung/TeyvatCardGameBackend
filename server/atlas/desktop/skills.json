@@ -1,19 +1,19 @@
 {
   "frames": {
-    "skill-icon": {
+    "skill-hilistray-summon": {
       "frame": {
         "x": 0,
-        "y": 100,
-        "w": 100,
-        "h": 100
+        "y": 0,
+        "w": 210,
+        "h": 360
       }
     }
   },
   "meta": {
     "image": "skills.webp",
     "size": {
-      "w": 100,
-      "h": 200
+      "w": 210,
+      "h": 360
     },
     "scale": "1",
     "path": "atlas/desktop/skills.webp"

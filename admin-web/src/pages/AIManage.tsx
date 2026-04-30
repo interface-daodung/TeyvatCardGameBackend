@@ -165,7 +165,7 @@ export default function AIManage() {
       setSessionId(sid);
       setMessages(messagesFromSessionLogs(logs));
     } catch {
-      setError('Không tải được lịch sử phiên chat.');
+      setError('Failed to load chat session history.');
     } finally {
       setLoadingSession(false);
     }
@@ -208,7 +208,7 @@ export default function AIManage() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Không gọi được AI. Kiểm tra server backend và Ollama (localhost:11434).'
+          : 'Cannot call AI. Check backend server and Ollama (localhost:11434).'
       );
     } finally {
       setLoading(false);
@@ -226,7 +226,7 @@ export default function AIManage() {
       >
         <PageHeader
           title="AI Manage"
-          description="Chat với AI; mỗi phiên có ID riêng, lưu kèm email người hỏi trong logs."
+          description="Chat with AI; each session has its own ID and stores requester email in logs."
         />
       </motion.div>
 
@@ -238,7 +238,7 @@ export default function AIManage() {
         >
           <motion.button
             type="button"
-            title={!pageHeaderVisible ? 'Bấm để hiện lại tiêu đề AI Manage' : undefined}
+            title={!pageHeaderVisible ? 'Click to show AI Manage header again' : undefined}
             onClick={() => setPageHeaderVisible(true)}
             variants={fadeSlideCard}
             initial="hidden"
@@ -248,7 +248,7 @@ export default function AIManage() {
             }`}
           >
             <span className="pointer-events-none">
-              <span className="text-slate-400">Phiên:</span>{' '}
+              <span className="text-slate-400">Session:</span>{' '}
               <code className="text-slate-700 font-mono text-[10px] break-all">{sessionId}</code>
             </span>
             <span className="pointer-events-none">
@@ -269,7 +269,7 @@ export default function AIManage() {
                 initial="hidden"
                 animate="visible"
               >
-                Đang mở phiên…
+                Opening session…
               </motion.div>
             ) : messages.length === 0 ? (
               <motion.div
@@ -279,7 +279,7 @@ export default function AIManage() {
                 initial="hidden"
                 animate="visible"
               >
-                Mở lịch sử phiên bên phải hoặc bắt đầu phiên mới, rồi nhập câu hỏi ở thanh dưới màn hình.
+                Open session history on the right or start a new session, then type your prompt below.
               </motion.div>
             ) : (
               messages.map((m, i) => (
@@ -345,8 +345,8 @@ export default function AIManage() {
                     rows={2}
                     placeholder={
                       loading
-                        ? 'Đang chờ AI trả lời...'
-                        : 'Nhập câu hỏi cho AI (Shift+Enter xuống dòng, Enter để gửi)…'
+                        ? 'Waiting for AI response...'
+                        : 'Enter your AI prompt (Shift+Enter for new line, Enter to send)…'
                     }
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -361,7 +361,7 @@ export default function AIManage() {
                     type="submit"
                     disabled={loading || loadingSession || !input.trim()}
                     className="absolute right-2 bottom-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                    aria-label="Gửi câu hỏi"
+                    aria-label="Send prompt"
                   >
                     <FontAwesomeIcon
                       icon={loading ? faCircleNotch : faArrowUp}
@@ -396,7 +396,7 @@ export default function AIManage() {
                 }}
                 className="min-h-14 px-3 py-3 border-b border-slate-200 flex items-center justify-between gap-2 cursor-pointer hover:bg-slate-100/80 transition-colors"
               >
-                <p className="text-xs font-semibold text-slate-700">Lịch sử phiên</p>
+                <p className="text-xs font-semibold text-slate-700">Session history</p>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -406,7 +406,7 @@ export default function AIManage() {
                   className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-blue-700 shrink-0"
                 >
                   <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
-                  Phiên mới
+                  New session
                 </button>
               </div>
               <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
@@ -417,7 +417,7 @@ export default function AIManage() {
                     initial="hidden"
                     animate="visible"
                   >
-                    Đang tải…
+                    Loading…
                   </motion.p>
                 )}
                 {!sessionsLoading && sessions.length === 0 && (
@@ -427,7 +427,7 @@ export default function AIManage() {
                     initial="hidden"
                     animate="visible"
                   >
-                    Chưa có phiên đã lưu.
+                    No saved sessions yet.
                   </motion.p>
                 )}
                 {sessions.map((s, idx) => {
@@ -480,8 +480,8 @@ export default function AIManage() {
             animate="visible"
             exit="exit"
             className="fixed z-40 top-24 right-4 inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-700 shadow-lg shadow-slate-900/10 hover:bg-slate-50 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:ring-offset-2 md:right-8"
-            aria-label="Mở lịch sử phiên"
-            title="Lịch sử phiên"
+            aria-label="Open session history"
+            title="Session history"
           >
             <FontAwesomeIcon icon={faClockRotateLeft} className="h-5 w-5" />
           </motion.button>

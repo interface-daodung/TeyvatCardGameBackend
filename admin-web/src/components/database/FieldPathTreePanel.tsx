@@ -98,7 +98,7 @@ export function FieldPathTreePanel({ filteredFieldSummaries, allFieldSummaries, 
   return (
     <div className="max-h-[min(70vh,640px)] overflow-y-auto rounded-lg border border-slate-100 bg-slate-50/40 p-3">
       <p className="text-xs text-slate-500 mb-3">
-        Cây theo cấu trúc path MongoDB (segment ngăn bằng <code className="text-[11px]">.</code>, mảng{' '}
+        Tree by MongoDB path structure (segments separated by <code className="text-[11px]">.</code>, arrays{' '}
         <code className="text-[11px]">[]</code>).
       </p>
       <div className="space-y-0.5">

@@ -253,7 +253,7 @@ export function MapFormModal({
     const handleI18nTranslate = async () => {
         const sourceText = getFormI18n(editLang).trim();
         if (!sourceText) {
-            setI18nError('Vui lòng nhập nội dung gốc trước khi dịch');
+            setI18nError('Please enter source text before translating');
             return;
         }
         setI18nError(null);
@@ -266,7 +266,7 @@ export function MapFormModal({
                 promises.push(localizationService.translate(sourceText, editLang, 'ja').then(setFormI18nJa));
             await Promise.all(promises);
         } catch {
-            setI18nError('Lỗi gọi dịch máy, hãy thử lại');
+            setI18nError('Translation service error, please try again');
         } finally {
             setTranslateLoading(false);
         }
@@ -289,7 +289,7 @@ export function MapFormModal({
                 try {
                     await localizationService.createLocalization(key, translations);
                 } catch {
-                    setI18nError('Không lưu được bản dịch, hãy thử lại');
+                    setI18nError('Cannot save translation, please try again');
                     return false;
                 }
             }
@@ -364,7 +364,7 @@ export function MapFormModal({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!canSaveRatios) {
-            setError('Tổng tỉ lệ phải bằng 100 (free ratio phải về 0 mới được lưu).');
+            setError('Total ratio must be 100 (free ratio must be 0 before saving).');
             return;
         }
         if (deckHasDisabledCards) {
@@ -395,7 +395,7 @@ export function MapFormModal({
             const msg =
                 err && typeof err === 'object' && 'message' in err
                     ? String((err as { message: string }).message)
-                    : 'Có lỗi';
+                    : 'Error';
             setError(msg);
         } finally {
             setSubmitLoading(false);
@@ -404,7 +404,7 @@ export function MapFormModal({
 
     const handleDelete = async () => {
         if (!editingMap) return;
-        if (!window.confirm(`Bạn có chắc xóa map "${editingMap.name}"?`)) return;
+        if (!window.confirm(`Are you sure you want to delete map "${editingMap.name}"?`)) return;
         setDeleteLoading(true);
         try {
             await gameDataService.deleteMap(editingMap._id);
@@ -412,7 +412,7 @@ export function MapFormModal({
             onSaved();
         } catch (err) {
             console.error('Failed to delete map:', err);
-            setError('Xóa map thất bại');
+            setError('Delete map failed');
         } finally {
             setDeleteLoading(false);
         }
@@ -476,13 +476,13 @@ export function MapFormModal({
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 bg-primary-600 text-white shrink-0">
                     <h2 className="text-xl font-semibold">
-                        {editingMap ? 'Sửa map' : 'Thêm map'}
+                        {editingMap ? 'Edit map' : 'Add map'}
                     </h2>
                     <button
                         type="button"
                         onClick={requestClose}
                         className="p-1 hover:bg-primary-500 rounded transition-colors text-xl leading-none"
-                        aria-label="Đóng"
+                        aria-label="Close"
                     >
                         ✕
                     </button>
@@ -503,7 +503,7 @@ export function MapFormModal({
                         {/* nameId */}
                         <div>
                             <label htmlFor="map-nameId" className="block text-sm font-medium mb-1">
-                                nameId (ID duy nhất)
+                                nameId (Unique ID)
                             </label>
                             <input
                                 id="map-nameId"
@@ -512,7 +512,7 @@ export function MapFormModal({
                                 onChange={(e) => setForm((p) => ({ ...p, nameId: e.target.value }))}
                                 disabled={!!editingMap}
                                 className="w-full rounded border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-500 font-mono"
-                                placeholder="vd: dungeon_ice_palace"
+                                placeholder="e.g.: dungeon_ice_palace"
                             />
                         </div>
 
@@ -520,7 +520,7 @@ export function MapFormModal({
                         <div>
                             <div className="flex items-center justify-between gap-2 mb-1">
                                 <label htmlFor="map-name" className="block text-sm font-medium">
-                                    Tên hiển thị
+                                    Display name
                                 </label>
                                 {editingMap ? (
                                     <>
@@ -560,7 +560,7 @@ export function MapFormModal({
                                                 onClick={openI18nNameEditor}
                                                 className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
                                             >
-                                                {i18nField === 'name' ? 'Thu gọn i18n' : 'Sửa i18n'}
+                                                {i18nField === 'name' ? 'Collapse i18n' : 'Edit i18n'}
                                             </button>
                                         </div>
                                     </>
@@ -577,13 +577,13 @@ export function MapFormModal({
                                 }
                                 onChange={(e) => !editingMap && setForm((p) => ({ ...p, name: e.target.value }))}
                                 className="w-full rounded border border-slate-200 px-3 py-2 text-sm bg-background disabled:bg-muted/50 read-only:bg-muted/50"
-                                placeholder="vd: Ice Palace"
+                                placeholder="e.g.: Ice Palace"
                             />
                             {i18nField === 'name' && (
                                 <div className="mt-3">
                                     <I18nEditorPanel
                                         variant="inline"
-                                        title="Sửa Tên hiển thị (i18n)"
+                                        title="Edit display name (i18n)"
                                         fieldType="name"
                                         editLang={editLang}
                                         getValue={getFormI18n}
@@ -602,14 +602,14 @@ export function MapFormModal({
                         {/* description */}
                         <div>
                             <label htmlFor="map-description" className="block text-sm font-medium mb-1">
-                                Mô tả
+                                Description
                             </label>
                             <textarea
                                 id="map-description"
                                 value={form.description}
                                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                                 className="w-full rounded border border-slate-200 px-3 py-2 text-sm min-h-[60px]"
-                                placeholder="Mô tả map"
+                                placeholder="Map description"
                             />
                         </div>
 
@@ -618,12 +618,12 @@ export function MapFormModal({
                             <label className="block text-sm font-medium mb-1">map_background</label>
                             <div
                                 className={`relative w-full max-w-[360px] rounded-xl overflow-hidden border border-border bg-muted aspect-[16/9] ${mapBackgroundTreeOpen || !form.mapBackground ? 'cursor-pointer' : ''}`}
-                                aria-label="Ảnh map background"
+                                aria-label="Map background image"
                             >
                                 {mapBackgroundTreeOpen ? (
                                     <div className="absolute inset-0 flex flex-col overflow-hidden">
                                         <div className="flex items-center justify-between px-2 py-1 bg-muted border-b border-border text-xs font-medium shrink-0">
-                                            <span>Chọn ảnh nền</span>
+                                            <span>Select background image</span>
                                             <button
                                                 type="button"
                                                 className="px-1.5 py-0.5 rounded hover:bg-muted-foreground/20"
@@ -632,12 +632,12 @@ export function MapFormModal({
                                                     setMapBackgroundTreeOpen(false);
                                                 }}
                                             >
-                                                Đóng
+                                                Close
                                             </button>
                                         </div>
                                         <div className="flex-1 overflow-y-auto p-2 text-xs">
                                             {mapBackgroundTreeLoading ? (
-                                                <p className="text-muted-foreground">Đang tải...</p>
+                                                <p className="text-muted-foreground">Loading...</p>
                                             ) : mapBackgroundTree && mapBackgroundTree.length > 0 ? (
                                                 mapBackgroundTree.map((item) => (
                                                     <FileTreeNode
@@ -659,7 +659,7 @@ export function MapFormModal({
                                                     />
                                                 ))
                                             ) : (
-                                                <p className="text-muted-foreground">Không có ảnh</p>
+                                                <p className="text-muted-foreground">No images</p>
                                             )}
                                         </div>
                                     </div>
@@ -669,7 +669,7 @@ export function MapFormModal({
                                             className="absolute inset-0 cursor-default"
                                             role="button"
                                             tabIndex={0}
-                                            title="Ctrl+click: chọn ảnh nền. Double-click: xem toàn màn hình."
+                                            title="Ctrl+click: select background image. Double-click: view fullscreen."
                                             onDoubleClick={(e) => {
                                                 e.preventDefault();
                                                 setMapBackgroundLightbox({
@@ -711,7 +711,7 @@ export function MapFormModal({
                                                 e.stopPropagation();
                                                 setForm((p) => ({ ...p, mapBackground: '' }));
                                             }}
-                                            aria-label="Xóa ảnh nền"
+                                            aria-label="Remove background image"
                                         >
                                             ✕
                                         </button>
@@ -721,7 +721,7 @@ export function MapFormModal({
                                         className="absolute inset-0 flex items-center justify-center px-2 text-xs text-muted-foreground"
                                         role="button"
                                         tabIndex={0}
-                                        title="Click để chọn ảnh nền"
+                                        title="Click to select background image"
                                         onClick={() => setMapBackgroundTreeOpen(true)}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' || e.key === ' ') {
@@ -730,7 +730,7 @@ export function MapFormModal({
                                             }
                                         }}
                                     >
-                                        Chưa chọn map_background
+                                        No map_background selected
                                     </div>
                                 )}
                             </div>
@@ -744,7 +744,7 @@ export function MapFormModal({
 
                         {/* Status toggle */}
                         <div>
-                            <label className="block text-sm font-medium mb-1">Trạng thái</label>
+                            <label className="block text-sm font-medium mb-1">Status</label>
                             <div
                                 role="button"
                                 tabIndex={0}
@@ -780,8 +780,8 @@ export function MapFormModal({
                             />
                             {deckHasDisabledCards && (
                                 <p className="text-sm text-destructive mt-2">
-                                    Deck còn thẻ đã disabled (viền đỏ). Xóa hết các thẻ đó khỏi deck
-                                    trước khi lưu.
+                                    Deck still contains disabled cards (red border). Remove all of them from
+                                    the deck before saving.
                                 </p>
                             )}
                         </div>
@@ -796,7 +796,7 @@ export function MapFormModal({
                                         onClick={handleDelete}
                                         disabled={deleteLoading}
                                     >
-                                        {deleteLoading ? 'Đang xóa...' : 'Xóa map'}
+                                        {deleteLoading ? 'Deleting...' : 'Delete map'}
                                     </Button>
                                 )}
                             </div>
@@ -808,14 +808,14 @@ export function MapFormModal({
                                     disabled={deckAtlasImages.length === 0}
                                     title={
                                         deckAtlasImages.length === 0
-                                            ? 'Thêm ít nhất một thẻ vào deck để tạo atlas'
+                                            ? 'Add at least one card to the deck to build atlas'
                                             : undefined
                                     }
                                 >
-                                    Tạo atlas
+                                    Create atlas
                                 </Button>
                                 <Button type="submit" disabled={submitLoading || !canSaveRatios}>
-                                    {submitLoading ? 'Đang xử lý...' : editingMap ? 'Lưu' : 'Thêm'}
+                                    {submitLoading ? 'Processing...' : editingMap ? 'Save' : 'Add'}
                                 </Button>
                             </div>
                         </div>
@@ -836,8 +836,8 @@ export function MapFormModal({
                 onSave={confirmSaveFromDialog}
                 saveLoading={submitLoading}
                 saveDisabled={!canSaveRatios}
-                title="Lưu thay đổi?"
-                description="Bạn đã chỉnh sửa map. Bạn có muốn lưu trước khi đóng không?"
+                title="Save changes?"
+                description="You have edited this map. Save before closing?"
             />
 
             <UnsavedChangesDialog
@@ -847,8 +847,8 @@ export function MapFormModal({
                 onSave={confirmI18nSaveFromDialog}
                 saveLoading={i18nSaveSubmitting}
                 overlayClassName="z-[10001]"
-                title="Lưu bản dịch?"
-                description="Bạn đã chỉnh sửa i18n tên map chưa lưu. Bạn có muốn lưu trước khi đóng không?"
+                title="Save translation?"
+                description="You have unsaved edits in map name i18n. Save before closing?"
             />
 
             {showDisabledDeckBlockDialog ? (
@@ -866,28 +866,28 @@ export function MapFormModal({
                     >
                         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-muted/30 shrink-0">
                             <h3 id="disabled-deck-dialog-title" className="text-lg font-semibold pr-2">
-                                Không thể lưu
+                                Cannot save
                             </h3>
                             <button
                                 type="button"
                                 onClick={() => setShowDisabledDeckBlockDialog(false)}
                                 className="shrink-0 p-1.5 rounded-md hover:bg-muted text-xl leading-none"
-                                aria-label="Đóng"
+                                aria-label="Close"
                             >
                                 ✕
                             </button>
                         </div>
                         <div className="p-4 space-y-4">
                             <p className="text-sm text-muted-foreground">
-                                Map vẫn còn thẻ adventure đã bị disabled trong deck. Hãy bấm nút −
-                                trên từng thẻ có viền đỏ để gỡ hết khỏi deck, sau đó lưu lại.
+                                This map still has disabled adventure cards in the deck. Click the −
+                                button on each red-bordered card to remove them from the deck, then save again.
                             </p>
                             <div className="flex justify-end">
                                 <Button
                                     type="button"
                                     onClick={() => setShowDisabledDeckBlockDialog(false)}
                                 >
-                                    Đã hiểu
+                                    Understood
                                 </Button>
                             </div>
                         </div>

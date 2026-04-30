@@ -162,7 +162,7 @@ export default function Logs() {
               type="text"
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
-              placeholder="Nhập email"
+              placeholder="Enter email"
               className="w-full rounded-lg border border-slate-200 bg-white/90 shadow-sm px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 focus:outline-none transition-all"
             />
           </div>
@@ -174,7 +174,7 @@ export default function Logs() {
               className="rounded-lg border border-slate-200 bg-white/90 shadow-sm pl-3.5 pr-9 py-2.5 text-sm text-slate-800 min-w-[150px] focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 focus:outline-none transition-all appearance-none cursor-pointer hover:border-slate-300 bg-no-repeat bg-[length:1.25rem] bg-[right_0.5rem_center]"
               style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")" }}
             >
-              <option value="">Tất cả</option>
+              <option value="">All</option>
               <option value="login">login</option>
               <option value="login_failed">login_failed</option>
               <option value="register">register</option>
@@ -188,7 +188,7 @@ export default function Logs() {
               className="rounded-lg border border-slate-200 bg-white/90 shadow-sm pl-3.5 pr-9 py-2.5 text-sm text-slate-800 min-w-[130px] focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 focus:outline-none transition-all appearance-none cursor-pointer hover:border-slate-300 bg-no-repeat bg-[length:1.25rem] bg-[right_0.5rem_center]"
               style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")" }}
             >
-              <option value="">Tất cả</option>
+              <option value="">All</option>
               <option value="auth">auth</option>
               <option value="user">user</option>
             </select>
@@ -201,7 +201,7 @@ export default function Logs() {
               className="rounded-lg border border-slate-200 bg-white/90 shadow-sm pl-3.5 pr-9 py-2.5 text-sm text-slate-800 min-w-[110px] focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 focus:outline-none transition-all appearance-none cursor-pointer hover:border-slate-300 bg-no-repeat bg-[length:1.25rem] bg-[right_0.5rem_center]"
               style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")" }}
             >
-              <option value="">Tất cả</option>
+              <option value="">All</option>
               <option value="info">info</option>
               <option value="log">log</option>
               <option value="error">error</option>
@@ -213,7 +213,7 @@ export default function Logs() {
             size="icon"
             onClick={handleRefetch}
             disabled={loading}
-            title="Lấy log mới (giữ nguyên bộ lọc)"
+            title="Fetch latest logs (keep current filters)"
             className="shrink-0"
           >
             <FontAwesomeIcon icon={faArrowsRotate} className={loading ? 'animate-spin' : ''} />
@@ -318,7 +318,7 @@ export default function Logs() {
           <div className="relative z-10 w-full max-w-2xl rounded-xl bg-card shadow-2xl border border-border overflow-hidden">
             <div className="px-6 py-4 bg-gradient-to-r from-slate-700 to-slate-800 flex items-center justify-between">
               <h2 id="log-detail-title" className="text-lg font-semibold text-white">
-                Chi tiết log — {detailLog.content === 'error' ? 'error' : detailLog.content === 'log' ? 'log' : detailLog.content === 'info' ? 'info' : '—'}
+                Log details — {detailLog.content === 'error' ? 'error' : detailLog.content === 'log' ? 'log' : detailLog.content === 'info' ? 'info' : '—'}
               </h2>
               <div className="flex items-center gap-2">
                 <Button
@@ -328,7 +328,7 @@ export default function Logs() {
                   onClick={handleCopy}
                   className="bg-white/20 text-white hover:bg-white/30"
                 >
-                  {copyDone ? 'Đã copy' : 'Copy'}
+                  {copyDone ? 'Copied' : 'Copy'}
                 </Button>
                 <Button
                   type="button"
@@ -337,7 +337,7 @@ export default function Logs() {
                   onClick={() => setDetailLog(null)}
                   className="text-white hover:bg-white/10"
                 >
-                  Đóng
+                  Close
                 </Button>
               </div>
             </div>

@@ -93,7 +93,7 @@ export function validateLevelStatsPowerCooldownUnique(
     const key = `${intNat(s.power)},${intNat(s.cooldown)}`;
     if (seen.has(key)) {
       const firstLvl = seen.get(key)! + 1;
-      return `Cặp Power/Cooldown (${intNat(s.power)}, ${intNat(s.cooldown)}) bị trùng giữa level ${firstLvl} và level ${i + 1}.`;
+      return `Duplicate Power/Cooldown pair (${intNat(s.power)}, ${intNat(s.cooldown)}) between level ${firstLvl} and level ${i + 1}.`;
     }
     seen.set(key, i);
   }

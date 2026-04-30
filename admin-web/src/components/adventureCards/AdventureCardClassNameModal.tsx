@@ -51,7 +51,7 @@ export function AdventureCardClassNameModal({
         animate="visible"
       >
         <ClassNamePickerPanel
-          title="Chọn Class name"
+          title="Select class name"
           currentValue={form.className ?? editCard.className ?? ''}
           onSelect={(className) => {
             onSelectClassName(className);

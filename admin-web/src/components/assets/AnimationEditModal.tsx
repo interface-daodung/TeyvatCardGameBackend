@@ -322,14 +322,14 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
         orderedSelectedIndices,
         name
       );
-      setSaveOk(`Đã lưu: ${result.imageUrl}`);
+      setSaveOk(`Saved: ${result.imageUrl}`);
       onSaved?.();
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Lưu thất bại';
-      setSaveError(msg || 'Lưu thất bại');
+          : 'Save failed';
+      setSaveError(msg || 'Save failed');
     } finally {
       setSaving(false);
     }
@@ -429,7 +429,7 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                       onSelect={(path) => setSelectedPath(path)}
                       loading={filesLoading}
                       rootWebPrefix={ANIMATIONS_ROOT}
-                      emptyMessage="Chưa có ảnh trong assets/images/animations."
+                      emptyMessage="No images in assets/images/animations."
                       className="h-[565px]"
                     />
                   </motion.div>
@@ -450,14 +450,14 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                             className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
                             aria-hidden
                           />
-                          <p className="text-sm text-muted-foreground">Đang tải danh sách…</p>
+                          <p className="text-sm text-muted-foreground">Loading list...</p>
                         </>
                       ) : (
                         <>
-                          <p className="text-sm font-medium text-foreground">Chưa chọn ảnh</p>
+                          <p className="text-sm font-medium text-foreground">No image selected</p>
                           <p className="max-w-sm text-xs text-muted-foreground">
-                            Chọn một file trong cây <span className="font-mono text-[11px]">animations</span> — frame
-                            cố định {ANIMATION_FRAME_SIZE}×{ANIMATION_FRAME_SIZE}px.
+                            Select a file in the <span className="font-mono text-[11px]">animations</span> tree —
+                            fixed frame size {ANIMATION_FRAME_SIZE}×{ANIMATION_FRAME_SIZE}px.
                           </p>
                         </>
                       )}
@@ -465,9 +465,9 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                   </>
                 ) : (
                   <>
-                    <TabPanelLoading show={decodeLoading} label="Đang tải & cắt frame…" />
+                    <TabPanelLoading show={decodeLoading} label="Loading and slicing frames…" />
                     <label className="mb-1 block text-sm font-medium">
-                      Nguồn: {frameCanvases.length} frame · đã chọn {outputCount}
+                      Source: {frameCanvases.length} frames · selected {outputCount}
                     </label>
                     <div className="mb-2 flex flex-wrap items-end justify-between gap-x-2 gap-y-1 border-b border-border">
                       <div className="flex min-w-0 flex-wrap items-center gap-1" role="tablist">
@@ -530,7 +530,7 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                                 className="mt-0 min-h-[260px] border-none bg-transparent p-0"
                                 caption={
                                   <p className="text-[11px] text-muted-foreground">
-                                    Spritesheet — frame {ANIMATION_FRAME_SIZE}×{ANIMATION_FRAME_SIZE}px (theo frame đã chọn)
+                                    Spritesheet — frame {ANIMATION_FRAME_SIZE}×{ANIMATION_FRAME_SIZE}px (based on selected frames)
                                   </p>
                                 }
                                 playing={playing}
@@ -565,25 +565,25 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                                 }
                               />
                             ) : (
-                              <p className="text-xs text-muted-foreground">Chọn ít nhất một frame để xem animation.</p>
+                              <p className="text-xs text-muted-foreground">Select at least one frame to preview animation.</p>
                             )}
                           </div>
 
                           <div className="min-h-0 space-y-1 rounded-md border border-border bg-card p-2">
                             <p className="text-[11px] font-medium text-muted-foreground">
-                              Preview spritesheet đã ghép ({outputCount} frame)
+                              Combined spritesheet preview ({outputCount} frames)
                             </p>
                             <div
                               ref={previewWrapRef}
                               className="flex min-h-[180px] w-full items-center justify-center overflow-auto rounded-md border border-border bg-black/30 p-2"
                             >
                               {outputCount === 0 ? (
-                                <p className="text-xs text-muted-foreground">Chọn ít nhất một frame.</p>
+                                <p className="text-xs text-muted-foreground">Select at least one frame.</p>
                               ) : (
                                 <canvas
                                   ref={previewCanvasRef}
                                   className="max-h-[260px] w-auto max-w-full rounded border border-border bg-black/20 image-rendering-pixelated"
-                                  aria-label="Preview spritesheet ghép"
+                                  aria-label="Combined spritesheet preview"
                                 />
                               )}
                             </div>
@@ -592,7 +592,7 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                           <div className="min-h-0 space-y-1 rounded-md border border-border bg-card p-2">
                             <div className="flex flex-wrap items-center justify-between gap-1">
                               <p className="text-[11px] font-medium text-muted-foreground">
-                                Chọn frame (hover + Ctrl để chọn, Ctrl+A chọn tất cả, Ctrl+X bỏ chọn)
+                                Select frames (hover + Ctrl to select, Ctrl+A select all, Ctrl+X clear selection)
                               </p>
                               <div className="flex flex-wrap gap-1">
                                 <Button
@@ -602,7 +602,7 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                                   className="h-6 px-1.5 text-[11px]"
                                   onClick={selectAllFrames}
                                 >
-                                  Chọn tất cả
+                                  Select all
                                 </Button>
                                 <Button
                                   type="button"
@@ -611,7 +611,7 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                                   className="h-6 px-1.5 text-[11px]"
                                   onClick={clearSelection}
                                 >
-                                  Bỏ chọn
+                                  Clear selection
                                 </Button>
                               </div>
                             </div>
@@ -662,7 +662,7 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                           {simulatedAtlas ? (
                             <JsonRawHighlight data={simulatedAtlas.metadata} className="!max-h-[420px]" />
                           ) : (
-                            <p className="text-xs text-muted-foreground">Chưa có frame để dựng JSON.</p>
+                            <p className="text-xs text-muted-foreground">No frames available to build JSON.</p>
                           )}
                         </div>
                       )}
@@ -671,7 +671,7 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                     <div className="mt-3 space-y-2 rounded-lg border border-border bg-muted/50 p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <label className="text-[11px] font-medium text-muted-foreground">
-                          Tên file lưu (mới) trong animations
+                          New save filename in animations
                         </label>
                         <Button
                           type="button"
@@ -682,11 +682,11 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                             !canSave && 'cursor-not-allowed opacity-60'
                           )}
                           disabled={!canSave}
-                          title="Lưu spritesheet mới vào animations"
+                          title="Save new spritesheet to animations"
                           onClick={() => void handleSave()}
                         >
                           <FontAwesomeIcon icon={faFloppyDisk} className="mr-1 h-3 w-3" />
-                          Lưu
+                          Save
                         </Button>
                       </div>
                       <input
@@ -698,7 +698,7 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
                       />
                       {!saveNameValid && normalizedSaveName.length > 0 && (
                         <p className="text-[11px] text-destructive">
-                          Chỉ chữ, số, . _ - và đuôi .webp hoặc .png
+                          Only letters, numbers, . _ - and extension .webp or .png are allowed
                         </p>
                       )}
                     </div>
@@ -715,8 +715,8 @@ export function AnimationEditModal({ files, filesLoading = false, onClose, onSav
         <AssetLoadingOverlay
           show={saving}
           variant="modal"
-          label="Đang lưu và xử lý ảnh trên server…"
-          subLabel="Vui lòng chờ phản hồi."
+          label="Saving and processing image on server…"
+          subLabel="Please wait for response."
         />
       </Card>
     </div>

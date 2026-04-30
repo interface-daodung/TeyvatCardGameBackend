@@ -145,7 +145,7 @@ export const changeUserPassword = async (req: AuthRequest, res: Response) => {
     if (result === 'invalid_current_password') {
       return res.status(400).json({ error: 'Current password is incorrect' });
     }
-    await createAuditLog(req, 'change_user_password', 'user', req.params.id, { email: result.email }, undefined, 'warning');
+    await createAuditLog(req, 'change_user_password', 'user', req.params.id, { email: result.email }, undefined, 'log');
     res.json({ message: 'Password updated successfully' });
   } catch (error: unknown) {
     const err = error as { name?: string; errors?: unknown; message?: string };

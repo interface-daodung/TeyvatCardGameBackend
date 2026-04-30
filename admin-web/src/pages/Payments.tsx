@@ -94,19 +94,19 @@ export default function Payments() {
               type="text"
               value={searchEmail}
               onChange={(e) => setSearchEmail(e.target.value)}
-              placeholder="Tìm theo email"
+              placeholder="Search by email"
               className="w-full rounded-lg border border-slate-200 bg-white/90 shadow-sm px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 focus:outline-none transition-all"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-1.5">Trạng thái</label>
+            <label className="block text-sm font-semibold text-slate-600 mb-1.5">Status</label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="rounded-lg border border-slate-200 bg-white/90 shadow-sm pl-3.5 pr-9 py-2.5 text-sm text-slate-800 min-w-[130px] focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 focus:outline-none transition-all appearance-none cursor-pointer hover:border-slate-300 bg-no-repeat bg-[length:1.25rem] bg-[right_0.5rem_center]"
               style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")" }}
             >
-              <option value="">Tất cả</option>
+              <option value="">All</option>
               <option value="pending">pending</option>
               <option value="success">success</option>
               <option value="failed">failed</option>
@@ -118,7 +118,7 @@ export default function Payments() {
             size="icon"
             onClick={handleRefresh}
             disabled={loading}
-            title="Tải lại từ DB (giữ nguyên bộ lọc)"
+            title="Reload from DB (keep current filters)"
             className="shrink-0"
           >
             <FontAwesomeIcon icon={faArrowsRotate} className={loading ? 'animate-spin' : ''} />
@@ -169,7 +169,7 @@ export default function Payments() {
                   return sorted.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
-                      {payments.length === 0 ? 'No payments found' : 'Không có kết quả phù hợp'}
+                      {payments.length === 0 ? 'No payments found' : 'No matching results'}
                     </td>
                   </tr>
                 ) : (

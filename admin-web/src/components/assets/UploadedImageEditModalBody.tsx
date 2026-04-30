@@ -37,12 +37,12 @@ function tagLineForConvert(quality: number): string {
 function tagLineForResize(w: number, h: number, lossy: boolean, quality?: number): string {
   const W = Math.max(1, Math.min(4096, Math.round(w)));
   const H = Math.max(1, Math.min(4096, Math.round(h)));
-  if (!lossy) return `${W}×${H} · giữ định dạng`;
+  if (!lossy) return `${W}×${H} · keep format`;
   return `${W}×${H} · q${clampQuality(quality ?? 85)}`;
 }
 
 const DUPLICATE_PREVIEW_MSG =
-  'Đã có preview trùng thiết lập trong danh sách chờ duyệt — xóa bản cũ trước nếu muốn tạo lại.';
+  'A preview with the same settings already exists in pending list — remove the old one before recreating.';
 
 export type ImageEditModalProps = {
   filePath: string;
@@ -173,7 +173,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
   const resizePresets = useMemo(() => {
     if (!sourceSize || sourceSize.w <= 0 || sourceSize.h <= 0) {
       return [
-        { w: 420, h: 720, label: 'Mặc định' },
+        { w: 420, h: 720, label: 'Default' },
         { w: 210, h: 360, label: '50%' },
         { w: 105, h: 180, label: '25%' },
         { w: 840, h: 1440, label: '200%' },
@@ -206,14 +206,14 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
 
   const renameNameError =
     editName.trim().length > 0 && !normalizedRenameTarget
-      ? 'Tên file chỉ được chứa chữ, số, dấu chấm, gạch ngang, gạch dưới.'
+      ? 'Filename can only contain letters, numbers, dots, hyphens, and underscores.'
       : null;
 
   const handleRename = async () => {
     const current = fileName;
     const newName = normalizedRenameTarget;
     if (!newName) {
-      setError('Tên file mới không hợp lệ');
+      setError('New filename is invalid');
       return;
     }
     if (newName === current) {
@@ -235,8 +235,8 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Đổi tên thất bại';
-      setError(msg || 'Đổi tên thất bại');
+          : 'Rename failed';
+      setError(msg || 'Rename failed');
     } finally {
       setEditSaving(false);
     }
@@ -257,8 +257,8 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Xóa file thất bại';
-      setError(msg || 'Xóa file thất bại');
+          : 'Delete file failed';
+      setError(msg || 'Delete file failed');
     } finally {
       setEditSaving(false);
       setDeleteConfirmOpen(false);
@@ -284,8 +284,8 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Chuyển webp thất bại';
-      setError(msg || 'Chuyển webp thất bại');
+          : 'Convert to webp failed';
+      setError(msg || 'Convert to webp failed');
     } finally {
       setWebpLoading(false);
     }
@@ -311,8 +311,8 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Resize thất bại';
-      setError(msg || 'Resize thất bại');
+          : 'Resize failed';
+      setError(msg || 'Resize failed');
     } finally {
       setResizeLoading(null);
     }
@@ -341,8 +341,8 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Lưu preview thất bại';
-      setError(msg || 'Lưu preview thất bại');
+          : 'Save preview failed';
+      setError(msg || 'Save preview failed');
     } finally {
       setCommitLoading(null);
     }
@@ -360,8 +360,8 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Xóa preview thất bại';
-      setError(msg || 'Xóa preview thất bại');
+          : 'Delete preview failed';
+      setError(msg || 'Delete preview failed');
     }
   };
 
@@ -388,8 +388,8 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Huỷ preview thất bại';
-      setError(msg || 'Huỷ preview thất bại');
+          : 'Discard preview failed';
+      setError(msg || 'Discard preview failed');
     } finally {
       setDiscardAllLoading(false);
     }
@@ -441,13 +441,13 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
           onClick={(e) => e.stopPropagation()}
         >
           <p id="unsaved-close-title" className="text-sm font-medium">
-            Còn ảnh chờ duyệt chưa lưu
+            There are unsaved pending previews
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Bạn có muốn tiếp tục lưu các preview này không? Nếu đóng modal, có thể huỷ preview tạm trên server.
+            Do you want to continue saving these previews? If you close the modal, temporary previews on the server may be discarded.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            ({pendingPreviews.length} ảnh chờ duyệt)
+            ({pendingPreviews.length} pending previews)
           </p>
           <div className="mt-4 flex flex-wrap gap-2 justify-end">
             <Button
@@ -457,7 +457,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
               disabled={discardAllLoading}
               onClick={() => setUnsavedCloseConfirmOpen(false)}
             >
-              Ở lại
+              Stay
             </Button>
             <Button
               type="button"
@@ -466,7 +466,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
               disabled={discardAllLoading}
               onClick={() => void discardAllPendingAndClose()}
             >
-              {discardAllLoading ? 'Đang huỷ...' : 'Huỷ hết'}
+              {discardAllLoading ? 'Discarding...' : 'Discard all'}
             </Button>
           </div>
         </div>
@@ -489,13 +489,13 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
           >
             <div className="space-y-3 rounded-lg border border-amber-300/70 bg-amber-950/40 p-4">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-destructive">Xóa file?</p>
+                <p className="text-sm font-medium text-destructive">Delete file?</p>
                 <p className="text-xs text-muted-foreground break-all">{fileName}</p>
               </div>
-              <p className="text-sm font-medium text-amber-100">Hành động này không thể hoàn tác.</p>
+              <p className="text-sm font-medium text-amber-100">This action cannot be undone.</p>
               <div className="flex gap-2">
                 <Button type="button" variant="destructive" size="sm" onClick={handleDeleteConfirm} disabled={editSaving}>
-                  Có, xóa vĩnh viễn
+                  Yes, delete permanently
                 </Button>
                 <Button
                   type="button"
@@ -504,7 +504,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                   onClick={() => setDeleteConfirmOpen(false)}
                   disabled={editSaving}
                 >
-                  Hủy
+                  Cancel
                 </Button>
               </div>
             </div>
@@ -537,15 +537,15 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                       />
                       <p className="text-xs text-muted-foreground break-all">{fileName}</p>
                       <p className="text-xs text-muted-foreground">
-                        Kích thước gốc: {sourceSize ? `${sourceSize.w}×${sourceSize.h}` : '—'}
+                        Original size: {sourceSize ? `${sourceSize.w}×${sourceSize.h}` : '—'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Dung lượng file: {sourceFileSizeBytes !== null ? formatSize(sourceFileSizeBytes) : '—'}
+                        File size: {sourceFileSizeBytes !== null ? formatSize(sourceFileSizeBytes) : '—'}
                       </p>
                     </div>
 
                     <div className="pt-2">
-                      <p className="text-sm font-medium">Đổi tên</p>
+                      <p className="text-sm font-medium">Rename</p>
                       <input
                         type="text"
                         value={editName}
@@ -562,7 +562,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                     </div>
                     {renameNameError && !error && <p className="text-sm text-red-600">{renameNameError}</p>}
                     {!renameNameError && !editSaving && (
-                      <p className="text-[11px] text-muted-foreground">Nhấn Enter để lưu</p>
+                      <p className="text-[11px] text-muted-foreground">Press Enter to save</p>
                     )}
                   </div>
 
@@ -571,10 +571,10 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                 <div className="space-y-4">
                 {canConvertWebp && (
                   <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
-                    <h4 className="text-sm font-medium">Nén Lossy (WebP)</h4>
+                    <h4 className="text-sm font-medium">Lossy compression (WebP)</h4>
 
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-muted-foreground">Kích hoạt nén mất dữ liệu</span>
+                      <span className="text-xs text-muted-foreground">Enable lossy compression</span>
                       <label className="relative inline-flex cursor-pointer items-center">
                         <input
                           type="checkbox"
@@ -589,7 +589,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
 
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
-                        <label className="text-xs text-muted-foreground whitespace-nowrap">Chất lượng</label>
+                        <label className="text-xs text-muted-foreground whitespace-nowrap">Quality</label>
                         <div className="flex min-w-0 flex-1 items-center gap-2">
                           <input
                             type="range"
@@ -611,12 +611,12 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                           disabled={!lossyEnabled || webpLoading || convertCurrentWouldDuplicate}
                           title={
                             convertCurrentWouldDuplicate
-                              ? 'Đã có preview cùng chất lượng trong chờ duyệt'
+                              ? 'A pending preview with same quality already exists'
                               : isWebp
-                                ? 'Nén lại WebP'
-                                : 'Đổi đuôi thành WebP'
+                                ? 'Re-compress WebP'
+                                : 'Convert extension to WebP'
                           }
-                          aria-label={isWebp ? 'Nén lại WebP' : 'Đổi đuôi thành WebP'}
+                          aria-label={isWebp ? 'Re-compress WebP' : 'Convert extension to WebP'}
                         >
                           {webpLoading ? (
                             <FontAwesomeIcon icon={faSpinner} className="h-4 w-4 animate-spin" />
@@ -644,8 +644,8 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                               disabled={!lossyEnabled || webpLoading}
                               title={
                                 dupQ
-                                  ? 'Đã có preview WebP cùng q trong chờ duyệt (Shift+click sẽ báo trùng)'
-                                  : 'Shift+click: tạo preview lossy ngay'
+                                  ? 'A pending WebP preview with same quality already exists (Shift+click will report duplicate)'
+                                  : 'Shift+click: create lossy preview now'
                               }
                               className="h-8"
                             >
@@ -656,7 +656,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                       </div>
 
                       <p className="text-[11px] text-muted-foreground">
-                        Khi bật, thao tác <span className="font-medium text-foreground">Resize</span> sẽ được nén WebP (Lossy).
+                        When enabled, the <span className="font-medium text-foreground">Resize</span> action will be compressed as WebP (Lossy).
                       </p>
                     </div>
                   </div>
@@ -673,7 +673,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                         className="h-7 px-2 text-xs"
                         onClick={() => setResizeManualMode((prev) => !prev)}
                       >
-                        {resizeManualMode ? 'Quick links' : 'Nhập tay'}
+                        {resizeManualMode ? 'Quick links' : 'Manual'}
                       </Button>
                     </div>
 
@@ -692,7 +692,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                               className="group relative px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium rounded-lg shadow-md transition-all duration-200 ease-in-out cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-400 disabled:hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                               title={
                                 dupResize
-                                  ? 'Đã có preview cùng kích thước & lossy trong chờ duyệt'
+                                  ? 'A pending preview with same size and lossy setting already exists'
                                   : `Resize: ${label}`
                               }
                             >
@@ -750,13 +750,13 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                               Math.max(1, Math.round(customWidth || 0)),
                               Math.max(1, Math.round(customHeight || 0))
                             )
-                              ? 'Đã có preview cùng kích thước & lossy trong chờ duyệt'
+                              ? 'A pending preview with same size and lossy setting already exists'
                               : undefined
                           }
                         >
                           {resizeLoading === `${Math.max(1, Math.round(customWidth || 0))}x${Math.max(1, Math.round(customHeight || 0))}`
                             ? '...'
-                            : `Cắt theo nhập tay: ${Math.max(1, Math.round(customWidth || 0))}×${Math.max(1, Math.round(customHeight || 0))}`}
+                            : `Crop by manual input: ${Math.max(1, Math.round(customWidth || 0))}×${Math.max(1, Math.round(customHeight || 0))}`}
                         </Button>
                       </>
                     )}
@@ -768,18 +768,18 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
             {/* PREVIEW PANEL */}
             <div className="rounded-lg border bg-muted/30 p-4">
               <div className="flex items-baseline justify-between gap-2 mb-3">
-                <h4 className="text-sm font-medium">Ảnh chờ duyệt</h4>
-                <p className="text-xs text-muted-foreground">({pendingPreviews.length} ảnh)</p>
+                <h4 className="text-sm font-medium">Pending previews</h4>
+                <p className="text-xs text-muted-foreground">({pendingPreviews.length} images)</p>
               </div>
 
               {pendingPreviews.length === 0 ? (
                 <div className="py-8 text-center text-xs text-muted-foreground">
-                  Chưa có ảnh nào. Bấm <span className="font-medium text-foreground">Chuyển WebP</span> hoặc{' '}
-                  <span className="font-medium text-foreground">Resize</span> để tạo preview tạm (tmp); bấm{' '}
-                  <span className="font-medium text-foreground">Lưu</span> trên từng ảnh để ghi vào{' '}
-                  <span className="font-medium text-foreground">uploads/lossy</span> hoặc{' '}
-                  <span className="font-medium text-foreground">uploads/resize</span>. File mới dưới thư mục gốc{' '}
-                  <span className="font-medium text-foreground">uploads/</span> thêm từ trang quản lý asset (upload).
+                  No images yet. Click <span className="font-medium text-foreground">Convert WebP</span> or{' '}
+                  <span className="font-medium text-foreground">Resize</span> to create temporary previews (tmp); click{' '}
+                  <span className="font-medium text-foreground">Save</span> on each image to write into{' '}
+                  <span className="font-medium text-foreground">uploads/lossy</span> or{' '}
+                  <span className="font-medium text-foreground">uploads/resize</span>. New files under the root folder{' '}
+                  <span className="font-medium text-foreground">uploads/</span> can be added from the asset management page (upload).
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mt-1">
@@ -811,22 +811,22 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                           </span>
                         </div>
                         <div className="absolute bottom-2 left-2 rounded-sm bg-amber-600/90 px-2 py-0.5 text-[10px] font-medium text-white">
-                          chờ duyệt
+                          pending
                         </div>
                       </div>
 
-                      <p className="text-[10px] font-mono text-muted-foreground/90 break-all" title="Khóa trùng lặp (frontend)">
+                      <p className="text-[10px] font-mono text-muted-foreground/90 break-all" title="Duplicate key (frontend)">
                         {p.dedupeKey}
                       </p>
                       <p className="text-[11px] font-mono text-muted-foreground break-all">{p.kind}</p>
                       <p className="text-[11px] font-mono break-all">{p.targetFilename}</p>
                       {p.meta?.width && p.meta?.height && (
                         <p className="text-[11px] text-muted-foreground">
-                          Kích thước: {p.meta.width}×{p.meta.height}px
+                          Size: {p.meta.width}×{p.meta.height}px
                         </p>
                       )}
                       {typeof p.meta?.sizeBytes === 'number' && (
-                        <p className="text-[11px] text-muted-foreground">Dung lượng: {formatSize(p.meta.sizeBytes)}</p>
+                        <p className="text-[11px] text-muted-foreground">File size: {formatSize(p.meta.sizeBytes)}</p>
                       )}
 
                       <div className="flex gap-2">
@@ -837,7 +837,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                           onClick={() => void handleCommitPreview(p)}
                           disabled={commitLoading === p.stagedFilename}
                         >
-                          {commitLoading === p.stagedFilename ? 'Đang lưu...' : 'Lưu'}
+                          {commitLoading === p.stagedFilename ? 'Saving...' : 'Save'}
                         </Button>
                         <Button
                           type="button"
@@ -845,7 +845,7 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
                           size="sm"
                           onClick={() => void handleDiscardPreview(p)}
                           disabled={commitLoading !== null}
-                          title="Xóa preview tmp"
+                          title="Delete tmp preview"
                         >
                           ✕
                         </Button>
@@ -875,8 +875,8 @@ export function ImageEditModal({ filePath, onClose, onSuccess, registerCloseAtte
             className="h-9 w-9 shrink-0"
             onClick={() => setDeleteConfirmOpen(true)}
             disabled={editSaving}
-            title="Xóa file"
-            aria-label="Xóa file"
+            title="Delete file"
+            aria-label="Delete file"
           >
             <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
           </Button>

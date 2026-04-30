@@ -15,8 +15,8 @@ export interface UnsavedChangesDialogProps {
     overlayClassName?: string;
 }
 
-const defaultTitle = 'Lưu thay đổi?';
-const defaultDescription = 'Bạn đã chỉnh sửa. Bạn có muốn lưu trước khi đóng không?';
+const defaultTitle = 'Save changes?';
+const defaultDescription = 'You have unsaved edits. Save before closing?';
 
 /**
  * Popup xác nhận khi đóng form còn thay đổi chưa lưu.
@@ -54,7 +54,7 @@ export function UnsavedChangesDialog({
                         type="button"
                         onClick={onStay}
                         className="shrink-0 p-1.5 rounded-md hover:bg-muted text-xl leading-none text-foreground"
-                        aria-label="Đóng"
+                        aria-label="Close"
                     >
                         ✕
                     </button>
@@ -63,14 +63,14 @@ export function UnsavedChangesDialog({
                     <p className="text-sm text-muted-foreground">{description}</p>
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
                         <Button type="button" variant="destructive" onClick={onDiscard}>
-                            Không lưu
+                            Discard
                         </Button>
                         <Button
                             type="button"
                             onClick={onSave}
                             disabled={saveDisabled || saveLoading}
                         >
-                            {saveLoading ? 'Đang lưu...' : 'Lưu'}
+                            {saveLoading ? 'Saving...' : 'Save'}
                         </Button>
                     </div>
                 </div>

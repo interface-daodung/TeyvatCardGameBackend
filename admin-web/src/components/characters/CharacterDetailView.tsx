@@ -87,7 +87,7 @@ export function CharacterDetailView({
       .catch((error: unknown) => {
         if (cancelled) return;
         const message =
-          error instanceof Error ? error.message : 'Không phân tích được AST class nhân vật';
+          error instanceof Error ? error.message : 'Cannot analyze character class AST';
         setAstMapError(message);
         setAstMapData(null);
       })
@@ -290,7 +290,7 @@ export function CharacterDetailView({
 
       <I18nDescriptionModal
         open={detail.i18nModalField !== null}
-        title={detail.i18nModalField === 'name' ? 'Sửa Name (i18n)' : 'Sửa Description (i18n)'}
+        title={detail.i18nModalField === 'name' ? 'Edit Name (i18n)' : 'Edit Description (i18n)'}
         editLang={detail.editLang}
         getValue={detail.getFormI18n}
         onChange={(lang, val) => detail.setFormI18n(lang, val)}

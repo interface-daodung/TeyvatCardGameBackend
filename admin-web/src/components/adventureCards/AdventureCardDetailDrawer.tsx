@@ -187,7 +187,7 @@ export function AdventureCardDetailDrawer({
       ? createPortal(
           <BottomDockFabShell>
             <DockFabMotionGroup
-              aria-label="Thao tác adventure card"
+              aria-label="Adventure card actions"
               className="ml-[250px]"
               initial={{ y: 72, opacity: 0 }}
               animate={isPresent ? { y: 0, opacity: 1 } : { y: 72, opacity: 0 }}
@@ -201,8 +201,8 @@ export function AdventureCardDetailDrawer({
                   tone="primary"
                   onClick={() => void onSave()}
                   disabled={saveLoading || deleteLoading}
-                  title="Lưu"
-                  aria-label="Lưu"
+                  title="Save"
+                  aria-label="Save"
                 >
                   {saveLoading ? (
                     <span
@@ -220,8 +220,8 @@ export function AdventureCardDetailDrawer({
                     requestDelete();
                   }}
                   disabled={deleteLoading || saveLoading || showDeleteConfirm}
-                  title="Xóa thẻ"
-                  aria-label="Xóa thẻ"
+                  title="Delete card"
+                  aria-label="Delete card"
                 >
                   <FontAwesomeIcon icon={faTrash} className={dockPeekFabIconClassName} aria-hidden />
                 </DockPeekFabButton>
@@ -231,8 +231,8 @@ export function AdventureCardDetailDrawer({
                     setClassCodeOpen((v) => !v);
                     setAttachedOpen(false);
                   }}
-                  title={classCodeOpen ? 'Đóng trình sửa class' : 'Mở trình sửa class (.ts)'}
-                  aria-label={classCodeOpen ? 'Đóng trình sửa class' : 'Mở trình sửa class'}
+                  title={classCodeOpen ? 'Close class editor' : 'Open class editor (.ts)'}
+                  aria-label={classCodeOpen ? 'Close class editor' : 'Open class editor'}
                   aria-pressed={classCodeOpen}
                 >
                   <FontAwesomeIcon icon={faCode} className={dockPeekFabIconClassName} aria-hidden />
@@ -243,8 +243,8 @@ export function AdventureCardDetailDrawer({
                     setAttachedOpen((v) => !v);
                     setClassCodeOpen(false);
                   }}
-                  title={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh đính kèm'}
-                  aria-label={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh đính kèm'}
+                  title={attachedOpen ? 'Close attached assets' : 'Attached assets'}
+                  aria-label={attachedOpen ? 'Close attached assets' : 'Attached assets'}
                   aria-pressed={attachedOpen}
                 >
                   <FontAwesomeIcon icon={faPaperclip} className={dockPeekFabIconClassName} aria-hidden />
@@ -263,7 +263,7 @@ export function AdventureCardDetailDrawer({
         role="dialog"
         aria-modal="true"
         aria-roledescription="drawer"
-        aria-label="Chi tiết adventure card — kéo cạnh trái sang phải hoặc nhấn Esc để đóng"
+        aria-label="Adventure card details - drag left edge right or press Esc to close"
         initial="hidden"
         animate="visible"
         exit="exit"
@@ -290,7 +290,7 @@ export function AdventureCardDetailDrawer({
           className="flex w-5 min-w-[20px] shrink-0 cursor-grab touch-none items-center justify-center self-stretch bg-muted/15 active:cursor-grabbing"
           aria-hidden={true}
           role="presentation"
-          title="Kéo sang phải để đóng — hoặc nhấn Esc"
+          title="Drag right to close - or press Esc"
           onPointerDown={startDrawerDrag}
         >
           <div className="h-14 w-1.5 shrink-0 rounded-full bg-muted-foreground/35" />
@@ -385,8 +385,8 @@ export function AdventureCardDetailDrawer({
                         availableCards={allCards}
                         onDeckChange={(newIds) => setForm((p) => ({ ...p, contents: newIds }))}
                         getImageUrl={getAdventureCardImageUrl}
-                        deckLabel="🎁 Rương (nội dung rương)"
-                        sourceLabel="Thẻ có sẵn (kéo vào rương)"
+                        deckLabel="🎁 Chest (chest contents)"
+                        sourceLabel="Available cards (drag into chest)"
                       />
                     </div>
                   )}
@@ -410,9 +410,9 @@ export function AdventureCardDetailDrawer({
           })();
         }}
         confirmLoading={deleteLoading}
-        title="Xóa adventure card?"
-        description={`Thẻ sẽ bị xóa vĩnh viễn (nameId: ${editCard.nameId}). Thao tác không hoàn tác.`}
-        confirmLabel="Xóa"
+        title="Delete adventure card?"
+        description={`This card will be permanently deleted (nameId: ${editCard.nameId}). This action cannot be undone.`}
+        confirmLabel="Delete"
       />
     </>
   );

@@ -23,7 +23,7 @@ function isLightboxCustom(open: ImageLightboxOpen): open is LightboxCustom {
 export function ImageLightbox({
   open,
   onClose,
-  dialogLabel = 'Ảnh phóng to',
+  dialogLabel = 'Zoomed image',
   /** Ảnh nhỏ (vd. icon item): phóng to gần full viewport; không dùng cho ảnh lớn (card/character) vì dễ tràn màn hình. */
   smallAssetLightbox = false,
   /** Gộp vào lớp overlay (vd. `z-[10000]` khi mở từ modal z cao). */
@@ -74,7 +74,7 @@ export function ImageLightbox({
         type="button"
         onClick={onClose}
         className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-xl text-white transition-colors hover:bg-white/20"
-        aria-label="Đóng"
+        aria-label="Close"
       >
         ✕
       </button>

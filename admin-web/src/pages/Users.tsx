@@ -92,7 +92,7 @@ export default function Users() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm theo email"
+              placeholder="Search by email"
               className="w-full rounded-lg border border-slate-200 bg-white/90 shadow-sm px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 focus:outline-none transition-all"
             />
           </div>
@@ -104,23 +104,23 @@ export default function Users() {
               className="rounded-lg border border-slate-200 bg-white/90 shadow-sm pl-3.5 pr-9 py-2.5 text-sm text-slate-800 min-w-[120px] focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 focus:outline-none transition-all appearance-none cursor-pointer hover:border-slate-300 bg-no-repeat bg-[length:1.25rem] bg-[right_0.5rem_center]"
               style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")" }}
             >
-              <option value="">Tất cả</option>
+              <option value="">All</option>
               <option value="admin">admin</option>
               <option value="moderator">moderator</option>
               <option value="user">user</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-1.5">Trạng thái</label>
+            <label className="block text-sm font-semibold text-slate-600 mb-1.5">Status</label>
             <select
               value={filterBanned}
               onChange={(e) => setFilterBanned(e.target.value)}
               className="rounded-lg border border-slate-200 bg-white/90 shadow-sm pl-3.5 pr-9 py-2.5 text-sm text-slate-800 min-w-[120px] focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 focus:outline-none transition-all appearance-none cursor-pointer hover:border-slate-300 bg-no-repeat bg-[length:1.25rem] bg-[right_0.5rem_center]"
               style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")" }}
             >
-              <option value="">Tất cả</option>
-              <option value="false">Hoạt động</option>
-              <option value="true">Đã khóa</option>
+              <option value="">All</option>
+              <option value="false">Active</option>
+              <option value="true">Banned</option>
             </select>
           </div>
           <Button
@@ -129,7 +129,7 @@ export default function Users() {
             size="icon"
             onClick={handleRefresh}
             disabled={loading}
-            title="Tải lại từ DB (giữ nguyên bộ lọc)"
+            title="Reload from DB (keep current filters)"
             className="shrink-0"
           >
             <FontAwesomeIcon icon={faArrowsRotate} className={loading ? 'animate-spin' : ''} />

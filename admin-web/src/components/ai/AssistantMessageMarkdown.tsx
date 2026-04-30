@@ -70,7 +70,7 @@ function buildMarkdownComponents(
           onClick={() => {
             if (src) imagePreview.onOpen(src, alt ?? undefined);
           }}
-          aria-label={alt ? `Xem ảnh: ${alt}` : 'Xem ảnh phóng to'}
+          aria-label={alt ? `View image: ${alt}` : 'View zoomed image'}
         >
           <img
             {...rest}

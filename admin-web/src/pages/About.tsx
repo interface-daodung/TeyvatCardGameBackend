@@ -34,10 +34,10 @@ const BACKEND_TECH = [
   'JWT (jsonwebtoken)',
   'bcrypt',
   'Zod (validation)',
-  'ts-morph (phân tích AST / codegen)',
+  'ts-morph (AST analysis / codegen)',
   'Pino (logging)',
   'CORS, cookie-parser',
-  'REST + Multer (upload file ảnh, lưu vào uploads/)',
+  'REST + Multer (image upload, stored in uploads/)',
 ];
 
 const FRONTEND_TECH = [
@@ -63,7 +63,7 @@ const TEYVAT_CARD_TECH = {
     'ES6 Modules',
   ],
   additional: [
-    'Sharp (xử lý ảnh, sprite sheets)',
+    'Sharp (image processing, sprite sheets)',
     'HTML5 Canvas (rendering)',
     'CSS3 (styling, animations)',
     'GitHub Actions (auto-deploy)',
@@ -72,7 +72,7 @@ const TEYVAT_CARD_TECH = {
     'Card-based combat, turn-based gameplay',
     'AnimationManager, AssetManager, CardManager',
     'Sprite sheet optimization',
-    'Đa ngôn ngữ (EN, VI, JA)',
+    'Multi-language support (EN, VI, JA)',
   ],
 };
 
@@ -80,7 +80,7 @@ const EXTERNAL_SERVICES = [
   {
     name: 'PayOS',
     description:
-      'Cổng thanh toán Việt Nam. Tích hợp qua @payos/node để tạo link thanh toán, webhook xác nhận giao dịch.',
+      'Vietnamese payment gateway. Integrated via @payos/node to create payment links and payment confirmation webhooks.',
     link: 'https://payos.vn',
     icon: faCreditCard,
     gradient: 'from-emerald-500 to-teal-600',
@@ -92,7 +92,7 @@ const EXTERNAL_SERVICES = [
   {
     name: 'mymemory',
     description:
-      'Dịch vụ dịch máy bên ngoài, dùng để dịch văn bản đa ngôn ngữ thông qua API của MyMemory.',
+      'External machine translation service used to translate multilingual text through the MyMemory API.',
     link: 'https://mymemory.translated.net',
     icon: faPlug,
     gradient: 'from-white to-white',
@@ -105,7 +105,7 @@ const EXTERNAL_SERVICES = [
   {
     name: 'Google Authentication',
     description:
-      'Xác thực đăng nhập bằng tài khoản Google (google-auth-library). Hỗ trợ đăng nhập admin và người chơi bằng OAuth.',
+      'Google account authentication (google-auth-library). Supports OAuth login for admins and players.',
     link: 'https://developers.google.com/identity',
     icon: faKey,
     // gradient: 'from-blue-500 to-indigo-600',
@@ -117,7 +117,7 @@ const EXTERNAL_SERVICES = [
   {
     name: 'Resend',
     description:
-      'Nền tảng email transactional. Backend sử dụng Resend để gửi email hệ thống (xác thực, thông báo) – bản thân Resend cũng là một lớp hạ tầng email chuyên dụng.',
+      'Transactional email platform. Backend uses Resend to send system emails (verification, notifications) as dedicated email infrastructure.',
     link: 'https://resend.com',
     icon: faEnvelope,
     gradient: 'from-slate-500 to-slate-600',
@@ -129,7 +129,7 @@ const EXTERNAL_SERVICES = [
   {
     name: 'Cloudflare',
     description:
-      'Nền tảng hạ tầng web toàn cầu: DNS, CDN, bảo mật và proxy. Được dùng như một lớp công nghệ nền để tối ưu hiệu năng và bảo vệ dịch vụ.',
+      'Global web infrastructure platform: DNS, CDN, security, and proxy. Used as a foundational layer for performance and protection.',
     link: 'https://www.cloudflare.com',
     icon: faServer,
     // gradient: 'from-orange-500 to-amber-500',
@@ -143,7 +143,7 @@ const EXTERNAL_SERVICES = [
   {
     name: 'Ollama',
     description:
-      'Nền tảng runtime AI local, cung cấp API key AI nội bộ và quản lý/bật tắt các model chạy trên máy (bao gồm Qwen 2.5).',
+      'Local AI runtime platform that provides internal AI API keys and manages on-device models (including Qwen 2.5).',
     link: 'https://ollama.com',
     icon: faCodeBranch,
     // gradient: 'from-white to-slate-100',
@@ -154,7 +154,7 @@ const EXTERNAL_SERVICES = [
     flipModel: {
       name: 'Qwen 2.5',
       description:
-        'Model Qwen 2.5 chạy trên Ollama – mô hình ngôn ngữ mạnh, tối ưu cho tác vụ AI local: gợi ý code, trợ lý in-game và xử lý nội dung nội bộ.',
+        'Qwen 2.5 model running on Ollama - a strong language model optimized for local AI tasks: code suggestions, in-game assistant, and internal content processing.',
       logoUrl: 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/webp/qwen.webp',
       // gradient: 'from-violet-500 to-purple-600',
       bgLight: 'bg-violet-50',
@@ -258,8 +258,7 @@ function OllamaFlipCard({ service, index }: { service: ExternalService; index: n
           </h4>
           <p className="text-sm text-slate-700 mt-1 ml-10">{flip.description}</p>
           <p className="text-[11px] text-violet-700 font-medium mt-3 ml-10">
-            Qwen 2.5 được chạy thông qua Ollama như một công nghệ AI local, phù hợp cho các tác vụ trong game
-            và môi trường dev.
+            Qwen 2.5 runs through Ollama as a local AI technology, suitable for in-game and development tasks.
           </p>
         </div>
       </motion.div>
@@ -278,7 +277,7 @@ export default function About() {
       >
         <PageHeader
           title="About"
-          description="Thông tin dự án, công nghệ sử dụng và dịch vụ bên thứ ba"
+          description="Project information, technology stack, and third-party services"
         />
         <p className="mt-2 text-sm text-slate-600 flex items-center gap-2">
           <FontAwesomeIcon icon={faRocket} className="text-violet-500" />
@@ -293,7 +292,7 @@ export default function About() {
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md">
                 <FontAwesomeIcon icon={faUser} className="h-5 w-5" />
               </span>
-              Người phát triển
+              Developer
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -331,7 +330,7 @@ export default function About() {
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
                 <FontAwesomeIcon icon={faServer} className="h-5 w-5" />
               </span>
-              Công nghệ Backend (Server)
+              Backend Technologies (Server)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -364,7 +363,7 @@ export default function About() {
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
                 <FontAwesomeIcon icon={faDisplay} className="h-5 w-5" />
               </span>
-              Công nghệ Frontend (Admin Web)
+              Frontend Technologies (Admin Web)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -397,11 +396,11 @@ export default function About() {
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-pink-600 text-white shadow-md">
                 <FontAwesomeIcon icon={faGamepad} className="h-5 w-5" />
               </span>
-              Công nghệ Teyvat Card (Game)
+              Teyvat Card Technologies (Game)
             </CardTitle>
             <p className="text-sm text-muted-foreground font-normal mt-1 flex items-center gap-2">
               <FontAwesomeIcon icon={faPalette} className="text-fuchsia-500 text-xs" />
-              Game chiến đấu thẻ bài theo lượt – theo TeyvatCard/README.md
+              Turn-based card battle game - based on TeyvatCard/README.md
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -424,7 +423,7 @@ export default function About() {
             <div>
               <h4 className="font-medium text-slate-800 mb-2 flex items-center gap-2">
                 <FontAwesomeIcon icon={faRocket} className="text-fuchsia-500 text-sm" />
-                Công cụ bổ sung
+                Additional tools
               </h4>
               <motion.ul
                 className="list-disc list-inside space-y-1 text-slate-700 text-sm"
@@ -440,7 +439,7 @@ export default function About() {
             <div>
               <h4 className="font-medium text-slate-800 mb-2 flex items-center gap-2">
                 <FontAwesomeIcon icon={faPalette} className="text-fuchsia-500 text-sm" />
-                Tính năng kỹ thuật
+                Technical highlights
               </h4>
               <motion.ul
                 className="list-disc list-inside space-y-1 text-slate-700 text-sm"
@@ -464,7 +463,7 @@ export default function About() {
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md">
                 <FontAwesomeIcon icon={faPlug} className="h-5 w-5" />
               </span>
-              Dịch vụ & công nghệ bên ngoài
+              External services and technologies
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

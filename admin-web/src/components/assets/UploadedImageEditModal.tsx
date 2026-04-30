@@ -40,7 +40,7 @@ export function UploadedImageEditModal({ filePath, onClose, onSuccess }: Uploade
       >
         <Card className="w-full max-h-[min(96vh,900px)] overflow-y-auto">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Chi tiết ảnh</CardTitle>
+            <CardTitle>Image details</CardTitle>
             <Button type="button" variant="ghost" size="sm" onClick={() => closeAttemptRef.current()}>
               ✕
             </Button>

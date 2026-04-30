@@ -89,9 +89,21 @@ function stableStringify(value: unknown): string {
   return JSON.stringify(value);
 }
 
+type MigratableModel = {
+  find: (filter: Record<string, never>, projection: { _id: 1; attached: 1 }) => {
+    lean: () => Promise<Array<{ _id: unknown; attached?: unknown[] }>>;
+  };
+  bulkWrite: (operations: Array<{
+    updateOne: {
+      filter: { _id: unknown };
+      update: { $set: { attached: unknown[] } };
+    };
+  }>) => Promise<{ matchedCount?: number; modifiedCount?: number }>;
+};
+
 async function migrateCollection(
   label: 'Character' | 'AdventureCard' | 'Item',
-  model: typeof Character | typeof AdventureCard | typeof Item
+  model: MigratableModel
 ) {
   const docs = await model.find({}, { _id: 1, attached: 1 }).lean();
   if (docs.length === 0) {
@@ -136,9 +148,9 @@ async function migrate() {
   await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/teyvat-card-game');
   console.log('Connected to MongoDB');
 
-  await migrateCollection('Character', Character);
-  await migrateCollection('AdventureCard', AdventureCard);
-  await migrateCollection('Item', Item);
+  await migrateCollection('Character', Character as unknown as MigratableModel);
+  await migrateCollection('AdventureCard', AdventureCard as unknown as MigratableModel);
+  await migrateCollection('Item', Item as unknown as MigratableModel);
 
   console.log('Done migrate attached metadata.');
   process.exit(0);

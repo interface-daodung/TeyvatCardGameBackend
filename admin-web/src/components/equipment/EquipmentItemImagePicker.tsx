@@ -36,8 +36,8 @@ export function EquipmentItemImagePicker({
   return (
     <ImagePickerSurface
       pickerOpen={isTreeOpen}
-      pickerTitle="Chọn ảnh (item)"
-      pickerEmptyText="Không có ảnh trong thư mục item"
+      pickerTitle="Select image (item)"
+      pickerEmptyText="No images in item folder"
       tree={imageTree}
       treeLoading={imageTreeLoading}
       expanded={imageTreeExpanded}
@@ -48,7 +48,7 @@ export function EquipmentItemImagePicker({
       previewAlt={item.nameId}
       previewSrc={imageSrc ?? undefined}
       previewWrapperClassName="w-52 sm:w-64 md:w-72 aspect-square rounded-xl bg-muted border border-border shrink-0 shadow-sm"
-      triggerTitle="Ctrl+click: chọn ảnh (item). Double-click: xem toàn màn hình."
+      triggerTitle="Ctrl+click: select image (item). Double-click: view fullscreen."
       lightboxSmallAsset
       emptyState={
         <div className="flex h-full cursor-default flex-col items-center justify-center gap-1 bg-muted p-2 text-muted-foreground">

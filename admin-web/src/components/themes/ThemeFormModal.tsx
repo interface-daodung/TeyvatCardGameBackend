@@ -112,7 +112,7 @@ export function ThemeFormModal({
       const tree = await filesService.getImageTree('assets');
       setImageTree(tree);
     } catch {
-      setError('Không tải được cây ảnh assets.');
+      setError('Failed to load assets image tree.');
     } finally {
       setTreeLoading(false);
     }
@@ -144,18 +144,18 @@ export function ThemeFormModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return setError('Tên theme không được để trống.');
+    if (!name.trim()) return setError('Theme name cannot be empty.');
 
     const hex = /^#[0-9A-Fa-f]{6}$/;
     for (const k of colorKeys) {
-      if (!hex.test(colors[k])) return setError(`Màu "${k}" phải là mã hex (vd: #95245b).`);
+      if (!hex.test(colors[k])) return setError(`Color "${k}" must be a hex code (e.g. #95245b).`);
     }
 
     try {
       await onSave(name.trim(), colors, assets);
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Lưu thất bại.');
+      setError(err instanceof Error ? err.message : 'Save failed.');
     }
   };
 
@@ -173,10 +173,10 @@ export function ThemeFormModal({
           <div className="z-10 border-b border-slate-200 px-6 py-4" style={{ backgroundImage: `linear-gradient(120deg, ${colors.accent}, ${accentWarm2}, ${accentWarm3})` }}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-xl font-semibold text-white">{initialName ? 'Chỉnh sửa theme' : 'Thêm theme mới'}</h2>
-                <p className="text-sm text-white/90 mt-1">Tinh chỉnh bảng màu và xem preview trực tiếp trong lúc chỉnh sửa.</p>
+                <h2 className="text-xl font-semibold text-white">{initialName ? 'Edit theme' : 'Add new theme'}</h2>
+                <p className="text-sm text-white/90 mt-1">Adjust the color palette and see a live preview while editing.</p>
               </div>
-              <button type="button" onClick={onClose} className="w-8 h-8 rounded-md border border-white/50 text-white hover:bg-white/15" title="Đóng popup" aria-label="Đóng popup">
+              <button type="button" onClick={onClose} className="w-8 h-8 rounded-md border border-white/50 text-white hover:bg-white/15" title="Close popup" aria-label="Close popup">
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
@@ -186,8 +186,8 @@ export function ThemeFormModal({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-full">
               <div className="space-y-5 min-w-0">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-700">Tên theme</label>
-                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800" placeholder="vd: default, dark, light" />
+                  <label className="text-sm font-medium text-slate-700">Theme name</label>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-800" placeholder="e.g.: default, dark, light" />
                 </div>
 
                 <div className="space-y-3">
@@ -201,7 +201,7 @@ export function ThemeFormModal({
                           : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                       }`}
                     >
-                      Màu sắc
+                      Colors
                     </button>
                     <button
                       type="button"
@@ -231,8 +231,8 @@ export function ThemeFormModal({
                     <div className="space-y-2">
                       {colorKeys.map((key) => (
                         <div key={key} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5">
-                          <input type="color" value={colors[key]} onChange={(e) => setColor(key, e.target.value)} className="w-10 h-10 rounded cursor-pointer bg-transparent appearance-none" title={`Chọn màu ${key}`} />
-                          <input type="text" value={colors[key]} onChange={(e) => setColor(key, e.target.value)} className="flex-1 rounded-md px-3 py-1.5 text-sm font-mono bg-transparent" placeholder="#000000" title={`Nhập mã hex cho ${key}`} />
+                          <input type="color" value={colors[key]} onChange={(e) => setColor(key, e.target.value)} className="w-10 h-10 rounded cursor-pointer bg-transparent appearance-none" title={`Pick color ${key}`} />
+                          <input type="text" value={colors[key]} onChange={(e) => setColor(key, e.target.value)} className="flex-1 rounded-md px-3 py-1.5 text-sm font-mono bg-transparent" placeholder="#000000" title={`Enter hex code for ${key}`} />
                           <span className="text-slate-500 text-sm w-24 capitalize">{key}</span>
                         </div>
                       ))}
@@ -244,7 +244,7 @@ export function ThemeFormModal({
                       <div className="mb-1 text-xs text-slate-500">bg-image</div>
                       <ImagePickerSurface
                         pickerOpen={activePicker === 'bg'}
-                        pickerTitle="Chọn background"
+                        pickerTitle="Select background"
                         tree={bgTreeView}
                         treeLoading={treeLoading}
                         expanded={expanded}
@@ -256,7 +256,7 @@ export function ThemeFormModal({
                         previewSrc={assets.background}
                         previewWrapperClassName="w-full max-w-[260px] aspect-[7/12] rounded-md border border-slate-200 bg-slate-50"
                         previewClassName="object-cover"
-                        triggerTitle="Ctrl/Cmd + click để chọn background."
+                        triggerTitle="Ctrl/Cmd + click to select background."
                         imageFallbackSrc="/assets/images/ui/background/default.webp"
                       />
                       <p className="mt-1 text-xs font-mono text-slate-600 break-all">{assets.background}</p>
@@ -270,7 +270,7 @@ export function ThemeFormModal({
                           <div className="mb-1 text-xs text-slate-500">icon {key}</div>
                           <ImagePickerSurface
                             pickerOpen={activePicker === key}
-                            pickerTitle={`Chọn icon ${key}`}
+                            pickerTitle={`Select icon ${key}`}
                             tree={iconTreeView}
                             treeLoading={treeLoading}
                             expanded={expanded}
@@ -282,7 +282,7 @@ export function ThemeFormModal({
                             previewSrc={assets.icons[key]}
                             previewWrapperClassName="w-full aspect-square rounded-md border border-slate-200 bg-slate-50"
                             previewClassName="object-contain p-3"
-                            triggerTitle={`Ctrl/Cmd + click để chọn icon ${key}.`}
+                            triggerTitle={`Ctrl/Cmd + click to select icon ${key}.`}
                             imageFallbackSrc="/assets/images/ui/library.webp"
                           />
                           <p className="mt-1 text-xs font-mono text-slate-600 break-all">{assets.icons[key]}</p>
@@ -296,7 +296,7 @@ export function ThemeFormModal({
               </div>
 
               <div className="space-y-2 min-w-0 lg:sticky lg:top-0 self-start">
-                <h3 className="text-sm font-medium text-slate-700">Preview trực tiếp</h3>
+                <h3 className="text-sm font-medium text-slate-700">Live preview</h3>
                 <ThemePreview colors={colors} assets={assets} />
               </div>
             </div>
@@ -305,10 +305,10 @@ export function ThemeFormModal({
           <div className="border-t border-slate-200 px-6 py-3 bg-white">
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={saveLoading}>
-                {saveLoading ? 'Đang lưu...' : 'Lưu'}
+                {saveLoading ? 'Saving...' : 'Save'}
               </Button>
             </div>
           </div>

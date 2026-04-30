@@ -46,7 +46,7 @@ export function LocalizationTable({
                 Key | Preview
               </th>
               <th className="px-6 py-4 text-right text-xs font-semibold text-blue-700 uppercase tracking-wider w-32">
-                Thao tác
+                Actions
               </th>
             </tr>
           </thead>
@@ -70,7 +70,7 @@ export function LocalizationTable({
                           type="button"
                           onClick={() => onToggleExpand(loc.key)}
                           className="mt-0.5 text-slate-500 hover:text-slate-700 shrink-0"
-                          aria-label={expanded ? 'Thu gọn' : 'Mở rộng'}
+                          aria-label={expanded ? 'Collapse' : 'Expand'}
                         >
                           {expanded ? '▼' : '▶'}
                         </button>
@@ -100,7 +100,7 @@ export function LocalizationTable({
                           onClick={() => onEdit(loc)}
                           className="border-slate-200"
                         >
-                          Sửa
+                          Edit
                         </Button>
                         <Button
                           variant="outline"
@@ -108,7 +108,7 @@ export function LocalizationTable({
                           onClick={() => onDelete(loc)}
                           className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                         >
-                          Xóa
+                          Delete
                         </Button>
                       </div>
                     </td>

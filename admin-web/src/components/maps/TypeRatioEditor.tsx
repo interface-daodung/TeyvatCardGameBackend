@@ -87,7 +87,7 @@ export function TypeRatioEditor({ typeRatios, onChange }: TypeRatioEditorProps) 
             </div>
             {!canSave && (
                 <p className="text-xs text-amber-600 mt-1">
-                    Tổng phải bằng 100. Giảm tỉ lệ các loại hoặc tăng đến khi free = 0 để lưu.
+                    Total must be 100. Reduce type ratios or increase them until free = 0 to save.
                 </p>
             )}
         </div>

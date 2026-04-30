@@ -45,15 +45,15 @@ export function ThemePaletteCard({
             <span className="text-[15px] font-medium text-slate-800">{theme.name}</span>
             {isDefault && (
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                mặc định
+                default
               </span>
             )}
           </div>
           <div className="flex gap-1.5">
-            <button type="button" onClick={onPreview} className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100" title="Xem trước" aria-label="Xem trước">
+            <button type="button" onClick={onPreview} className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100" title="Preview" aria-label="Preview">
               <FontAwesomeIcon icon={faEye} />
             </button>
-            <button type="button" onClick={onEdit} className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100" title="Sửa" aria-label="Sửa">
+            <button type="button" onClick={onEdit} className="w-8 h-8 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100" title="Edit" aria-label="Edit">
               <FontAwesomeIcon icon={faPenToSquare} />
             </button>
             <button
@@ -61,8 +61,8 @@ export function ThemePaletteCard({
               onClick={onDelete}
               disabled={isDefault}
               className="w-8 h-8 rounded-md border border-red-200 text-red-500 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={isDefault ? 'Theme mặc định không thể xóa' : 'Xóa'}
-              aria-label={isDefault ? 'Theme mặc định không thể xóa' : 'Xóa'}
+              title={isDefault ? 'Default theme cannot be deleted' : 'Delete'}
+              aria-label={isDefault ? 'Default theme cannot be deleted' : 'Delete'}
             >
               <FontAwesomeIcon icon={faTrash} />
             </button>

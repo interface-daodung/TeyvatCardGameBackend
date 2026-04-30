@@ -83,20 +83,20 @@ export function CharacterLevelEditModal({
       >
         <div className="flex items-center justify-between border-b border-blue-700/20 bg-blue-600 px-5 py-4 text-white">
           <h3 id="character-level-edit-title" className="text-xl font-semibold">
-            Chỉnh Level &amp; giá upgrade
+            Edit Level &amp; Upgrade Price
           </h3>
           <button
             type="button"
             onClick={requestClose}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-white/90 transition-colors hover:bg-white/15"
-            aria-label="Đóng"
+            aria-label="Close"
           >
             ✕
           </button>
         </div>
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-medium text-muted-foreground">Bảng giá upgrade theo level</p>
+            <p className="text-xs font-medium text-muted-foreground">Upgrade price table by level</p>
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground">level max</span>
               <span className="min-w-[1.25rem] text-center text-xs font-semibold">{displayLevel}</span>
@@ -165,7 +165,7 @@ export function CharacterLevelEditModal({
             className="flex-1 bg-blue-600 hover:bg-blue-700"
             disabled={saveLoading}
           >
-            {saveLoading ? 'Đang lưu...' : 'Lưu'}
+            {saveLoading ? 'Saving...' : 'Save'}
           </Button>
           <Button
             type="button"
@@ -174,7 +174,7 @@ export function CharacterLevelEditModal({
             className="flex-1"
             disabled={saveLoading}
           >
-            Hủy
+            Cancel
           </Button>
         </div>
       </div>
@@ -202,8 +202,8 @@ export function CharacterLevelEditModal({
           })();
         }}
         saveLoading={saveLoading}
-        title="Lưu thay đổi Level?"
-        description="Bạn đã chỉnh level max hoặc giá upgrade. Lưu trước khi đóng?"
+        title="Save level changes?"
+        description="You edited max level or upgrade cost. Save before closing?"
         overlayClassName="z-[10001]"
       />
     </>,

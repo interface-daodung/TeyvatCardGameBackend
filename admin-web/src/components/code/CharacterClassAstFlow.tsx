@@ -273,7 +273,7 @@ export function CharacterClassAstFlow({
   return (
     <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
       <p className="text-sm font-semibold text-slate-700">AST method map {classRelativePath.replace('/', '-')}</p>
-      {loading && <p className="text-sm text-slate-500">Đang phân tích AST bằng ts-morph...</p>}
+      {loading && <p className="text-sm text-slate-500">Analyzing AST with ts-morph...</p>}
       {error && <p className="text-sm text-red-600">{error}</p>}
       {!loading && !error && astMapData && astFlow && (
         <div ref={containerRef} className="space-y-2">

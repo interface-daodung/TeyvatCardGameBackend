@@ -40,7 +40,7 @@ export function ClassNamePickerPanel({
   subfolder,
   modelsScope = 'cards',
   selectionMode = 'className',
-  title = 'Chọn Class name',
+  title = 'Select class name',
 }: ClassNamePickerPanelProps) {
   const [tree, setTree] = useState<CardClassTreeNode[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,7 @@ export function ClassNamePickerPanel({
       setTree(data);
       setExpanded(new Set());
     } catch {
-      setError('Không tải được danh sách class.');
+      setError('Failed to load class list.');
       setTree([]);
     } finally {
       setLoading(false);
@@ -102,7 +102,7 @@ export function ClassNamePickerPanel({
           type="button"
           onClick={onClose}
           className="p-1 hover:bg-emerald-500 rounded transition-colors text-xl leading-none"
-          aria-label="Đóng"
+          aria-label="Close"
         >
           ✕
         </button>
@@ -117,8 +117,8 @@ export function ClassNamePickerPanel({
         {!loading && displayTree && displayTree.length === 0 && !error && (
           <p className="text-sm text-muted-foreground">
             {subfolder
-              ? `Không có file .ts trong TeyvatCard/src/models/${modelsScope === 'items' ? 'items' : 'cards'}/${subfolder}`
-              : `Không có file .ts trong TeyvatCard/src/models/${modelsScope === 'items' ? 'items' : 'cards'}`}
+              ? `No .ts files in TeyvatCard/src/models/${modelsScope === 'items' ? 'items' : 'cards'}/${subfolder}`
+              : `No .ts files in TeyvatCard/src/models/${modelsScope === 'items' ? 'items' : 'cards'}`}
           </p>
         )}
         {!loading && displayTree && displayTree.length > 0 && (
@@ -135,7 +135,7 @@ export function ClassNamePickerPanel({
       </div>
       <div className="px-4 py-3 border-t border-border text-xs text-muted-foreground">
         Bấm vào tên file .ts để chọn (mỗi file lấy `export default class`)
-        {subfolder ? ` — thư mục: ${subfolder}/` : ''}
+        {subfolder ? ` - folder: ${subfolder}/` : ''}
         {modelsScope === 'items' ? ' — models/items' : ''}
       </div>
     </div>

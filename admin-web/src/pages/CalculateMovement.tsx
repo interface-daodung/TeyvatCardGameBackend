@@ -12,7 +12,7 @@ export default function CalculateMovement() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <PageHeader
             title="Calculate Movement"
-            description="Công cụ calculateMovement / Extended Grid Support (nhúng từ static HTML)."
+            description="calculateMovement / Extended Grid Support tool (embedded from static HTML)."
           />
           <a
             href={STANDALONE_HTML}
@@ -24,7 +24,7 @@ export default function CalculateMovement() {
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
             )}
           >
-            Mở tab mới (full page)
+            Open in new tab (full page)
           </a>
         </div>
       </div>

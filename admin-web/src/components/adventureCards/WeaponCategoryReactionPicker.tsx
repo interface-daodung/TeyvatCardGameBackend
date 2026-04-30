@@ -51,7 +51,7 @@ export function WeaponCategoryReactionPicker({ selectedCategory, onSelect }: Wea
       items={WEAPON_ITEMS}
       selectedId={current === 'none' ? null : current}
       onSelect={onSelect}
-      emptyLabel="Không"
+      emptyLabel="None"
     />
   );
 }

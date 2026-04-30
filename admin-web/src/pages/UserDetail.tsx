@@ -101,7 +101,7 @@ export default function UserDetail() {
     if (!id || user?.isVerified) return;
     if (
       !confirm(
-        'Xác nhận email cho tài khoản này? User sẽ có thể đăng nhập bằng email và mật khẩu (nếu đã đặt mật khẩu).',
+        'Verify email for this account? The user will be able to log in with email and password (if a password is set).',
       )
     ) {
       return;
@@ -110,10 +110,10 @@ export default function UserDetail() {
       setVerifyingEmail(true);
       await userService.verifyEmail(id);
       setUser((u) => (u ? { ...u, isVerified: true } : null));
-      alert('Đã xác nhận email.');
+      alert('Email verified.');
     } catch (error) {
       console.error('Failed to verify email:', error);
-      alert('Không thể xác nhận email.');
+      alert('Failed to verify email.');
     } finally {
       setVerifyingEmail(false);
     }
@@ -123,7 +123,7 @@ export default function UserDetail() {
     if (!id) return;
     if (
       !confirm(
-        'Thu hồi refresh token: user sẽ không thể gia hạn phiên, và sẽ bị đăng xuất khi access token hết hạn (5 phút). Tiếp tục?',
+        'Revoke refresh token: the user will not be able to renew sessions and will be logged out when access token expires (5 minutes). Continue?',
       )
     ) {
       return;
@@ -131,10 +131,10 @@ export default function UserDetail() {
     try {
       setRevoking(true);
       await userService.revokeRefreshToken(id);
-      alert('Đã thu hồi refresh token.');
+      alert('Refresh token revoked.');
     } catch (error) {
       console.error('Failed to revoke refresh token:', error);
-      alert('Không thể thu hồi refresh token.');
+      alert('Failed to revoke refresh token.');
     } finally {
       setRevoking(false);
     }
@@ -143,29 +143,29 @@ export default function UserDetail() {
   const handleChangePassword = async () => {
     if (!id) return;
     if (!currentPassword.trim()) {
-      alert('Vui lòng nhập mật khẩu cũ.');
+      alert('Please enter current password.');
       return;
     }
     if (newPassword.length < 6) {
-      alert('Mật khẩu phải có ít nhất 6 ký tự.');
+      alert('Password must be at least 6 characters.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      alert('Mật khẩu xác nhận không khớp.');
+      alert('Password confirmation does not match.');
       return;
     }
 
     try {
       setChangingPassword(true);
       await userService.changePassword(id, currentPassword, newPassword);
-      alert('Đổi mật khẩu thành công.');
+      alert('Password changed successfully.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setPasswordFormOpen(false);
     } catch (error: any) {
       console.error('Failed to change password:', error);
-      alert(error?.response?.data?.error || 'Không thể đổi mật khẩu.');
+      alert(error?.response?.data?.error || 'Failed to change password.');
     } finally {
       setChangingPassword(false);
     }
@@ -341,10 +341,10 @@ export default function UserDetail() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-medium tracking-wide text-slate-500 uppercase shrink-0">
-                      Đổi mật khẩu
+                      Change password
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
-                      Yêu cầu nhập mật khẩu cũ trước khi cập nhật.
+                      Require current password before updating.
                     </p>
                   </div>
                   <Button
@@ -353,7 +353,7 @@ export default function UserDetail() {
                     onClick={() => setPasswordFormOpen((open) => !open)}
                     className="rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 px-4 hover:from-sky-700 hover:to-indigo-700 text-white shadow-sm"
                   >
-                    {passwordFormOpen ? 'Ẩn form' : 'Đổi mật khẩu'}
+                    {passwordFormOpen ? 'Hide form' : 'Change password'}
                   </Button>
                 </div>
                 {passwordFormOpen && (
@@ -363,21 +363,21 @@ export default function UserDetail() {
                         type="password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        placeholder="Mật khẩu cũ"
+                        placeholder="Current password"
                         className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
                       />
                       <input
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Mật khẩu mới"
+                        placeholder="New password"
                         className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
                       />
                       <input
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Nhập lại mật khẩu mới"
+                        placeholder="Re-enter new password"
                         className="flex h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
                       />
                     </div>
@@ -394,7 +394,7 @@ export default function UserDetail() {
                         disabled={changingPassword}
                         className="rounded-lg"
                       >
-                        Hủy
+                        Cancel
                       </Button>
                       <Button
                         type="button"
@@ -402,7 +402,7 @@ export default function UserDetail() {
                         disabled={changingPassword}
                         className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md"
                       >
-                        {changingPassword ? 'Đang xử lý…' : 'Lưu mật khẩu'}
+                        {changingPassword ? 'Processing…' : 'Save password'}
                       </Button>
                     </div>
                   </div>
@@ -411,16 +411,16 @@ export default function UserDetail() {
             ) : (
               <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-slate-100">
                 <p className="text-xs font-medium tracking-wide text-slate-500 uppercase shrink-0">
-                  Xác nhận email
+                  Email verification
                 </p>
                 {user.isVerified ? (
                   <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                    Đã xác nhận
+                    Verified
                   </Badge>
                 ) : (
                   <>
                     <Badge variant="outline" className="border-amber-400 text-amber-800 bg-amber-50/80">
-                      Chưa xác nhận
+                      Not verified
                     </Badge>
                     <Button
                       type="button"
@@ -429,7 +429,7 @@ export default function UserDetail() {
                       disabled={verifyingEmail}
                       className="bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white shadow-sm"
                     >
-                      {verifyingEmail ? 'Đang xử lý…' : 'Xác nhận email (admin)'}
+                      {verifyingEmail ? 'Processing…' : 'Verify email (admin)'}
                     </Button>
                   </>
                 )}
@@ -467,7 +467,7 @@ export default function UserDetail() {
                     variant="outline"
                     className="w-full sm:w-auto border-emerald-500 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
                   >
-                    Tạo link nạp (PayOS)
+                    Create top-up link (PayOS)
                   </Button>
                   <Button
                     onClick={handleBanToggle}
@@ -492,7 +492,7 @@ export default function UserDetail() {
               Session & Security
             </CardTitle>
             <CardDescription>
-              Quản lý phiên đăng nhập và refresh token của user
+              Manage user login sessions and refresh token
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-3">
@@ -502,11 +502,11 @@ export default function UserDetail() {
               variant="outline"
               className="w-full justify-center border-amber-500 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
             >
-              {revoking ? 'Đang xử lý…' : 'Thu hồi refresh token'}
+              {revoking ? 'Processing…' : 'Revoke refresh token'}
             </Button>
             <p className="text-xs text-slate-500">
-              User sẽ tự động đăng xuất khi access token hiện tại hết hạn (khoảng 5 phút). Hành động
-              này không thu hồi access token ngay lập tức.
+              The user will be automatically logged out when the current access token expires
+              (about 5 minutes). This action does not revoke the access token immediately.
             </p>
           </CardContent>
         </Card>
@@ -525,7 +525,7 @@ export default function UserDetail() {
               <span>Owned Characters</span>
             </CardTitle>
             <CardDescription className="text-xs text-slate-500">
-              {ownedCharacterCards.length} characters unlocked (theo saveGame)
+              {ownedCharacterCards.length} characters unlocked (from saveGame)
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
@@ -576,13 +576,13 @@ export default function UserDetail() {
               </Badge>
             </div>
             <CardDescription className="text-xs text-slate-500">
-              Item level & trạng thái mở khóa (từ saveGame)
+              Item level and unlock status (from saveGame)
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4 space-y-3">
             {unlockedItems.length === 0 ? (
               <p className="text-sm text-slate-500 text-center py-4">
-                Chưa có item nào được mở khóa trong saveGame
+                No items unlocked in saveGame
               </p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -647,9 +647,9 @@ export default function UserDetail() {
                   exit="exit"
                 >
                   <div className="space-y-1">
-                    <h2 className="text-sm font-semibold text-slate-900">Xác nhận cập nhật Xu</h2>
+                    <h2 className="text-sm font-semibold text-slate-900">Confirm Xu update</h2>
                     <p className="text-xs text-slate-500">
-                      Bạn có chắc muốn đặt số Xu của user này thành{' '}
+                      Are you sure you want to set this user's Xu to{' '}
                       <span className="font-semibold text-slate-900">
                         {xu.toLocaleString()}
                       </span>
@@ -665,7 +665,7 @@ export default function UserDetail() {
                       disabled={updatingXu}
                       onClick={() => setXuConfirmOpen(false)}
                     >
-                      Hủy
+                      Cancel
                     </Button>
                     <Button
                       type="button"
@@ -674,7 +674,7 @@ export default function UserDetail() {
                       onClick={handleUpdateXu}
                       disabled={updatingXu}
                     >
-                      {updatingXu ? 'Đang cập nhật...' : 'Xác nhận'}
+                      {updatingXu ? 'Updating...' : 'Confirm'}
                     </Button>
                   </div>
                 </motion.div>
@@ -702,7 +702,7 @@ export default function UserDetail() {
                   className="flex flex-col w-full max-w-3xl h-[min(90vh,880px)] rounded-xl bg-white shadow-xl border border-slate-200 overflow-hidden"
                   role="dialog"
                   aria-modal="true"
-                  aria-label="Tạo link thanh toán PayOS"
+                  aria-label="Create PayOS payment link"
                   variants={zoomInPopup}
                   initial="hidden"
                   animate="visible"
@@ -710,7 +710,7 @@ export default function UserDetail() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 border-b border-slate-200 bg-slate-50/90">
-                    <h2 className="text-sm font-semibold text-slate-900">Tạo link nạp (PayOS)</h2>
+                    <h2 className="text-sm font-semibold text-slate-900">Create top-up link (PayOS)</h2>
                     <Button
                       type="button"
                       variant="ghost"
@@ -718,12 +718,12 @@ export default function UserDetail() {
                       className="text-slate-600 hover:text-slate-900"
                       onClick={() => setPayosIframeOpen(false)}
                     >
-                      Đóng
+                      Close
                     </Button>
                   </div>
                   <iframe
                     key={embedPaymentLinkSrc}
-                    title="Tạo link thanh toán PayOS"
+                    title="Create PayOS payment link"
                     src={embedPaymentLinkSrc}
                     className="w-full flex-1 min-h-0 border-0 bg-white"
                   />

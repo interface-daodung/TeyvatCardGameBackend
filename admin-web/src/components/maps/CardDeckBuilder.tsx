@@ -32,7 +32,7 @@ export function CardDeckBuilder({
     onDeckChange,
     getImageUrl = getCardImageUrl,
     deckLabel = 'Deck',
-    sourceLabel = 'Thẻ có sẵn (kéo vào deck)',
+    sourceLabel = 'Available cards (drag into deck)',
     filterCard = isAdventureCardShownInDeckSource,
 }: CardDeckBuilderProps) {
     const handleAdd = (cardId: string) => {
@@ -59,7 +59,7 @@ export function CardDeckBuilder({
                     onRemove={handleRemove}
                     getImageUrl={getImageUrl}
                 />
-                <p className="text-xs text-muted-foreground mt-1">{cardIds.length} thẻ trong deck</p>
+                <p className="text-xs text-muted-foreground mt-1">{cardIds.length} cards in deck</p>
             </div>
 
             {/* Source card list */}

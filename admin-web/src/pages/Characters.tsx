@@ -188,16 +188,16 @@ export default function Characters() {
   const handleCreateCharacterSubmit = async () => {
     const nameId = createNameId.trim().toLowerCase();
     if (!nameId) {
-      setCreateError('Nhập nameId (ID duy nhất trong game, thường trùng chữ thường của tên class).');
+      setCreateError('Enter nameId (unique ID in the game, usually lowercase class name).');
       return;
     }
     const hp = Math.floor(Number(createHp));
     if (!Number.isFinite(hp) || hp < 1) {
-      setCreateError('HP phải là số ≥ 1.');
+      setCreateError('HP must be a number >= 1.');
       return;
     }
     if (characters.some((c) => c.nameId === nameId)) {
-      setCreateError(`Nhân vật với nameId "${nameId}" đã tồn tại.`);
+      setCreateError(`Character with nameId "${nameId}" already exists.`);
       return;
     }
     setCreateError(null);
@@ -219,7 +219,7 @@ export default function Characters() {
       setCreateElement('cryo');
       setSelectedNameId(created.nameId);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Không tạo được nhân vật.';
+      const msg = err instanceof Error ? err.message : 'Failed to create character.';
       setCreateError(msg);
     } finally {
       setCreateLoading(false);
@@ -295,7 +295,7 @@ export default function Characters() {
   const characterToolbar = (
     <div
       className="flex flex-wrap items-center gap-2"
-      aria-label="Thao tác nhanh Characters"
+      aria-label="Characters quick actions"
     >
       <Button
         type="button"
@@ -309,7 +309,7 @@ export default function Characters() {
           void loadCharacterClassSuggestions();
         }}
       >
-        Tạo thẻ mới
+        Create new card
       </Button>
       <LangDropdown
         value={editLang}
@@ -459,14 +459,14 @@ export default function Characters() {
                 <div className="flex w-full min-w-0 max-w-lg flex-shrink-0 flex-col rounded-xl border border-border bg-card shadow-2xl overflow-hidden">
                   <div className="flex items-center justify-between bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
                     <div>
-                      <h2 className="text-xl font-semibold text-white">Tạo nhân vật mới</h2>
+                      <h2 className="text-xl font-semibold text-white">Create new character</h2>
                     </div>
                     <button
                       type="button"
                       onClick={closeCreateModal}
                       disabled={createLoading}
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/30 text-3xl leading-none text-white hover:bg-white/10"
-                      aria-label="Đóng"
+                      aria-label="Close"
                     >
                       ×
                     </button>
@@ -487,12 +487,12 @@ export default function Characters() {
                           setCreateNameId(e.target.value);
                         }}
                         disabled={createLoading}
-                        placeholder="vd: nahida, raiden"
+                        placeholder="e.g. nahida, raiden"
                         className="flex h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 py-2 font-mono text-sm text-slate-900 shadow-sm ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         autoComplete="off"
                       />
                       <p className="text-[11px] text-muted-foreground">
-                        ID lưu trong DB và save game; chọn class bên dưới sẽ gợi ý theo tên file .ts.
+                        ID stored in DB and save game; choosing a class below suggests from .ts filename.
                       </p>
                     </div>
                     <div className="space-y-2">
@@ -510,7 +510,7 @@ export default function Characters() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Nguyên tố</p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Element</p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         <button
                           type="button"
@@ -568,7 +568,7 @@ export default function Characters() {
                       <label className="mb-1 block text-xs font-medium text-muted-foreground">Class name</label>
                       <input
                         type="text"
-                        placeholder="Không bắt buộc (gợi ý theo file .ts)"
+                        placeholder="Optional (suggested from .ts file)"
                         disabled={createLoading}
                         className="w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
                         value={selectedClassName}
@@ -586,20 +586,20 @@ export default function Characters() {
                         ))}
                       </datalist>
                       <p className="mt-1 text-[11px] text-muted-foreground">
-                        Gợi ý lấy từ tên file `.ts` trong `models/cards/character`.
+                        Suggestions are taken from `.ts` filenames in `models/cards/character`.
                       </p>
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
                     <Button variant="outline" type="button" disabled={createLoading} onClick={closeCreateModal}>
-                      Hủy
+                      Cancel
                     </Button>
                     <Button
                       type="button"
                       disabled={createLoading || !createNameId.trim()}
                       onClick={handleCreateCharacterSubmit}
                     >
-                      {createLoading ? 'Đang tạo...' : 'Tạo'}
+                      {createLoading ? 'Creating...' : 'Create'}
                     </Button>
                   </div>
                 </div>

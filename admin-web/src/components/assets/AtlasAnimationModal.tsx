@@ -206,8 +206,8 @@ export function AtlasAnimationModal({
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Tạo atlas animation thất bại';
-      setError(msg || 'Tạo atlas animation thất bại');
+          : 'Create animation atlas failed';
+      setError(msg || 'Create animation atlas failed');
     } finally {
       setSubmitting(false);
     }
@@ -269,11 +269,11 @@ export function AtlasAnimationModal({
                 <AssetLoadingOverlay
                   show={decoding}
                   variant="panel"
-                  label="Đang cắt frame 192×192 và lọc frame rỗng…"
+                  label="Slicing 192×192 frames and filtering empty frames…"
                 />
                 {panelTab === 'collection' && (
                   <div className="flex h-full min-h-0 flex-wrap content-start gap-2 overflow-y-auto p-3" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
-                    {selected.length === 0 && <p className="text-xs text-muted-foreground">Kéo thả file từ danh sách animations bên phải vào đây.</p>}
+                    {selected.length === 0 && <p className="text-xs text-muted-foreground">Drag and drop files from the animations list on the right here.</p>}
                     {selected.map((s) => (
                       <div key={s.path} className="relative h-28 w-24 overflow-hidden rounded-md border border-border bg-background">
                         <img src={s.path} alt={s.fileName} className="h-20 w-full object-cover object-top" />
@@ -314,9 +314,9 @@ export function AtlasAnimationModal({
                 {panelTab === 'preview' && (
                   <div ref={previewWrapRef} className="flex h-full min-h-0 flex-col items-center justify-center overflow-auto p-2">
                     {decoding ? (
-                      <p className="text-xs text-muted-foreground">Đang cắt frame 192×192 và lọc frame rỗng...</p>
+                      <p className="text-xs text-muted-foreground">Slicing 192×192 frames and filtering empty frames...</p>
                     ) : decodedFrames.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Chưa có frame hợp lệ.</p>
+                      <p className="text-xs text-muted-foreground">No valid frames yet.</p>
                     ) : (
                       <canvas ref={previewCanvasRef} className="max-h-[300px] w-auto max-w-full rounded border border-border bg-black/20" />
                     )}
@@ -328,7 +328,7 @@ export function AtlasAnimationModal({
                     {jsonPreview ? (
                       <JsonRawHighlight data={jsonPreview} className="!max-h-[280px]" />
                     ) : (
-                      <p className="text-xs text-muted-foreground">Chưa có dữ liệu JSON.</p>
+                      <p className="text-xs text-muted-foreground">No JSON data yet.</p>
                     )}
                   </div>
                 )}
@@ -372,9 +372,9 @@ export function AtlasAnimationModal({
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+                <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                 <Button type="button" onClick={() => void handleCreate()} disabled={!canSubmit}>
-                  {submitting ? 'Đang tạo...' : 'Tạo atlas'}
+                  {submitting ? 'Creating...' : 'Create atlas'}
                 </Button>
               </div>
             </div>
@@ -385,8 +385,8 @@ export function AtlasAnimationModal({
         <AssetLoadingOverlay
           show={submitting}
           variant="modal"
-          label="Đang build atlas trên server…"
-          subLabel="Vui lòng chờ phản hồi."
+          label="Building atlas on server…"
+          subLabel="Please wait for response."
         />
       </Card>
     </div>

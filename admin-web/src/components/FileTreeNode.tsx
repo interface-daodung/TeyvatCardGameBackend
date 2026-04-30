@@ -82,8 +82,8 @@ export function FileTreeNode({
               onEdit(item.path);
             }}
             className="shrink-0 p-1.5 rounded opacity-0 group-hover/file:opacity-100 text-slate-500 hover:text-primary transition-opacity"
-            title="Chỉnh sửa"
-            aria-label="Chỉnh sửa"
+            title="Edit"
+            aria-label="Edit"
           >
             <FontAwesomeIcon icon={faPenToSquare} className="w-4 h-4" />
           </button>

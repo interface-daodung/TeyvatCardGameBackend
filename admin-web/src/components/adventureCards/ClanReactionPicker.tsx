@@ -65,7 +65,7 @@ export function ClanReactionPicker({ selectedClan, onSelect }: ClanReactionPicke
       items={items}
       selectedId={current}
       onSelect={onSelect}
-      emptyLabel="Không"
+      emptyLabel="None"
     />
   );
 }

@@ -58,10 +58,10 @@ export function SpriteFramePreviewPanel({
             Reset
           </Button>
           <p className="text-[11px] text-muted-foreground">
-            Frame hiện tại: <span className="font-semibold text-foreground">{currentFrame}</span>
+            Current frame: <span className="font-semibold text-foreground">{currentFrame}</span>
           </p>
           <p className="text-[11px] text-muted-foreground">
-            Tổng frame: <span className="font-semibold text-foreground">{totalFrames || '—'}</span>
+            Total frames: <span className="font-semibold text-foreground">{totalFrames || '—'}</span>
           </p>
         </div>
 

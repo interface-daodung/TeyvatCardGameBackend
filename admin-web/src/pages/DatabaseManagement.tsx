@@ -206,7 +206,7 @@ export default function DatabaseManagement() {
       <div className="space-y-8">
         <PageHeader
           title="Database Management"
-          description="Quét cấu trúc MongoDB theo document, hiển thị theo collection và chuẩn bị dữ liệu cho AI migration."
+          description="Scan MongoDB structure by document, grouped by collection, and prepare data for AI migration."
         />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 space-y-4">
@@ -228,11 +228,11 @@ export default function DatabaseManagement() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <PageHeader
           title="Database Management"
-          description="Quét/đọc structure MongoDB theo collection, suy luận field + loại giá trị. Bên phải: chat với AI để sinh migration script dựa trên sample docs."
+          description="Scan/read MongoDB structure by collection and infer field paths + value types. Right panel: chat with AI to generate migration scripts from sample docs."
         />
         <div className="flex items-center gap-2 flex-wrap">
           <Button onClick={runScan} disabled={loading} className="bg-slate-900 hover:bg-slate-800 text-white">
-            {loading ? 'Đang quét…' : 'Scan MongoDB'}
+            {loading ? 'Scanning…' : 'Scan MongoDB'}
           </Button>
         </div>
       </div>
@@ -262,7 +262,7 @@ export default function DatabaseManagement() {
                       <input type="checkbox" checked={scanAll} onChange={(e) => setScanAll(e.target.checked)} />
                       Scan all (experimental)
                     </label>
-                    <p className="text-xs text-slate-500 mt-0.5">Duyệt tối đa `maxDocsTotal` để tránh treo.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Limit to `maxDocsTotal` to avoid hanging.</p>
                   </div>
 
                   <div className="min-w-[220px]">
@@ -294,7 +294,7 @@ export default function DatabaseManagement() {
                       <input type="checkbox" checked={includeSampleDocs} onChange={(e) => setIncludeSampleDocs(e.target.checked)} />
                       Include sample docs
                     </label>
-                    <p className="text-xs text-slate-500 mt-0.5">Giúp kiểm tra nhanh structure.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Useful for quickly checking structure.</p>
                   </div>
                 </div>
 
@@ -308,7 +308,7 @@ export default function DatabaseManagement() {
               <Card className="border-0 shadow-lg">
                 <CardContent className="pt-6">
                   <p className="text-sm text-slate-600">
-                    Chưa có dữ liệu scan. Bấm <span className="font-semibold">Scan MongoDB</span> để bắt đầu.
+                    No scan data yet. Click <span className="font-semibold">Scan MongoDB</span> to start.
                   </p>
                 </CardContent>
               </Card>
@@ -326,7 +326,7 @@ export default function DatabaseManagement() {
                       type="text"
                       value={fieldSearch}
                       onChange={(e) => setFieldSearch(e.target.value)}
-                      placeholder="vd: createdAt, levelStats[], nameId..."
+                      placeholder="e.g. createdAt, levelStats[], nameId..."
                       className="w-full rounded-lg border border-slate-200 bg-white/90 shadow-sm px-3.5 py-2.5 text-sm text-slate-800"
                     />
                   </div>
@@ -374,9 +374,9 @@ export default function DatabaseManagement() {
                       <div className="flex flex-wrap items-center gap-2">
                         {(
                           [
-                            { id: 'list' as const, label: 'Danh sách' },
-                            { id: 'tree' as const, label: 'Cây thư mục' },
-                            { id: 'flow' as const, label: 'Lưới quan hệ (Flow)' },
+                            { id: 'list' as const, label: 'List' },
+                            { id: 'tree' as const, label: 'Tree' },
+                            { id: 'flow' as const, label: 'Relationship graph (Flow)' },
                           ] as const
                         ).map((t) => (
                           <button
@@ -409,7 +409,7 @@ export default function DatabaseManagement() {
                               {filteredFieldSummaries.length === 0 ? (
                                 <tr>
                                   <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground text-sm">
-                                    Không tìm thấy field nào phù hợp.
+                                    No matching fields found.
                                   </td>
                                 </tr>
                               ) : (
@@ -502,7 +502,7 @@ export default function DatabaseManagement() {
                   )}
                 </CardTitle>
                 <p className="text-sm text-slate-500 mt-1">
-                  Nhập câu lệnh prompt để AI tạo migration script dựa trên snapshot + sample docs.
+                  Enter a prompt so AI can generate migration scripts based on snapshot + sample docs.
                 </p>
               </CardHeader>
               <CardContent className="pt-0 space-y-3">
@@ -513,9 +513,9 @@ export default function DatabaseManagement() {
                   >
                     {chatMessages.length === 0 ? (
                       <div className="text-sm text-slate-500">
-                        Chưa có chat. Ví dụ prompt:
+                        No chat yet. Example prompt:
                         <div className="mt-2 text-xs text-slate-600 leading-relaxed">
-                          “Chuyển field <code>type</code> từ string sang enum; nếu thiếu/null thì set giá trị mặc định; mô phỏng trước/sau cho sample docs”.
+                          "Convert field <code>type</code> from string to enum; if missing/null then set a default value; simulate before/after for sample docs."
                         </div>
                       </div>
                     ) : (
@@ -537,7 +537,7 @@ export default function DatabaseManagement() {
                         </div>
                       ))
                     )}
-                    {chatLoading && <div className="text-sm text-slate-500">AI đang viết script…</div>}
+                    {chatLoading && <div className="text-sm text-slate-500">AI is writing script…</div>}
                   </div>
 
                   {chatError && (
@@ -554,13 +554,13 @@ export default function DatabaseManagement() {
                     }}
                   >
                     <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                      Prompt migration (cần AI viết script)
+                      Migration prompt (AI generates script)
                     </label>
                     <textarea
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       rows={3}
-                      placeholder={selectedCollectionName ? 'Nhập prompt yêu cầu migration...' : 'Scan và chọn collection trước.'}
+                      placeholder={selectedCollectionName ? 'Enter migration requirements...' : 'Scan and select a collection first.'}
                       disabled={!selectedCollectionName || chatLoading}
                       className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-mono text-slate-900 outline-none focus:border-blue-400/60 focus:ring-2 focus:ring-blue-400/25 disabled:opacity-60"
                       onKeyDown={(e) => {
@@ -589,7 +589,7 @@ export default function DatabaseManagement() {
                         disabled={chatLoading || !chatInput.trim() || !selectedCollectionName}
                         className="bg-slate-900 hover:bg-slate-800 text-white"
                       >
-                        {chatLoading ? 'Đang gửi…' : 'Gửi'}
+                        {chatLoading ? 'Sending…' : 'Send'}
                       </Button>
                     </div>
                   </form>
@@ -605,9 +605,9 @@ export default function DatabaseManagement() {
               </CardHeader>
               <CardContent className="pt-0">
                 {!selectedCollection ? (
-                  <p className="text-sm text-muted-foreground">Chọn collection để xem sample docs.</p>
+                  <p className="text-sm text-muted-foreground">Select a collection to view sample docs.</p>
                 ) : selectedCollection.sampleDocs.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Include sample docs đang tắt.</p>
+                  <p className="text-sm text-muted-foreground">Include sample docs is disabled.</p>
                 ) : (
                   <div className="space-y-3">
                     {selectedCollection.sampleDocs.map((doc, idx) => (

@@ -311,7 +311,7 @@ export function FieldPathFlowPanel({
               }
               type="button"
             >
-              {isDrawMode ? 'Tắt vẽ tay' : 'Vẽ tay'}
+              {isDrawMode ? 'Disable free draw' : 'Free draw'}
             </Button>
             <Button
               onClick={clearDraw}
@@ -326,7 +326,7 @@ export function FieldPathFlowPanel({
               className="bg-slate-600 hover:bg-slate-700 text-white"
               type="button"
             >
-              {isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+              {isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
             </Button>
           </div>
         </div>

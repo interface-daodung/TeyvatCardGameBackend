@@ -127,7 +127,7 @@ function AttachedRowImageThumb({
       )}
       role="button"
       tabIndex={0}
-      title="Double-click hoặc Enter để xem phóng to"
+      title="Double-click or Enter to zoom in"
       onDoubleClick={(e) => {
         e.preventDefault();
         onOpenLightbox({ src, alt: nameId });
@@ -258,7 +258,7 @@ function AttachedAnimations192Preview({
   if (mode === 'loading') {
     return (
       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md border border-slate-600/80 bg-slate-800 px-1 text-center text-[9px] leading-tight text-slate-400">
-        Đang tải…
+        Loading...
       </div>
     );
   }
@@ -278,7 +278,7 @@ function AttachedAnimations192Preview({
         className={cn(
           'h-16 w-16 shrink-0 cursor-zoom-in overflow-hidden rounded-md border border-slate-600/80 bg-slate-800 shadow-inner outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-primary'
         )}
-        title="Double-click hoặc Enter để xem phóng to"
+        title="Double-click or Enter to zoom in"
         onDoubleClick={(e) => {
           e.preventDefault();
           openLightbox();
@@ -338,12 +338,12 @@ export function AttachedPanel({
   const attached = attachedProp ?? [];
   const panelTitle =
     context === 'character'
-      ? 'Skill assets đính kèm'
+      ? 'Attached skill assets'
       : context === 'adventureCard'
-        ? 'Assets đính kèm thẻ phiêu lưu'
-        : 'Assets đính kèm trang bị';
+        ? 'Attached adventure card assets'
+        : 'Attached equipment assets';
   const addButtonTooltip =
-    'Chọn asset trong assets/images/skill, assets/images/animations, assets/sounds/SE (và badge nếu có). Mỗi mục: định danh nameId + đường dẫn asset.';
+    'Select assets from assets/images/skill, assets/images/animations, assets/sounds/SE (and badge if available). Each row: nameId + asset path.';
 
   const [fullImageTree, setFullImageTree] = useState<FileTreeItem[] | null>(null);
   const [soundTree, setSoundTree] = useState<FileTreeItem[] | null>(null);
@@ -394,19 +394,19 @@ export function AttachedPanel({
           id: 'skills' as const,
           label: 'Skills',
           items: skillSubtree,
-          emptyLabel: 'Không tìm thấy asset trong /assets/images/skill.',
+          emptyLabel: 'No assets found in /assets/images/skill.',
         },
         {
           id: 'animations' as const,
           label: 'Animations',
           items: animationsSubtree,
-          emptyLabel: 'Không tìm thấy asset trong /assets/images/animations.',
+          emptyLabel: 'No assets found in /assets/images/animations.',
         },
         {
           id: 'soundEffects' as const,
           label: 'Sound Effects',
           items: soundTree ?? [],
-          emptyLabel: 'Không tìm thấy asset trong /assets/sounds/SE.',
+          emptyLabel: 'No assets found in /assets/sounds/SE.',
         },
         ...(isWeaponType
           ? [
@@ -415,8 +415,8 @@ export function AttachedPanel({
                 label: 'Badge',
                 items: badgeSubtree,
                 emptyLabel: normalizedAssetCategory
-                  ? `Không tìm thấy asset trong /assets/images/badge/${normalizedAssetCategory}.`
-                  : 'Không tìm thấy category cho badge.',
+                  ? `No assets found in /assets/images/badge/${normalizedAssetCategory}.`
+                  : 'No category found for badge.',
               },
             ]
           : []),
@@ -426,7 +426,7 @@ export function AttachedPanel({
                 id: 'resonance' as const,
                 label: 'Resonance',
                 items: resonanceSubtree,
-                emptyLabel: 'Không tìm thấy file resonance trong /assets/images/cards/coin.',
+                emptyLabel: 'No resonance files found in /assets/images/cards/coin.',
               },
             ]
           : []),
@@ -588,17 +588,17 @@ export function AttachedPanel({
             onClick={() => openPickerAdd()}
             disabled={saveLoading}
             title={addButtonTooltip}
-            aria-label={`Thêm asset. ${addButtonTooltip}`}
+            aria-label={`Add asset. ${addButtonTooltip}`}
             className={cn(
               'inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary',
               'hover:bg-primary/15 disabled:pointer-events-none disabled:opacity-50'
             )}
           >
             <FontAwesomeIcon icon={faPlus} className="h-3.5 w-3.5" aria-hidden />
-            Chọn asset
+            Select asset
           </button>
           {saveLoading && (
-            <span className="text-xs text-muted-foreground">Đang lưu…</span>
+            <span className="text-xs text-muted-foreground">Saving...</span>
           )}
         </div>
       </div>
@@ -606,13 +606,13 @@ export function AttachedPanel({
       <div className="relative min-h-0 flex-1 overflow-y-auto px-3 py-3 md:px-4">
         {attached.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Chưa có asset đính kèm. Nhấn &quot;Chọn asset&quot; để chọn từ Skills, Animations, Sound Effects
+            No attached assets yet. Click &quot;Select asset&quot; to choose from Skills, Animations, Sound Effects
             {isWeaponType && isCoinType
-              ? ', Badge hoặc Resonance.'
+              ? ', Badge or Resonance.'
               : isWeaponType
-                ? ' hoặc Badge.'
+                ? ' or Badge.'
                 : isCoinType
-                  ? ' hoặc Resonance.'
+                  ? ' or Resonance.'
                   : '.'}
           </p>
         ) : (
@@ -667,7 +667,7 @@ export function AttachedPanel({
                     />
                   </label>
                   <p className="truncate text-[11px] text-muted-foreground" title={row.image}>
-                    {row.image || 'Chưa chọn asset'}
+                    {row.image || 'No asset selected'}
                   </p>
                   {rowType === 'animation' && (
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -708,8 +708,8 @@ export function AttachedPanel({
                 <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">
                   <button
                     type="button"
-                    title="Đổi asset"
-                    aria-label="Đổi asset"
+                    title="Change asset"
+                    aria-label="Change asset"
                     disabled={saveLoading}
                     onClick={() => openPickerForRow(index)}
                     className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100 disabled:opacity-50"
@@ -722,8 +722,8 @@ export function AttachedPanel({
                   </button>
                   <button
                     type="button"
-                    title="Xóa mục"
-                    aria-label="Xóa mục"
+                    title="Remove row"
+                    aria-label="Remove row"
                     disabled={saveLoading}
                     onClick={() => void removeRow(index)}
                     className="inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
@@ -741,18 +741,18 @@ export function AttachedPanel({
         <div className="absolute inset-0 z-20 flex flex-col overflow-hidden bg-white">
           <div className="flex shrink-0 items-center justify-between border-b border-border bg-muted px-3 py-2 text-xs font-medium">
             <span className="truncate pr-2">
-              Chọn asset
+              Select asset
             </span>
             <button
               type="button"
               onClick={closePicker}
               className="shrink-0 rounded px-2 py-1 hover:bg-muted-foreground/15"
             >
-              Đóng
+              Close
             </button>
           </div>
           <div className="shrink-0 border-b border-border/70 px-3 pt-2">
-            <div className="flex min-w-0 flex-wrap gap-0" role="tablist" aria-label="Nguồn asset">
+            <div className="flex min-w-0 flex-wrap gap-0" role="tablist" aria-label="Asset source">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -774,7 +774,7 @@ export function AttachedPanel({
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto p-2 text-xs">
             {pickerLoading ? (
-              <p className="text-muted-foreground">Đang tải cây asset…</p>
+              <p className="text-muted-foreground">Loading asset tree...</p>
             ) : activeTab.items.length > 0 ? (
               <div className="space-y-3">
                 {pickerTab !== 'soundEffects' && (
@@ -785,7 +785,7 @@ export function AttachedPanel({
                         : pickerTab === 'animations'
                           ? '/assets/images/animations'
                           : pickerTab === 'resonance'
-                            ? '/assets/images/cards/coin (lọc tên chứa resonance)'
+                            ? '/assets/images/cards/coin (filter names containing resonance)'
                           : `/assets/images/badge/${normalizedAssetCategory}`}
                     </code>
                   </p>

@@ -83,7 +83,7 @@ export default function Themes() {
       setThemes(list);
       syncPreviewByList(list);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không tải được danh sách theme.');
+      setError(err instanceof Error ? err.message : 'Failed to load theme list.');
     } finally {
       setLoading(false);
     }
@@ -119,25 +119,25 @@ export default function Themes() {
 
   const handleDelete = async (theme: Theme) => {
     if (theme.name.toLowerCase() === 'default') {
-      setError('Theme "default" không thể xóa, chỉ có thể chỉnh sửa.');
+      setError('The "default" theme cannot be deleted, only edited.');
       return;
     }
-    if (!window.confirm(`Xóa theme "${theme.name}"?`)) return;
+    if (!window.confirm(`Delete theme "${theme.name}"?`)) return;
 
     try {
       await deleteTheme(theme._id);
       await fetchThemes();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Xóa thất bại.');
+      setError(err instanceof Error ? err.message : 'Delete failed.');
     }
   };
 
   return (
     <div className="p-4 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <PageHeader title="Themes" description="Chỉnh sửa và kiểm tra các bộ màu (lưu trong DB, collection themes)" />
+        <PageHeader title="Themes" description="Edit and preview color themes (stored in DB, themes collection)" />
         <Button type="button" onClick={openCreate}>
-          Thêm theme
+          Add theme
         </Button>
       </div>
 
@@ -148,14 +148,14 @@ export default function Themes() {
       )}
 
       {loading ? (
-        <div className="text-slate-500">Đang tải...</div>
+        <div className="text-slate-500">Loading...</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-slate-700">Danh sách theme</h3>
+            <h3 className="text-lg font-medium text-slate-700">Theme list</h3>
             {themes.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-slate-500">Chưa có theme. Bấm &quot;Thêm theme&quot; để tạo.</CardContent>
+                <CardContent className="py-8 text-center text-slate-500">No themes yet. Click &quot;Add theme&quot; to create one.</CardContent>
               </Card>
             ) : (
               <div className="space-y-3">

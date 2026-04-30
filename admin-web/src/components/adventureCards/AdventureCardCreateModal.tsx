@@ -166,7 +166,7 @@ export function AdventureCardCreateModal({
                     className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
                     value={form.name ?? ''}
                     onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                    placeholder="Tên hiển thị"
+                    placeholder="Display name"
                   />
                 </div>
                 <div>
@@ -177,7 +177,7 @@ export function AdventureCardCreateModal({
                     className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background min-h-[80px]"
                     value={form.description ?? ''}
                     onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                    placeholder="Mô tả"
+                    placeholder="Description"
                   />
                 </div>
                 <div>
@@ -354,8 +354,8 @@ export function AdventureCardCreateModal({
                   availableCards={allCards}
                   onDeckChange={(newIds) => setForm((p) => ({ ...p, contents: newIds }))}
                   getImageUrl={getAdventureCardImageUrl}
-                  deckLabel="🎁 Rương (nội dung rương)"
-                  sourceLabel="Thẻ có sẵn (kéo vào rương)"
+                  deckLabel="🎁 Chest (chest contents)"
+                  sourceLabel="Available cards (drag into chest)"
                 />
               </div>
             )}
@@ -365,7 +365,7 @@ export function AdventureCardCreateModal({
               Hủy
             </Button>
             <Button type="button" disabled={saveLoading} onClick={onCreate}>
-              {saveLoading ? 'Đang tạo...' : 'Tạo'}
+              {saveLoading ? 'Creating...' : 'Create'}
             </Button>
           </div>
         </div>
@@ -377,8 +377,8 @@ export function AdventureCardCreateModal({
         onDiscard={onUnsavedDiscard}
         onSave={onUnsavedSave}
         saveLoading={saveLoading}
-        title="Lưu thay đổi?"
-        description="Bạn đã nhập thông tin thẻ mới. Bạn có muốn lưu trước khi đóng không?"
+        title="Save changes?"
+        description="You entered new card data. Save before closing?"
       />
     </div>
   );

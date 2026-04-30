@@ -246,8 +246,8 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Xuất resize thất bại';
-      setResizeError(msg || 'Xuất resize thất bại');
+          : 'Resize export failed';
+      setResizeError(msg || 'Resize export failed');
     } finally {
       setResizeExporting(false);
     }
@@ -260,14 +260,14 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
       setSaveError(null);
       setSaveOk(null);
       const result = await filesService.exportSpritesheetBestGrid(selectedPath);
-      setSaveOk(`Đã lưu: ${result.imageUrl}`);
+      setSaveOk(`Saved: ${result.imageUrl}`);
       onSaved?.();
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : 'Lưu thất bại';
-      setSaveError(msg || 'Lưu thất bại');
+          : 'Save failed';
+      setSaveError(msg || 'Save failed');
     } finally {
       setSaving(false);
     }
@@ -303,8 +303,8 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
               disabled={!canSave || saving || resizeExporting || !selectedPath}
               title={
                 canSave
-                  ? 'Lưu spritesheet bestGrid ra admin-web/public'
-                  : 'Tỉ lệ bestGrid trùng ảnh gốc — không cần xuất'
+                  ? 'Save bestGrid spritesheet to admin-web/public'
+                  : 'bestGrid ratio matches original image - no export needed'
               }
               onClick={() => void handleSave()}
             >
@@ -348,15 +348,15 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                           className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
                           aria-hidden
                         />
-                        <p className="text-sm text-muted-foreground">Đang tải danh sách spritesheet…</p>
+                        <p className="text-sm text-muted-foreground">Loading spritesheet list...</p>
                       </>
                     ) : (
                       <>
-                        <p className="text-sm font-medium text-foreground">Chưa chọn spritesheet</p>
+                        <p className="text-sm font-medium text-foreground">No spritesheet selected</p>
                         <p className="max-w-sm text-xs text-muted-foreground">
-                          Chọn một file trong cây{' '}
-                          <span className="font-mono text-[11px]">images/Spritesheet</span> bên trái để
-                          xem frame (350×590) và preview.
+                          Select a file in the{' '}
+                          <span className="font-mono text-[11px]">images/Spritesheet</span> tree on the left to
+                          view frames (350×590) and preview.
                         </p>
                       </>
                     )}
@@ -364,7 +364,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                 </>
               ) : (
                 <>
-                  <TabPanelLoading show={decodeLoading} label="Đang tải & cắt frame…" />
+                  <TabPanelLoading show={decodeLoading} label="Loading and slicing frames…" />
                   <label className="mb-1 block text-sm font-medium">
                     Frames ({frameCanvases.length})
                   </label>
@@ -415,7 +415,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                       <div className="min-h-0 flex-1 overflow-y-auto p-3">
                         {frameCanvases.length === 0 ? (
                           <p className="text-xs text-muted-foreground">
-                            Không cắt được frame từ ảnh này.
+                            Unable to slice frames from this image.
                           </p>
                         ) : (
                           <div className="flex flex-wrap gap-2 content-start">
@@ -424,7 +424,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                                 key={i}
                                 className="cursor-zoom-in overflow-hidden rounded-md border border-border bg-background"
                                 style={{ width: 70, height: Math.round(70 * (FH / FW)) }}
-                                title="Double-click để xem toàn màn hình"
+                                title="Double-click to view fullscreen"
                                 onDoubleClick={(e) => {
                                   e.stopPropagation();
                                   const src = frameThumbnailDataUrls[i];
@@ -467,7 +467,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                             className="h-7 text-xs"
                             onClick={() => setPreviewLayout('original')}
                           >
-                            Gốc
+                            Original
                           </Button>
                         </div>
                         <div
@@ -477,7 +477,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                           {previewLayout === 'original' && sourceImage && sourceDims ? (
                             <img
                               src={selectedPath ?? undefined}
-                              alt="Spritesheet gốc"
+                              alt="Original spritesheet"
                               className="max-h-[280px] max-w-full rounded border border-border object-contain"
                             />
                           ) : previewLayout === 'bestGrid' && frameCanvases.length > 0 && gridInfo ? (
@@ -487,7 +487,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                               aria-label="Preview bestGrid"
                             />
                           ) : (
-                            <p className="text-xs text-muted-foreground">Không có dữ liệu preview.</p>
+                            <p className="text-xs text-muted-foreground">No preview data.</p>
                           )}
                         </div>
                       </div>
@@ -496,7 +496,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                     {panelTab === 'json' && (
                       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2">
                         {!simulatedAtlas ? (
-                          <p className="text-xs text-muted-foreground">Chưa có frame để dựng JSON giả lập.</p>
+                          <p className="text-xs text-muted-foreground">No frames available to build simulated JSON.</p>
                         ) : (
                           <JsonRawHighlight
                             data={simulatedAtlas.metadata}
@@ -509,12 +509,12 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                     {panelTab === 'resize' && (
                       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
                         <p className="text-xs leading-relaxed text-muted-foreground">
-                          Cắt từng frame {FW}×{FH}, resize stretch (Sharp <span className="font-mono">fit: &apos;fill&apos;</span>)
-                          rồi ghép bestGrid — không thu nhỏ trực tiếp cả spritesheet gốc.                           Desktop:{' '}
+                          Slice each frame {FW}×{FH}, apply stretch resize (Sharp <span className="font-mono">fit: &apos;fill&apos;</span>)
+                          then compose with bestGrid — do not resize the whole original spritesheet directly. Desktop:{' '}
                           <span className="font-medium text-foreground">210×360</span> / frame · Mobile:{' '}
-                          <span className="font-medium text-foreground">105×180</span> / frame. File ghi vào{' '}
-                          <span className="font-mono text-[11px]">server/uploads/resize/desktop/</span> và{' '}
-                          <span className="font-mono text-[11px]">server/uploads/resize/mobile/</span> — cùng tên file gốc{' '}
+                          <span className="font-medium text-foreground">105×180</span> / frame. Files are written to{' '}
+                          <span className="font-mono text-[11px]">server/uploads/resize/desktop/</span> and{' '}
+                          <span className="font-mono text-[11px]">server/uploads/resize/mobile/</span> — with the same original filename{' '}
                           <span className="font-mono text-[11px]">{'{basename}'}.webp</span>.
                         </p>
                         <div className="flex flex-wrap items-center gap-2">
@@ -525,7 +525,7 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
                             disabled={!canExportResize || resizeExporting}
                             onClick={() => void handleExportResize()}
                           >
-                            Xuất desktop + mobile
+                            Export desktop + mobile
                           </Button>
                         </div>
                         {resizeError && (
@@ -544,8 +544,8 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
 
           {sourceDims && gridInfo && (
             <p className="text-xs text-muted-foreground">
-              Ảnh gốc: {sourceDims.w}×{sourceDims.h} · bestGrid sheet: {gridInfo.sheetWidth}×
-              {gridInfo.sheetHeight} · tỉ lệ gốc {(sourceDims.w / sourceDims.h).toFixed(4)} vs bestGrid{' '}
+              Original image: {sourceDims.w}×{sourceDims.h} · bestGrid sheet: {gridInfo.sheetWidth}×
+              {gridInfo.sheetHeight} · original ratio {(sourceDims.w / sourceDims.h).toFixed(4)} vs bestGrid{' '}
               {(gridInfo.sheetWidth / gridInfo.sheetHeight).toFixed(4)}
             </p>
           )}
@@ -561,10 +561,10 @@ export function SpritesheetEditModal({ files, filesLoading = false, onClose, onS
           variant="modal"
           label={
             resizeExporting
-              ? 'Đang xuất resize (desktop + mobile) trên server…'
-              : 'Đang lưu và xử lý ảnh trên server…'
+              ? 'Exporting resize (desktop + mobile) on server…'
+              : 'Saving and processing image on server…'
           }
-          subLabel="Vui lòng chờ phản hồi."
+          subLabel="Please wait for response."
         />
       </Card>
     </div>

@@ -27,7 +27,7 @@ export function ThemePreview({ colors, assets }: { colors: ThemeColors; assets?:
       <div className="border-b p-3 flex items-center justify-between" style={{ borderColor: colors.secondary }}>
         <div className="flex items-center gap-2 text-sm font-semibold">
           <FontAwesomeIcon icon={faPalette} />
-          Preview giao diện
+          UI preview
         </div>
         <button
           type="button"
@@ -66,7 +66,7 @@ export function ThemePreview({ colors, assets }: { colors: ThemeColors; assets?:
               onMouseLeave={() => setHoveredAction(null)}
               style={{ backgroundColor: colors.primary, color: hoveredAction === 'primary' ? colors.neutral : colors.text }}
             >
-              Nút chính
+              Primary button
             </button>
             <button
               type="button"
@@ -79,7 +79,7 @@ export function ThemePreview({ colors, assets }: { colors: ThemeColors; assets?:
                 backgroundColor: colors.surface,
               }}
             >
-              Nút phụ
+              Secondary button
             </button>
           </div>
         </div>
@@ -88,9 +88,9 @@ export function ThemePreview({ colors, assets }: { colors: ThemeColors; assets?:
           <div className="flex items-start gap-2 text-sm">
             <FontAwesomeIcon icon={faCircleInfo} style={{ color: colors.primary }} className="mt-0.5" />
             <div>
-              <div className="font-medium">Popup mô phỏng</div>
+              <div className="font-medium">Mock popup</div>
               <p style={{ color: hoveredAction ? colors.neutral : colors.text }}>
-                Đây là ví dụ popup khi nhấn thao tác trong giao diện.
+                This is an example popup shown when clicking an action in the UI.
               </p>
             </div>
           </div>

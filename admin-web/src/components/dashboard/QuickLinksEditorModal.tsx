@@ -49,7 +49,7 @@ export function QuickLinksEditorModal({
             type="button"
             onClick={onClose}
             className="inline-flex items-center justify-center rounded-md p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-            aria-label="Đóng"
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

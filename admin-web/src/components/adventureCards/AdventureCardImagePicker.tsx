@@ -34,7 +34,7 @@ export function AdventureCardImagePicker({
   return (
     <ImagePickerSurface
       pickerOpen={isTreeOpen}
-      pickerTitle="Chọn ảnh"
+      pickerTitle="Select image"
       tree={imageTree}
       treeLoading={imageTreeLoading}
       expanded={imageTreeExpanded}
@@ -45,7 +45,7 @@ export function AdventureCardImagePicker({
       previewAlt={card.name}
       previewSrc={imageUrl}
       previewWrapperClassName="w-full max-w-[200px] mx-auto aspect-[420/720] rounded-xl bg-muted border border-border"
-      triggerTitle="Ctrl+click: chọn ảnh. Double-click: xem toàn màn hình."
+      triggerTitle="Ctrl+click: select image. Double-click: view fullscreen."
       imageFallbackSrc="/assets/images/cards/empty.webp"
     />
   );

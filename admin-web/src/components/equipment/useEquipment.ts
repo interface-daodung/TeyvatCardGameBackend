@@ -98,7 +98,7 @@ export function useEquipment() {
         setItems(gameItems);
       } catch (err) {
         if (!cancelled)
-          setError(err instanceof Error ? err.message : 'Lỗi tải dữ liệu');
+          setError(err instanceof Error ? err.message : 'Data loading error');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -122,7 +122,7 @@ export function useEquipment() {
   const handleCreateItem = async (values: EquipmentCreateFormValues) => {
     const img = values.image.trim().replace(/\\/g, '/');
     if (!img.startsWith(ITEM_LINK_PREFIX)) {
-      setCreateError('Bắt buộc chọn link ảnh đầy đủ (/assets/images/...).');
+      setCreateError('You must select a full image path (/assets/images/...).');
       return;
     }
     setCreateLoading(true);
@@ -151,7 +151,7 @@ export function useEquipment() {
       openEditModal(gameItem);
     } catch (err: unknown) {
       console.error('Create item failed:', err);
-      let msg = err instanceof Error ? err.message : 'Lỗi tạo item';
+      let msg = err instanceof Error ? err.message : 'Create item error';
       const e = err as { response?: { data?: { error?: string | unknown[] } } };
       if (e.response?.data?.error) {
         const serverErr = e.response.data.error;
@@ -260,7 +260,7 @@ export function useEquipment() {
       closeEditModal();
     } catch (err: unknown) {
       console.error('Delete item failed:', err);
-      let msg = err instanceof Error ? err.message : 'Lỗi xóa item';
+      let msg = err instanceof Error ? err.message : 'Delete item error';
       const e = err as { response?: { data?: { error?: string } } };
       if (e.response?.data?.error && typeof e.response.data.error === 'string') {
         msg = e.response.data.error;
@@ -469,7 +469,7 @@ export function useEquipment() {
     const sourceText = getFormI18n(editLang).trim();
     if (!sourceText) {
       setI18nError(
-        `Vui lòng nhập ${editLang} trước (ngôn ngữ base để dịch)`
+        `Please enter ${editLang} first (base language for translation)`
       );
       return;
     }
@@ -500,7 +500,7 @@ export function useEquipment() {
       }
       await Promise.all(promises);
     } catch {
-      setI18nError('Lỗi kết nối dịch máy, vui lòng thử lại');
+      setI18nError('Translation service connection error, please try again');
     } finally {
       setTranslateLoading(false);
     }
@@ -557,7 +557,7 @@ export function useEquipment() {
       const nameId = formValues.nameId ?? selectedItem.nameId;
       const img = (formValues.image ?? selectedItem.image ?? '').trim().replace(/\\/g, '/');
       if (!img.startsWith(ITEM_LINK_PREFIX)) {
-        setError('Bắt buộc link ảnh đầy đủ bắt đầu bằng /assets/images/ (chọn từ cây hoặc sửa DB).');
+        setError('Full image path must start with /assets/images/ (select from tree or update DB).');
         setSaveLoading(false);
         return;
       }
@@ -660,7 +660,7 @@ export function useEquipment() {
       }
     } catch (err: any) {
       console.error('Save failed:', err);
-      let msg = err instanceof Error ? err.message : 'Lỗi lưu';
+      let msg = err instanceof Error ? err.message : 'Save error';
       if (err.response?.data?.error) {
         const serverErr = err.response.data.error;
         if (Array.isArray(serverErr)) {

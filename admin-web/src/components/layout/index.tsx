@@ -11,12 +11,12 @@ import { AIChatBubble } from './AIChatBubble';
 export const NAV_SECTIONS: NavSection[] = [
   {
     id: 'overview',
-    label: 'Tổng quan',
+    label: 'Overview',
     items: [
       { path: '/', label: 'Dashboard', icon: '📊' },
       { path: '/users', label: 'Users', icon: '👥' },
       { path: '/payments', label: 'Payments', icon: '💳' },
-      { path: '/payment-link', label: 'Tạo link thanh toán', icon: '🔗' },
+      { path: '/payment-link', label: 'Create payment link', icon: '🔗' },
     ],
   },
   {
@@ -31,7 +31,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'content-assets',
-    label: 'Nội dung & Assets',
+    label: 'Content & Assets',
     items: [
       { path: '/localization', label: 'Localization', icon: '🌐' },
       { path: '/themes', label: 'Themes', icon: '🎨' },
@@ -40,7 +40,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'system',
-    label: 'Hệ thống',
+    label: 'System',
     items: [
       { path: '/server-configuration-versions', label: 'Server config', icon: '⚙️' },
       { path: '/logs', label: 'Logs', icon: '📝' },

@@ -146,7 +146,7 @@ export default function Equipment() {
         <div className="shrink-0 max-w-[min(100%,calc(100%-13rem))]">
           <PageHeader
             title="Equipment"
-            description="Xem và quản lý các item trong game (đọc từ DB)"
+            description="View and manage in-game items (loaded from DB)"
           />
         </div>
       )}
@@ -290,10 +290,10 @@ export default function Equipment() {
           ease: equipmentLayoutEase,
         }}
       >
-        <div className="pointer-events-auto flex flex-wrap items-center gap-2" aria-label="Thao tác nhanh Equipment">
+        <div className="pointer-events-auto flex flex-wrap items-center gap-2" aria-label="Equipment quick actions">
           <Button type="button" variant="default" onClick={eq.openCreateModal}>
             <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5 mr-1.5" />
-            Thêm item
+            Add item
           </Button>
           <LangDropdown
             value={eq.editLang}

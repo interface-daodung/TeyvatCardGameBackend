@@ -66,9 +66,9 @@ export function EquipmentItemFieldModal({
 }: EquipmentItemFieldModalProps) {
   const title =
     field === 'name'
-      ? 'Sửa Name (i18n)'
+      ? 'Edit Name (i18n)'
       : field === 'description'
-        ? 'Sửa Description (i18n)'
+        ? 'Edit Description (i18n)'
         : 'Level';
 
   const rootClass =
@@ -94,7 +94,7 @@ export function EquipmentItemFieldModal({
           type="button"
           onClick={onClose}
           className="p-1 hover:bg-blue-500 rounded transition-colors text-xl leading-none"
-          aria-label="Đóng"
+          aria-label="Close"
         >
           ✕
         </button>
@@ -131,7 +131,7 @@ export function EquipmentItemFieldModal({
                     onClick={() => onLevelMaxChange(Math.max(1, formLevelMax - 1))}
                     disabled={formLevelMax <= 1}
                     className="w-9 h-9 flex items-center justify-center rounded border border-slate-300 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
-                    aria-label="Giảm"
+                    aria-label="Decrease"
                   >
                     −
                   </button>
@@ -140,7 +140,7 @@ export function EquipmentItemFieldModal({
                     onClick={() => onLevelMaxChange(Math.min(99, formLevelMax + 1))}
                     disabled={formLevelMax >= 99}
                     className="w-9 h-9 flex items-center justify-center rounded border border-slate-300 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium"
-                    aria-label="Tăng"
+                    aria-label="Increase"
                   >
                     +
                   </button>
@@ -171,7 +171,7 @@ export function EquipmentItemFieldModal({
                     >
                       <span
                         className="text-slate-500 w-4 shrink-0"
-                        aria-label={expanded ? 'Thu gọn' : 'Mở rộng'}
+                        aria-label={expanded ? 'Collapse' : 'Expand'}
                       >
                         {expanded ? '▼' : '▶'}
                       </span>
@@ -317,7 +317,7 @@ export function EquipmentItemFieldModal({
               disabled={translateLoading || !getFormI18n(editLang).trim()}
               className="border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-400 text-sm"
             >
-              {translateLoading ? 'Đang dịch...' : 'Gợi ý dịch máy'}
+              {translateLoading ? 'Translating...' : 'Suggest machine translation'}
             </Button>
             {i18nError && <p className="text-sm text-red-600">{i18nError}</p>}
           </div>

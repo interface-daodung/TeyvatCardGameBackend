@@ -2,18 +2,18 @@ import { NavLink } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 
 const TABS: { to: string; label: string; icon: string; title: string; end?: boolean }[] = [
-  { to: '/mobile', label: 'Trang chủ', icon: '📊', title: 'Bảng điều khiển', end: true },
-  { to: '/mobile/users', label: 'Người dùng', icon: '👥', title: 'Danh sách người dùng' },
-  { to: '/mobile/adventure-cards', label: 'Thẻ', icon: '🎴', title: 'Adventure Cards' },
-  { to: '/mobile/manager-assets', label: 'Assets', icon: '📁', title: 'Quản lý tệp ảnh' },
-  { to: '/mobile/about', label: 'Giới thiệu', icon: 'ℹ️', title: 'Thông tin ứng dụng' },
+  { to: '/mobile', label: 'Home', icon: '📊', title: 'Dashboard', end: true },
+  { to: '/mobile/users', label: 'Users', icon: '👥', title: 'User list' },
+  { to: '/mobile/adventure-cards', label: 'Cards', icon: '🎴', title: 'Adventure Cards' },
+  { to: '/mobile/manager-assets', label: 'Assets', icon: '📁', title: 'Image file management' },
+  { to: '/mobile/about', label: 'About', icon: 'ℹ️', title: 'App information' },
 ];
 
 export function MobileBottomNav() {
   return (
     <nav
       className="safe-area-pb flex shrink-0 items-stretch justify-around border-t border-slate-200 bg-white px-1 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
-      aria-label="Điều hướng chính (mobile)"
+      aria-label="Main navigation (mobile)"
     >
       {TABS.map((tab) => (
         <NavLink

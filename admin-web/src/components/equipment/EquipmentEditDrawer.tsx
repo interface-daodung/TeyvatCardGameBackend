@@ -226,7 +226,7 @@ export function EquipmentEditDrawer({
               options={['enabled', 'disabled'] as const}
               onChange={(next) => setFormValues((p) => ({ ...p, status: next }))}
               getPillClassName={enabledDisabledStatusPillClass}
-              aria-label="Trạng thái item"
+              aria-label="Item status"
             />
           </div>
           <div className="flex items-center gap-2.5 flex-wrap">
@@ -442,7 +442,7 @@ export function EquipmentEditDrawer({
         className="flex justify-center pt-2.5 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
         onPointerDown={(e) => dragControls.start(e)}
         role="presentation"
-        aria-label="Kéo xuống để đóng"
+        aria-label="Drag down to close"
       >
         <div className="h-1.5 w-12 rounded-full bg-muted-foreground/35" />
       </div>
@@ -509,7 +509,7 @@ export function EquipmentEditDrawer({
       ? createPortal(
           <BottomDockFabShell>
             <DockFabMotionGroup
-              aria-label="Thao tác item"
+              aria-label="Item actions"
               initial={{ y: 72, opacity: 0 }}
               animate={
                 isPresent
@@ -529,8 +529,8 @@ export function EquipmentEditDrawer({
                     onRequestDelete();
                   }}
                   disabled={saveLoading || deleteLoading || showDeleteConfirm}
-                  title="Xóa item"
-                  aria-label="Xóa item"
+                  title="Delete item"
+                  aria-label="Delete item"
                 >
                   <FontAwesomeIcon
                     icon={faTrash}
@@ -542,8 +542,8 @@ export function EquipmentEditDrawer({
                   tone="primary"
                   onClick={onSave}
                   disabled={saveLoading}
-                  title="Lưu"
-                  aria-label="Lưu"
+                  title="Save"
+                  aria-label="Save"
                 >
                   {saveLoading ? (
                     <span
@@ -566,13 +566,13 @@ export function EquipmentEditDrawer({
                   }}
                   title={
                     itemClassDrawerOpen
-                      ? 'Đóng trình sửa class'
-                      : 'Mở trình sửa class (toàn drawer)'
+                      ? 'Close class editor'
+                      : 'Open class editor (full drawer)'
                   }
                   aria-label={
                     itemClassDrawerOpen
-                      ? 'Đóng trình sửa class'
-                      : 'Mở trình sửa class'
+                      ? 'Close class editor'
+                      : 'Open class editor'
                   }
                   aria-pressed={itemClassDrawerOpen}
                 >
@@ -588,8 +588,8 @@ export function EquipmentEditDrawer({
                     setAttachedOpen((v) => !v);
                     setItemClassDrawerOpen(false);
                   }}
-                  title={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh đính kèm'}
-                  aria-label={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh đính kèm'}
+                  title={attachedOpen ? 'Close attached assets' : 'Attached assets'}
+                  aria-label={attachedOpen ? 'Close attached assets' : 'Attached assets'}
                   aria-pressed={attachedOpen}
                 >
                   <FontAwesomeIcon
@@ -690,8 +690,8 @@ export function EquipmentEditDrawer({
             onDiscard={onUnsavedDiscard}
             onSave={onUnsavedSave}
             saveLoading={saveLoading}
-            title="Lưu thay đổi?"
-            description="Bạn đã chỉnh sửa equipment. Bạn có muốn lưu trước khi đóng không?"
+            title="Save changes?"
+            description="You edited equipment. Save before closing?"
           />
           <UnsavedChangesDialog
             open={showLevelUnsavedConfirm}
@@ -699,8 +699,8 @@ export function EquipmentEditDrawer({
             onDiscard={onLevelUnsavedDiscard}
             onSave={onLevelUnsavedSave}
             overlayClassName="z-[20100]"
-            title="Lưu thay đổi?"
-            description="Bạn đã chỉnh sửa level. Bạn có muốn lưu vào form trước khi đóng không?"
+            title="Save changes?"
+            description="You edited levels. Save into form before closing?"
           />
           <UnsavedChangesDialog
             open={showI18nUnsavedConfirm}
@@ -708,11 +708,11 @@ export function EquipmentEditDrawer({
             onDiscard={onI18nUnsavedDiscard}
             onSave={onI18nUnsavedSave}
             overlayClassName="z-[20100]"
-            title="Lưu thay đổi?"
+            title="Save changes?"
             description={
               i18nPopupField === 'name'
-                ? 'Bạn đã chỉnh sửa tên (i18n). Bạn có muốn lưu vào form trước khi đóng không?'
-                : 'Bạn đã chỉnh sửa mô tả (i18n). Bạn có muốn lưu vào form trước khi đóng không?'
+                ? 'You edited name (i18n). Save into form before closing?'
+                : 'You edited description (i18n). Save into form before closing?'
             }
           />
           <ConfirmDangerDialog
@@ -720,10 +720,10 @@ export function EquipmentEditDrawer({
             onCancel={onCancelDelete}
             onConfirm={onConfirmDelete}
             confirmLoading={deleteLoading}
-            title="Xóa item?"
-            description="Xóa item này khỏi DB? Hành động không hoàn tác."
-            confirmLabel="Xóa"
-            confirmLoadingLabel="Đang xóa…"
+            title="Delete item?"
+            description="Delete this item from DB? This action cannot be undone."
+            confirmLabel="Delete"
+            confirmLoadingLabel="Deleting…"
           />
         </>,
         document.body

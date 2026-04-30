@@ -114,7 +114,7 @@ export function CharacterDetailDrawer({
       ? createPortal(
           <BottomDockFabShell>
             <DockFabMotionGroup
-              aria-label="Thao tác nhân vật"
+              aria-label="Character actions"
               className="ml-[250px]"
               initial={{ y: 72, opacity: 0 }}
               animate={isPresent ? { y: 0, opacity: 1 } : { y: 72, opacity: 0 }}
@@ -131,8 +131,8 @@ export function CharacterDetailDrawer({
                     requestDelete();
                   }}
                   disabled={!canDelete || deleteLoading || showDeleteConfirm}
-                  title="Xóa nhân vật"
-                  aria-label="Xóa nhân vật"
+                  title="Delete character"
+                  aria-label="Delete character"
                 >
                   <FontAwesomeIcon
                     icon={faTrash}
@@ -147,8 +147,8 @@ export function CharacterDetailDrawer({
                     setClassCodeOpen(false);
                     setAttachedOpen(false);
                   }}
-                  title={astFlowOpen ? 'Đóng luồng AST' : 'Mở luồng AST (class)'}
-                  aria-label={astFlowOpen ? 'Đóng luồng AST' : 'Mở luồng AST'}
+                  title={astFlowOpen ? 'Close AST flow' : 'Open AST flow (class)'}
+                  aria-label={astFlowOpen ? 'Close AST flow' : 'Open AST flow'}
                   aria-pressed={astFlowOpen}
                 >
                   <FontAwesomeIcon
@@ -164,8 +164,8 @@ export function CharacterDetailDrawer({
                     setAstFlowOpen(false);
                     setAttachedOpen(false);
                   }}
-                  title={classCodeOpen ? 'Đóng trình sửa class' : 'Mở trình sửa class'}
-                  aria-label={classCodeOpen ? 'Đóng trình sửa class' : 'Mở trình sửa class'}
+                  title={classCodeOpen ? 'Close class editor' : 'Open class editor'}
+                  aria-label={classCodeOpen ? 'Close class editor' : 'Open class editor'}
                   aria-pressed={classCodeOpen}
                 >
                   <FontAwesomeIcon
@@ -181,8 +181,8 @@ export function CharacterDetailDrawer({
                     setClassCodeOpen(false);
                     setAstFlowOpen(false);
                   }}
-                  title={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh kỹ năng đính kèm (skill)'}
-                  aria-label={attachedOpen ? 'Đóng ảnh đính kèm' : 'Ảnh kỹ năng đính kèm'}
+                  title={attachedOpen ? 'Close attached images' : 'Attached skill images'}
+                  aria-label={attachedOpen ? 'Close attached images' : 'Attached skill images'}
                   aria-pressed={attachedOpen}
                 >
                   <FontAwesomeIcon
@@ -205,7 +205,7 @@ export function CharacterDetailDrawer({
         role="dialog"
         aria-modal="true"
         aria-roledescription="drawer"
-        aria-label="Chi tiết nhân vật"
+        aria-label="Character details"
         initial="hidden"
         animate="visible"
         exit="exit"
@@ -232,7 +232,7 @@ export function CharacterDetailDrawer({
           className="flex w-5 min-w-[20px] shrink-0 cursor-grab touch-none items-center justify-center self-stretch bg-muted/15 active:cursor-grabbing"
           aria-hidden
           role="presentation"
-          title="Kéo sang phải để đóng"
+          title="Drag right to close"
           onPointerDown={startDrawerDrag}
         >
           <div className="h-14 w-1.5 shrink-0 rounded-full bg-muted-foreground/35" />
@@ -240,10 +240,10 @@ export function CharacterDetailDrawer({
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <div
             className="flex shrink-0 cursor-grab touch-none select-none items-center border-b border-border/50 px-3 py-2.5 active:cursor-grabbing"
-            title="Kéo sang phải để đóng — hoặc nhấn Esc"
+            title="Drag right to close - or press Esc"
             onPointerDown={startDrawerDrag}
           >
-            <h2 className="text-sm font-semibold tracking-tight truncate">Chi tiết nhân vật</h2>
+            <h2 className="text-sm font-semibold tracking-tight truncate">Character details</h2>
           </div>
           <div
             className={
@@ -269,9 +269,9 @@ export function CharacterDetailDrawer({
         onCancel={() => !deleteLoading && setShowDeleteConfirm(false)}
         onConfirm={() => void confirmDelete()}
         confirmLoading={deleteLoading}
-        title="Xóa nhân vật?"
-        description={`Nhân vật này sẽ bị xóa vĩnh viễn khỏi cơ sở dữ liệu (nameId: ${nameId}). Thao tác không hoàn tác.`}
-        confirmLabel="Xóa"
+        title="Delete character?"
+        description={`This character will be permanently deleted from database (nameId: ${nameId}). This action cannot be undone.`}
+        confirmLabel="Delete"
       />
     </>
   );

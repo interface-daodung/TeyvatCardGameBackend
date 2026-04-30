@@ -53,7 +53,7 @@ export function AdventureCardEditForm({
           onClick={onOpenI18nName}
           className="text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Edit name i18n"
-          title="Sửa i18n tên (EN / VI / JA)"
+          title="Edit name i18n (EN / VI / JA)"
         >
           <FontAwesomeIcon icon={faSquarePen} className="h-4 w-4" />
         </button>
@@ -74,7 +74,7 @@ export function AdventureCardEditForm({
             value={descriptionPreview}
             placeholder="—"
             onClick={onOpenI18nDesc}
-            aria-label="Mô tả (i18n), nhấn để chỉnh sửa bản dịch"
+            aria-label="Description (i18n), click to edit translations"
             className="min-h-[5rem] w-full cursor-pointer resize-none rounded-md border-0 bg-transparent px-3 py-2.5 pr-10 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
           />
         </div>
@@ -95,7 +95,7 @@ export function AdventureCardEditForm({
         </div>
         <input
           type="text"
-          placeholder="Chọn từ cây thư mục"
+          placeholder="Select from folder tree"
           readOnly
           className="w-full cursor-pointer rounded-md border border-input bg-muted/50 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
           value={form.className ?? card.className ?? ''}
@@ -139,7 +139,7 @@ export function AdventureCardEditForm({
             options={STATUSES}
             onChange={(next) => setForm((p) => ({ ...p, status: next }))}
             getPillClassName={adventureCardStatusPillClass}
-            aria-label="Trạng thái adventure card"
+            aria-label="Adventure card status"
           />
         </div>
       </div>
